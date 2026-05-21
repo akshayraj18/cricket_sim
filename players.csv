@@ -1,0 +1,226 @@
+name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand
+Jasprit Bumrah,Bowler (Fast),98,18,98,False,32,Right,Right
+Heinrich Klaasen,Wicketkeeper,96,96,10,True,34,Right,None
+Virat Kohli,Batsman,96,96,20,False,37,Right,Right
+Rashid Khan,Bowler (Spin),96,74,96,True,27,Right,Right
+Suryakumar Yadav,Batsman,95,95,10,False,35,Right,Right
+Nicholas Pooran,Batsman,95,95,15,True,30,Left,Right
+Vaibhav Sooryavanshi,Batsman,94,97,10,False,19,Left,None
+Shubman Gill,Batsman,94,94,10,False,26,Right,Right
+Shreyas Iyer,Batsman,94,94,15,False,31,Right,Right
+Travis Head,Batsman,94,94,55,True,32,Left,Right
+Kuldeep Yadav,Bowler (Spin),93,22,93,False,31,Left,Left
+Hardik Pandya,All-Rounder,93,89,86,False,32,Right,Right
+Yashasvi Jaiswal,Batsman,93,93,35,False,24,Left,Right
+Pat Cummins,All-Rounder,93,76,92,True,33,Right,Right
+Jos Buttler,Wicketkeeper,93,93,10,True,35,Right,None
+Sanju Samson,Wicketkeeper,93,93,10,False,31,Right,None
+Sunil Narine,Bowler (Spin),93,78,92,True,37,Left,Right
+Ruturaj Gaikwad,Batsman,92,92,10,False,29,Right,Right
+Rohit Sharma,Batsman,92,92,25,False,39,Right,Right
+Axar Patel,All-Rounder,92,82,89,False,32,Left,Left
+Ravindra Jadeja,All-Rounder,92,81,91,False,37,Left,Left
+Arshdeep Singh,Bowler (Fast),91,15,91,False,27,Left,Left
+Bhuvneshwar Kumar,Bowler (Fast),91,24,91,False,36,Right,Right
+KL Rahul,Wicketkeeper,91,91,10,False,34,Right,None
+Trent Boult,Bowler (Fast),91,14,91,True,36,Right,Left
+Josh Hazlewood,Bowler (Fast),91,12,91,True,35,Left,Right
+Mitchell Starc,Bowler (Fast),91,28,91,True,36,Left,Left
+Yuzvendra Chahal,Bowler (Spin),90,11,90,False,35,Right,Right
+Abhishek Sharma,All-Rounder,90,90,65,False,25,Left,Left
+Matheesha Pathirana,Bowler (Fast),89,11,89,True,23,Right,Right
+Cameron Green,All-Rounder,89,89,74,True,26,Right,Right
+Rinku Singh,Batsman,89,89,15,False,28,Left,Right
+Phil Salt,Batsman,89,89,10,True,29,Right,None
+Varun Chakravarthy,Bowler (Spin),89,11,89,False,34,Right,Right
+Riyan Parag,All-Rounder,89,88,72,False,24,Right,Right
+Mohammed Shami,Bowler (Fast),89,16,89,False,35,Right,Right
+Noor Ahmad,Bowler (Spin),88,15,87,True,21,Left,Left
+Dhruv Jurel,Wicketkeeper,88,88,10,False,25,Right,None
+Mohammed Siraj,Bowler (Fast),88,13,88,False,32,Right,Right
+Ishan Kishan,Wicketkeeper,88,88,10,False,27,Left,None
+Liam Livingstone,All-Rounder,88,86,76,True,32,Right,Right
+Tristan Stubbs,Batsman,88,88,35,True,25,Right,Right
+Devdutt Padikkal,Batsman,87,87,10,False,25,Left,None
+Jitesh Sharma,Wicketkeeper,87,87,10,False,32,Right,None
+Rajat Patidar,Batsman,87,87,10,False,32,Right,Right
+Mayank Yadav,Bowler (Fast),87,11,87,False,23,Right,Right
+Marcus Stoinis,All-Rounder,87,85,74,True,36,Right,Right
+Shimron Hetmyer,Batsman,87,87,10,True,29,Left,None
+Shivam Dube,All-Rounder,87,87,68,False,32,Left,Right
+Finn Allen,Batsman,87,87,20,True,26,Right,None
+T Natarajan,Bowler (Fast),86,11,86,False,35,Left,Left
+Tilak Varma,All-Rounder,86,85,60,False,23,Left,Right
+Ravi Bishnoi,Bowler (Spin),86,14,86,False,25,Right,Right
+Quinton de Kock,Wicketkeeper,86,86,10,True,33,Left,None
+Nitish Kumar Reddy,All-Rounder,85,83,76,False,22,Right,Right
+Venkatesh Iyer,All-Rounder,85,84,52,False,31,Left,Right
+Prabhsimran Singh,Wicketkeeper,85,85,10,False,25,Right,None
+Priyansh Arya,Batsman,85,85,10,False,25,Right,None
+Dewald Brevis,Batsman,84,84,30,True,23,Right,Right
+Mukesh Kumar,Bowler (Fast),84,12,84,False,32,Right,Right
+Harshal Patel,All-Rounder,84,50,84,False,35,Right,Right
+Avesh Khan,Bowler (Fast),84,13,84,False,29,Right,Right
+Marco Jansen,All-Rounder,84,65,83,True,25,Right,Left
+Will Jacks,All-Rounder,84,84,66,True,25,Right,Right
+Harshit Rana,Bowler (Fast),84,35,83,False,24,Right,Right
+Ajinkya Rahane,Batsman,84,84,10,False,37,Right,Right
+Kartik Sharma,Wicketkeeper,84,84,10,False,19,Right,None
+Rachin Ravindra,All-Rounder,84,83,74,True,26,Left,Left
+David Miller,Batsman,84,84,10,True,36,Left,None
+Mustafizur Rahman,Bowler (Fast),84,11,84,True,30,Left,Left
+Kagiso Rabada,Bowler (Fast),84,15,84,True,30,Right,Right
+Aiden Markram,All-Rounder,82,82,55,True,31,Right,Right
+Rishabh Pant,Wicketkeeper,83,83,12,False,28,Left,None
+Deepak Chahar,Bowler (Fast),83,55,81,False,34,Right,Right
+Khaleel Ahmed,Bowler (Fast),83,11,83,False,28,Right,Left
+Krunal Pandya,All-Rounder,83,76,80,False,35,Left,Left
+Josh Inglis,Wicketkeeper,83,83,10,True,31,Right,None
+Pathum Nissanka,Batsman,83,83,10,True,28,Right,None
+Jason Holder,All-Rounder,83,72,81,True,34,Right,Right
+Tushar Deshpande,Bowler (Fast),82,18,82,False,30,Right,Right
+Sandeep Sharma,Bowler (Fast),82,12,82,False,33,Right,Right
+Shashank Singh,Batsman,82,82,40,False,34,Right,Right
+Nitish Rana,All-Rounder,82,81,55,False,32,Left,Right
+AM Ghazanfar,Bowler (Spin),82,18,82,True,20,Right,Right
+Ben Duckett,Wicketkeeper,82,82,10,True,31,Left,None
+Sam Curran,All-Rounder,82,76,80,True,27,Left,Left
+Auqib Nabi,All-Rounder,81,72,75,False,25,Right,Right
+Rahul Chahar,Bowler (Spin),81,22,81,False,26,Right,Right
+Rasikh Salam,Bowler (Fast),81,25,81,False,26,Right,Right
+Mangesh Yadav,All-Rounder,81,75,76,False,24,Right,Right
+Yash Dayal,Bowler (Fast),81,12,81,False,28,Left,Left
+Mohsin Khan,Bowler (Fast),81,14,81,False,27,Left,Left
+Ramandeep Singh,All-Rounder,81,78,65,False,29,Right,Right
+Nandre Burger,Bowler (Fast),81,16,81,True,30,Left,Left
+Tim David,Batsman,81,80,30,True,30,Right,Right
+Mitchell Santner,All-Rounder,81,70,80,True,34,Left,Left
+Matt Henry,Bowler (Fast),81,18,81,True,34,Right,Right
+Kyle Jamieson,Bowler (Fast),81,45,80,True,31,Right,Right
+Lungi Ngidi,Bowler (Fast),81,11,81,True,29,Right,Right
+Naman Dhir,Batsman,80,79,32,False,26,Right,Right
+Ayush Badoni,Batsman,80,79,42,False,26,Right,Right
+Nehal Wadhera,Batsman,80,80,15,False,25,Left,Right
+Abishek Porel,Wicketkeeper,80,80,10,False,23,Left,None
+Ashutosh Sharma,Batsman,80,80,20,False,27,Right,Right
+Lockie Ferguson,Bowler (Fast),80,12,80,True,35,Right,Right
+Azmatullah Omarzai,All-Rounder,80,75,77,True,26,Right,Right
+Rahul Tewatia,Batsman,80,78,46,False,31,Left,Right
+Prasidh Krishna,Bowler (Fast),80,11,80,False,30,Right,Right
+Glenn Phillips,Batsman,80,79,38,True,29,Right,Right
+Matthew Short,All-Rounder,80,78,68,True,30,Right,Right
+Rahul Tripathi,Batsman,80,80,10,False,35,Right,Right
+Nuwan Thushara,Bowler (Fast),79,11,79,True,31,Right,Right
+Shardul Thakur,All-Rounder,80,62,79,False,34,Right,Right
+Akash Deep,Bowler (Fast),80,20,80,False,29,Right,Right
+MS Dhoni,Wicketkeeper,80,80,10,False,44,Right,None
+Anshul Kamboj,Bowler (Fast),79,45,78,False,25,Right,Right
+Tim Seifert,Batsman,79,79,10,True,31,Right,None
+Sherfane Rutherford,Batsman,79,79,35,True,27,Left,Right
+Suyash Sharma,Bowler (Spin),79,11,79,False,23,Right,Right
+Shahbaz Ahmed,All-Rounder,79,73,76,False,31,Left,Left
+Nathan Ellis,Bowler (Fast),79,16,79,True,31,Right,Right
+Sai Kishore,Bowler (Spin),79,48,78,False,29,Left,Left
+Adam Milne,Bowler (Fast),79,15,79,True,34,Right,Right
+Tom Banton,Batsman,79,79,10,True,27,Right,None
+Prithvi Shaw,Batsman,79,79,10,False,26,Right,Right
+Jacob Bethell,All-Rounder,78,75,73,True,22,Left,Left
+Rovman Powell,Batsman,78,78,40,True,32,Right,Right
+Romario Shepherd,All-Rounder,78,74,75,True,31,Right,Right
+M Shahrukh Khan,Batsman,78,77,45,False,31,Right,Right
+Sarfaraz Khan,Batsman,78,78,10,False,28,Right,Right
+Angkrish Raghuvanshi,Wicketkeeper,78,78,10,False,20,Right,None
+Harpreet Brar,Bowler (Spin),78,45,77,False,30,Left,Left
+Ryan Rickelton,Batsman,78,78,10,True,29,Left,None
+Prashant Veer,All-Rounder,77,76,74,False,19,Left,Right
+Jack Edwards,All-Rounder,77,74,72,True,26,Right,Right
+Vaibhav Arora,Bowler (Fast),77,13,77,False,28,Right,Right
+Vijaykumar Vyshak,Bowler (Fast),77,18,77,False,29,Right,Right
+Yash Thakur,Bowler (Fast),77,12,77,False,27,Right,Right
+Kwena Maphaka,Bowler (Fast),77,11,77,True,20,Left,Left
+Jamie Overton,All-Rounder,77,70,74,True,32,Right,Right
+Deepak Hooda,Batsman,77,75,44,False,31,Right,Right
+Gurjapneet Singh,Bowler (Fast),76,12,76,False,27,Left,Left
+Jacob Duffy,Bowler (Fast),76,15,76,True,32,Right,Right
+Manimaran Siddharth,Bowler (Spin),76,11,76,False,27,Right,Left
+Dushmantha Chameera,Bowler (Fast),76,14,76,True,34,Right,Right
+Umran Malik,Bowler (Fast),76,11,76,False,26,Right,Right
+Jordan Cox,Batsman,76,76,10,True,25,Right,None
+Xavier Bartlett,Bowler (Fast),76,24,76,True,28,Right,Right
+Kuldeep Sen,Bowler (Fast),76,12,76,False,29,Right,Right
+Tejasvi Dahiya,Batsman,75,75,10,False,23,Right,None
+Urvil Patel,Batsman,75,75,10,False,27,Right,None
+Mukul Choudhary,Batsman,75,75,10,False,24,Right,None
+Donovan Ferreira,Batsman,75,75,35,True,27,Right,Right
+Sameer Rizvi,Batsman,75,74,30,False,22,Right,Right
+Karun Nair,Batsman,75,75,10,False,34,Right,Right
+Vijay Shankar,All-Rounder,75,73,60,False,34,Right,Right
+Ben Dwarshuis,Bowler (Fast),75,42,74,True,32,Left,Left
+Manish Pandey,Batsman,75,75,10,False,36,Right,Right
+Arshad Khan,Bowler (Fast),75,40,72,False,28,Left,Left
+Ishant Sharma,Bowler (Fast),75,11,75,False,37,Right,Right
+Shivam Mavi,Bowler (Fast),75,32,75,False,27,Right,Right
+Gurnoor Brar,Bowler (Fast),74,16,74,False,26,Right,Right
+Jayant Yadav,Bowler (Spin),74,48,72,False,36,Right,Right
+Anuj Rawat,Batsman,74,74,10,False,26,Left,None
+Lhuan-dre Pretorius,Batsman,74,74,10,True,20,Left,None
+Shubham Dubey,Batsman,74,74,10,False,21,Left,None
+Anukul Roy,Bowler (Spin),74,44,71,False,27,Left,Left
+Karn Sharma,Bowler (Spin),74,25,74,False,37,Left,Right
+Luke Wood,Bowler (Fast),74,22,74,True,30,Left,Left
+Zak Foulkes,All-Rounder,74,58,72,True,24,Right,Right
+Salil Arora,Batsman,74,74,10,False,23,Right,None
+Sushant Mishra,Bowler (Fast),73,13,73,False,25,Left,Left
+Naman Tiwari,Bowler (Fast),73,12,73,False,21,Left,Left
+Ashok Sharma,Bowler (Fast),73,11,73,False,23,Right,Right
+Kumar Kushagra,Batsman,73,73,10,False,21,Right,None
+Nishant Sindhu,Bowler (Spin),73,45,70,False,25,Left,Left
+Yudhvir Singh,Bowler (Fast),73,38,70,False,28,Right,Right
+Shreyas Gopal,Bowler (Spin),73,42,72,False,32,Right,Right
+Vishnu Vinod,Batsman,73,73,10,False,32,Right,None
+Robin Minz,Wicketkeeper,73,73,10,False,24,Left,None
+Mandeep Singh,Batsman,73,73,10,False,34,Right,None
+Siddharth Kaul,Bowler (Fast),73,14,73,False,36,Right,Right
+Mitchell Owen,Bowler (Fast),74,38,69,True,24,Right,Right
+Varun Aaron,Bowler (Fast),72,11,72,False,36,Right,Right
+Dhawan Rishi,Bowler (Fast),72,44,68,False,36,Right,Right
+Ravi Singh,Batsman,72,72,10,False,22,Right,None
+Vipraj Nigam,Batsman,71,50,48,False,22,Right,Right
+Madhav Tiwari,Bowler (Fast),71,22,67,False,23,Right,Right
+Ajay Mandal,Bowler (Spin),71,42,66,False,30,Left,Left
+Suryansh Shedge,Batsman,71,68,28,False,23,Right,Right
+Harnoor Singh,Batsman,71,71,10,False,23,Left,None
+Kartik Tyagi,Bowler (Fast),71,11,71,False,25,Right,Right
+Urvil Patel,Batsman,71,71,10,False,27,Right,None
+Tripurana Vijay,Batsman,70,55,35,False,23,Right,Right
+Ramakrishna Ghosh,Batsman,70,58,25,False,23,Right,Right
+Yash Raj Punja,Bowler (Fast),70,14,70,False,22,Right,Right
+Vignesh Puthur,Bowler (Fast),70,12,70,False,23,Right,Right
+Prashant Solanki,Bowler (Spin),70,11,70,False,26,Right,Right
+Shivang Kumar,Batsman,70,56,36,False,23,Right,Right
+Vihaan Malhotra,Batsman,70,58,22,False,22,Right,Right
+Prithvi Raj,Bowler (Fast),70,11,70,False,28,Left,Left
+Brijesh Sharma,Bowler (Fast),70,12,70,False,23,Right,Right
+Sahil Parakh,Batsman,70,70,10,False,21,Right,None
+Aman Rao,Batsman,70,70,10,False,21,Right,None
+Daksh Kamra,Batsman,70,52,35,False,22,Right,Right
+Sarthak Ranjan,Batsman,70,64,25,False,29,Right,Right
+Krains Fuletra,Batsman,70,54,35,False,23,Right,Right
+Praful Hinge,Bowler (Fast),70,11,70,False,23,Right,Right
+Atharva Ankolekar,Bowler (Spin),70,38,66,False,25,Right,Left
+Vishal Nishad,Bowler (Spin),70,11,70,False,23,Left,Left
+Amit Kumar,Bowler (Spin),70,12,70,False,23,Right,Right
+Onkar Tarmale,Bowler (Fast),70,11,70,False,23,Right,Right
+Mohd Izhar,Bowler (Fast),70,11,70,False,22,Right,Right
+Sakib Hussain,Bowler (Fast),70,11,70,False,23,Right,Right
+Mayank Rawat,Batsman,70,62,40,False,24,Right,Right
+Vicky Ostwal,Bowler (Spin),70,25,69,False,23,Left,Left
+Satvik Deswal,Batsman,70,55,32,False,23,Right,Right
+Danish Malewar,Batsman,70,70,10,False,22,Right,None
+Pyla Avinash,Batsman,70,70,10,False,23,Right,None
+Robin Uthappa,Batsman,70,70,10,False,40,Right,None
+Corbin Bosch,Bowler (Fast),74,42,70,True,31,Right,Right
+Shahbaz Ahmed,All-Rounder,79,73,76,False,31,Left,Left
+Mukesh Choudhary,Bowler (Fast),74,11,74,False,30,Left,Left
+Shahbaz Nadeem,Bowler (Spin),73,15,73,False,36,Right,Left
+Musheer Khan,All-Rounder,75,74,68,False,21,Right,Left
