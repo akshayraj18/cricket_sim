@@ -2,7 +2,7 @@
 import random
 
 class Player:
-    def __init__(self, name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age, batting_hand="Right", bowling_hand="Right"):
+    def __init__(self, name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age, batting_hand="Right", bowling_hand="Right", batting_archetype="Strike Rotator", bowling_phase="Flexible", bowling_type="None", strengths="", weaknesses=""):
         self.name = name
         self.role = role
         self.base_ovr = base_ovr
@@ -12,6 +12,11 @@ class Player:
         self.age = age
         self.batting_hand = batting_hand
         self.bowling_hand = bowling_hand
+        self.batting_archetype = batting_archetype
+        self.bowling_phase = bowling_phase
+        self.bowling_type = bowling_type
+        self.strengths = strengths
+        self.weaknesses = weaknesses
         self.form = 5
         self.intent = "Normal"
         self.team_name = "Unassigned"
@@ -21,12 +26,18 @@ class Player:
         self.stats = {
             "runs": 0, "balls_faced": 0, "outs": 0, "highest_score": 0,
             "fours": 0, "sixes": 0, "fifties": 0, "hundreds": 0,
-            "wickets": 0, "runs_conceded": 0, "balls_bowled": 0
+            "wickets": 0, "runs_conceded": 0, "balls_bowled": 0,
+            "maidens": 0, "motm": 0, "best_bowling_wickets": 0,
+            "best_bowling_runs": 999,
+            "catches": 0, "stumpings": 0, "runouts": 0
         }
 
     @property
     def form_impact(self):
-        return (self.form - 5) * 2.5
+        # Keep form as a confidence modifier, not a player rewrite. A 1-10 form
+        # band now moves OVR by roughly -4 to +5, which keeps match results
+        # believable across a season.
+        return self.form - 5
 
     @property
     def current_batting(self):
@@ -38,7 +49,7 @@ class Player:
 
     @property
     def current_ovr(self):
-        return max(1, min(100, int(self.base_ovr + self.form_impact)))
+        return max(1, min(100, int(max(self.base_ovr, self.batting_ovr, self.bowling_ovr) + self.form_impact)))
 
     @property
     def batting_strike_rate(self):
@@ -51,15 +62,38 @@ class Player:
         return (self.stats["runs_conceded"] / (self.stats["balls_bowled"] / 6))
 
     def apply_game_performance_on_form(self, specialized_impact):
-        self.form = max(1, min(10, self.form + specialized_impact))
+        if specialized_impact > 0:
+            if self.age <= 23:
+                adjusted = specialized_impact + 0.35
+            elif self.age <= 28:
+                adjusted = specialized_impact + 0.15
+            elif self.age >= 35:
+                adjusted = specialized_impact * 0.65
+            else:
+                adjusted = specialized_impact
+        else:
+            if self.age <= 23:
+                adjusted = specialized_impact * 1.20
+            elif self.age >= 35:
+                adjusted = specialized_impact * 0.70
+            else:
+                adjusted = specialized_impact
+        self.form = max(1, min(10, self.form + adjusted))
 
     def apply_offseason_progression(self):
-        if self.age < 25: growth = random.randint(1, 5)
-        elif self.age > 33: growth = random.randint(-5, -2)
-        else: growth = random.randint(-2, 2)
+        if self.age <= 21:
+            growth = random.choices([1, 2, 3, 4, 5], weights=[1, 3, 4, 3, 1])[0]
+        elif self.age <= 25:
+            growth = random.choices([0, 1, 2, 3, 4], weights=[1, 3, 4, 2, 1])[0]
+        elif self.age <= 30:
+            growth = random.choices([-1, 0, 1, 2], weights=[1, 3, 3, 1])[0]
+        elif self.age <= 34:
+            growth = random.choices([-2, -1, 0, 1], weights=[2, 3, 2, 1])[0]
+        else:
+            growth = random.choices([-5, -4, -3, -2, -1], weights=[1, 2, 3, 3, 1])[0]
         self.batting_ovr = max(1, min(100, self.batting_ovr + growth))
         self.bowling_ovr = max(1, min(100, self.bowling_ovr + growth))
-        self.base_ovr = max(self.batting_ovr, self.bowling_ovr) if self.role != "All-Rounder" else (self.batting_ovr + self.bowling_ovr) // 2
+        self.base_ovr = max(self.batting_ovr, self.bowling_ovr)
         self.age += 1
         self.form = 5
 
@@ -78,7 +112,13 @@ class Team:
         self.captain = None
         self.vice_captain = None
         self.saved_playing_xi_names = []
+        self.saved_batting_first_xi_names = []
+        self.saved_bowling_first_xi_names = []
+        self.saved_bat_to_bowl_sub = {"out": "", "in": ""}
+        self.saved_bowl_to_bat_sub = {"out": "", "in": ""}
+        self.saved_wicketkeeper_name = ""
         self.saved_batting_order_names = []
+        self.saved_bowling_over_names = []
 
     @property
     def games_played(self):

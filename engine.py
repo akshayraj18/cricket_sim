@@ -2,14 +2,73 @@
 import random
 
 class MatchEngine:
-    def __init__(self, team1, team2, user_team_name=None):
+    def __init__(self, team1, team2, user_team_name=None, difficulty="hard"):
         self.team1 = team1
         self.team2 = team2
         self.user_team_name = user_team_name
+        self.difficulty = difficulty
         self.fast_sim_active = False
 
     def simulate_ball(self, batter, bowler):
         skill_delta = (batter.current_batting - bowler.current_bowling) / 100.0
+        user_edge = {"easy": 0.18, "medium": 0.09, "hard": 0.0}.get(getattr(self, "difficulty", "hard"), 0.0)
+        if user_edge and self.user_team_name:
+            if getattr(batter, "team_name", "") == self.user_team_name:
+                skill_delta += user_edge
+            if getattr(bowler, "team_name", "") == self.user_team_name:
+                skill_delta -= user_edge
+        phase = getattr(batter, "match_phase", "Middle Overs")
+        batting_archetype = getattr(batter, "batting_archetype", "Strike Rotator")
+        bowling_phase = getattr(bowler, "bowling_phase", "Flexible")
+        bowling_type = getattr(bowler, "bowling_type", "None")
+        strengths = getattr(batter, "strengths", "").lower()
+        weaknesses = getattr(batter, "weaknesses", "").lower()
+
+        if batting_archetype in ("Aggressor", "Aggressive Opener", "Pace Specialist") and phase == "Powerplay":
+            skill_delta += 0.035
+        elif batting_archetype == "Finisher" and phase == "Death Overs":
+            skill_delta += 0.040
+        elif batting_archetype == "Anchor" and phase == "Powerplay":
+            skill_delta -= 0.015
+        elif batting_archetype in ("Strike Rotator", "Middle-over Rotator", "Spin Specialist") and phase == "Middle Overs":
+            skill_delta += 0.020
+        elif batting_archetype in ("Lower-order Hitter", "Lower-order Power Hitter") and phase != "Death Overs":
+            skill_delta -= 0.025
+
+        if bowling_phase == phase:
+            skill_delta -= 0.035
+        elif bowling_phase == "Flexible":
+            skill_delta -= 0.012
+        if phase == "Powerplay" and "Swing" in bowling_type:
+            skill_delta -= 0.020
+        if phase == "Middle Overs" and ("Spin" in bowling_type or "Orthodox" in bowling_type):
+            skill_delta -= 0.018
+        if phase == "Death Overs" and ("Variations" in bowling_type or "Fast" in bowling_type):
+            skill_delta -= 0.018
+        if batting_archetype == "Aggressor" and phase == "Powerplay" and "Swing" in bowling_type:
+            skill_delta -= 0.012
+        if batting_archetype == "Anchor" and phase == "Middle Overs" and ("Spin" in bowling_type or "Orthodox" in bowling_type):
+            skill_delta += 0.012
+        if batting_archetype == "Finisher" and phase == "Death Overs" and "Variations" in bowling_type:
+            skill_delta -= 0.010
+        if batting_archetype == "Strike Rotator" and phase == "Middle Overs" and "Fast" in bowling_type:
+            skill_delta += 0.008
+        is_spin = any(word in bowling_type for word in ("Spin", "Orthodox", "Leg", "Off"))
+        is_pace = bool(bowling_type and bowling_type != "None" and not is_spin)
+        phase_token = "powerplay" if phase == "Powerplay" else ("middle" if phase == "Middle Overs" else "death")
+        if phase_token in strengths:
+            skill_delta += 0.010
+        if phase_token in weaknesses:
+            skill_delta -= 0.010
+        if "pace" in strengths and is_pace:
+            skill_delta += 0.012
+        if "spin" in strengths and is_spin:
+            skill_delta += 0.012
+        if "pace" in weaknesses and is_pace:
+            skill_delta -= 0.012
+        if "spin" in weaknesses and is_spin:
+            skill_delta -= 0.012
+
         matchup_multiplier = 1.0
         if batter.batting_hand == "Left" and "Spin" in bowler.role and bowler.bowling_hand == "Right":
             matchup_multiplier += 0.06
@@ -22,6 +81,29 @@ class MatchEngine:
         p_single, p_double, p_triple = 0.350, 0.070, 0.005
         p_four = 0.120 + (skill_delta * 0.070)
         p_six = 0.050 + (skill_delta * 0.060)
+
+        batting_aggression = max(1, min(5, int(getattr(batter, "batting_aggression", 3))))
+        bowling_aggression = max(1, min(5, int(getattr(bowler, "bowling_aggression", 2))))
+        bat_push = batting_aggression - 3
+        bowl_push = bowling_aggression - 2
+
+        p_wicket *= 1 + (bat_push * 0.16) + (bowl_push * 0.14)
+        p_four *= 1 + (bat_push * 0.13)
+        p_six *= 1 + (bat_push * 0.16)
+        p_dot *= 1 - (bat_push * 0.05)
+        p_single *= 1 - (max(0, bat_push) * 0.04)
+        if bowling_aggression == 1:
+            p_wicket *= 0.86
+            p_dot *= 1.10
+            p_four *= 0.90
+            p_six *= 0.88
+            p_single *= 1.05
+        elif bowling_aggression >= 3:
+            attack = bowling_aggression - 2
+            p_wicket *= 1 + attack * 0.14
+            p_dot *= 1 - attack * 0.05
+            p_four *= 1 + attack * 0.08
+            p_six *= 1 + attack * 0.07
 
         if batter.intent == "Aggressive":
             p_wicket *= 1.60; p_six *= 1.50; p_four *= 1.30; p_dot *= 0.70
@@ -122,6 +204,9 @@ class MatchEngine:
 
             striker = batting_lineup[min(striker_idx, 10)]
             non_striker = batting_lineup[min(non_striker_idx, 10)]
+            phase = "Powerplay" if over_num < 6 else ("Middle Overs" if over_num < 15 else "Death Overs")
+            striker.match_phase = phase
+            active_bowler.match_phase = phase
 
             outcome = self.simulate_ball(striker, active_bowler)
             balls += 1
@@ -297,8 +382,8 @@ class MatchEngine:
         bowl2_pool = [p for p in xi_bat1 if "Bowler" in p.role or p.role == "All-Rounder"] or xi_bat1
 
         r2, w2, b2_dict, bowl2_dict = self.play_innings(inn1_bowl, inn1_bat, bat2_lineup, bowl2_pool, target=target)
-        self.eval_match_performances_for_form(bat1_lineup, bowl1_pool)
-        self.eval_match_performances_for_form(bat2_lineup, bowl2_pool)
+        self.eval_match_performances_for_form(bat1_lineup, bowl1_pool, b1_dict, bowl1_dict)
+        self.eval_match_performances_for_form(bat2_lineup, bowl2_pool, b2_dict, bowl2_dict)
 
         is_user_involved = (self.team1.name == self.user_team_name or self.team2.name == self.user_team_name)
 
@@ -315,12 +400,20 @@ class MatchEngine:
                 self.print_presentation_grade_scorecard(inn1_bat, inn1_bowl, r1, w1, r2, w2, b1_dict, b2_dict, bowl1_dict, bowl2_dict, inn1_bat, margin)
             return inn1_bat
 
-    def eval_match_performances_for_form(self, lineup_bat, lineup_bowl):
+    def eval_match_performances_for_form(self, lineup_bat, lineup_bowl, batter_stats=None, bowler_stats=None):
         for p in lineup_bat:
-            if p.stats["balls_faced"] > 0:
-                if p.stats["runs"] >= 50 or (p.stats["runs"] >= 25 and p.batting_strike_rate > 160): p.apply_game_performance_on_form(1)
-                elif p.stats["runs"] == 0: p.apply_game_performance_on_form(-1)
+            data = batter_stats.get(p.name, {}) if batter_stats else {}
+            balls = data.get("balls", p.stats["balls_faced"])
+            runs = data.get("runs", p.stats["runs"])
+            strike_rate = (runs / balls) * 100 if balls else 0
+            if balls > 0:
+                if runs >= 50 or (runs >= 25 and strike_rate > 160): p.apply_game_performance_on_form(1)
+                elif runs == 0: p.apply_game_performance_on_form(-1)
         for p in lineup_bowl:
-            if p.stats["balls_bowled"] > 0:
-                if p.stats["wickets"] >= 3: p.apply_game_performance_on_form(1)
-                elif p.stats["runs_conceded"] >= 45 and p.stats["wickets"] == 0: p.apply_game_performance_on_form(-1)
+            data = bowler_stats.get(p.name, {}) if bowler_stats else {}
+            balls = data.get("balls", p.stats["balls_bowled"])
+            runs = data.get("runs", p.stats["runs_conceded"])
+            wickets = data.get("wickets", p.stats["wickets"])
+            if balls > 0:
+                if wickets >= 3: p.apply_game_performance_on_form(1)
+                elif runs >= 45 and wickets == 0: p.apply_game_performance_on_form(-1)

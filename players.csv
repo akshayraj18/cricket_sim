@@ -1,226 +1,337 @@
-name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand
-Jasprit Bumrah,Bowler (Fast),98,18,98,False,32,Right,Right
-Heinrich Klaasen,Wicketkeeper,96,96,10,True,34,Right,None
-Virat Kohli,Batsman,96,96,20,False,37,Right,Right
-Rashid Khan,Bowler (Spin),96,74,96,True,27,Right,Right
-Suryakumar Yadav,Batsman,95,95,10,False,35,Right,Right
-Nicholas Pooran,Batsman,95,95,15,True,30,Left,Right
-Vaibhav Sooryavanshi,Batsman,94,97,10,False,19,Left,None
-Shubman Gill,Batsman,94,94,10,False,26,Right,Right
-Shreyas Iyer,Batsman,94,94,15,False,31,Right,Right
-Travis Head,Batsman,94,94,55,True,32,Left,Right
-Kuldeep Yadav,Bowler (Spin),93,22,93,False,31,Left,Left
-Hardik Pandya,All-Rounder,93,89,86,False,32,Right,Right
-Yashasvi Jaiswal,Batsman,93,93,35,False,24,Left,Right
-Pat Cummins,All-Rounder,93,76,92,True,33,Right,Right
-Jos Buttler,Wicketkeeper,93,93,10,True,35,Right,None
-Sanju Samson,Wicketkeeper,93,93,10,False,31,Right,None
-Sunil Narine,Bowler (Spin),93,78,92,True,37,Left,Right
-Ruturaj Gaikwad,Batsman,92,92,10,False,29,Right,Right
-Rohit Sharma,Batsman,92,92,25,False,39,Right,Right
-Axar Patel,All-Rounder,92,82,89,False,32,Left,Left
-Ravindra Jadeja,All-Rounder,92,81,91,False,37,Left,Left
-Arshdeep Singh,Bowler (Fast),91,15,91,False,27,Left,Left
-Bhuvneshwar Kumar,Bowler (Fast),91,24,91,False,36,Right,Right
-KL Rahul,Wicketkeeper,91,91,10,False,34,Right,None
-Trent Boult,Bowler (Fast),91,14,91,True,36,Right,Left
-Josh Hazlewood,Bowler (Fast),91,12,91,True,35,Left,Right
-Mitchell Starc,Bowler (Fast),91,28,91,True,36,Left,Left
-Yuzvendra Chahal,Bowler (Spin),90,11,90,False,35,Right,Right
-Abhishek Sharma,All-Rounder,90,90,65,False,25,Left,Left
-Matheesha Pathirana,Bowler (Fast),89,11,89,True,23,Right,Right
-Cameron Green,All-Rounder,89,89,74,True,26,Right,Right
-Rinku Singh,Batsman,89,89,15,False,28,Left,Right
-Phil Salt,Batsman,89,89,10,True,29,Right,None
-Varun Chakravarthy,Bowler (Spin),89,11,89,False,34,Right,Right
-Riyan Parag,All-Rounder,89,88,72,False,24,Right,Right
-Mohammed Shami,Bowler (Fast),89,16,89,False,35,Right,Right
-Noor Ahmad,Bowler (Spin),88,15,87,True,21,Left,Left
-Dhruv Jurel,Wicketkeeper,88,88,10,False,25,Right,None
-Mohammed Siraj,Bowler (Fast),88,13,88,False,32,Right,Right
-Ishan Kishan,Wicketkeeper,88,88,10,False,27,Left,None
-Liam Livingstone,All-Rounder,88,86,76,True,32,Right,Right
-Tristan Stubbs,Batsman,88,88,35,True,25,Right,Right
-Devdutt Padikkal,Batsman,87,87,10,False,25,Left,None
-Jitesh Sharma,Wicketkeeper,87,87,10,False,32,Right,None
-Rajat Patidar,Batsman,87,87,10,False,32,Right,Right
-Mayank Yadav,Bowler (Fast),87,11,87,False,23,Right,Right
-Marcus Stoinis,All-Rounder,87,85,74,True,36,Right,Right
-Shimron Hetmyer,Batsman,87,87,10,True,29,Left,None
-Shivam Dube,All-Rounder,87,87,68,False,32,Left,Right
-Finn Allen,Batsman,87,87,20,True,26,Right,None
-T Natarajan,Bowler (Fast),86,11,86,False,35,Left,Left
-Tilak Varma,All-Rounder,86,85,60,False,23,Left,Right
-Ravi Bishnoi,Bowler (Spin),86,14,86,False,25,Right,Right
-Quinton de Kock,Wicketkeeper,86,86,10,True,33,Left,None
-Nitish Kumar Reddy,All-Rounder,85,83,76,False,22,Right,Right
-Venkatesh Iyer,All-Rounder,85,84,52,False,31,Left,Right
-Prabhsimran Singh,Wicketkeeper,85,85,10,False,25,Right,None
-Priyansh Arya,Batsman,85,85,10,False,25,Right,None
-Dewald Brevis,Batsman,84,84,30,True,23,Right,Right
-Mukesh Kumar,Bowler (Fast),84,12,84,False,32,Right,Right
-Harshal Patel,All-Rounder,84,50,84,False,35,Right,Right
-Avesh Khan,Bowler (Fast),84,13,84,False,29,Right,Right
-Marco Jansen,All-Rounder,84,65,83,True,25,Right,Left
-Will Jacks,All-Rounder,84,84,66,True,25,Right,Right
-Harshit Rana,Bowler (Fast),84,35,83,False,24,Right,Right
-Ajinkya Rahane,Batsman,84,84,10,False,37,Right,Right
-Kartik Sharma,Wicketkeeper,84,84,10,False,19,Right,None
-Rachin Ravindra,All-Rounder,84,83,74,True,26,Left,Left
-David Miller,Batsman,84,84,10,True,36,Left,None
-Mustafizur Rahman,Bowler (Fast),84,11,84,True,30,Left,Left
-Kagiso Rabada,Bowler (Fast),84,15,84,True,30,Right,Right
-Aiden Markram,All-Rounder,82,82,55,True,31,Right,Right
-Rishabh Pant,Wicketkeeper,83,83,12,False,28,Left,None
-Deepak Chahar,Bowler (Fast),83,55,81,False,34,Right,Right
-Khaleel Ahmed,Bowler (Fast),83,11,83,False,28,Right,Left
-Krunal Pandya,All-Rounder,83,76,80,False,35,Left,Left
-Josh Inglis,Wicketkeeper,83,83,10,True,31,Right,None
-Pathum Nissanka,Batsman,83,83,10,True,28,Right,None
-Jason Holder,All-Rounder,83,72,81,True,34,Right,Right
-Tushar Deshpande,Bowler (Fast),82,18,82,False,30,Right,Right
-Sandeep Sharma,Bowler (Fast),82,12,82,False,33,Right,Right
-Shashank Singh,Batsman,82,82,40,False,34,Right,Right
-Nitish Rana,All-Rounder,82,81,55,False,32,Left,Right
-AM Ghazanfar,Bowler (Spin),82,18,82,True,20,Right,Right
-Ben Duckett,Wicketkeeper,82,82,10,True,31,Left,None
-Sam Curran,All-Rounder,82,76,80,True,27,Left,Left
-Auqib Nabi,All-Rounder,81,72,75,False,25,Right,Right
-Rahul Chahar,Bowler (Spin),81,22,81,False,26,Right,Right
-Rasikh Salam,Bowler (Fast),81,25,81,False,26,Right,Right
-Mangesh Yadav,All-Rounder,81,75,76,False,24,Right,Right
-Yash Dayal,Bowler (Fast),81,12,81,False,28,Left,Left
-Mohsin Khan,Bowler (Fast),81,14,81,False,27,Left,Left
-Ramandeep Singh,All-Rounder,81,78,65,False,29,Right,Right
-Nandre Burger,Bowler (Fast),81,16,81,True,30,Left,Left
-Tim David,Batsman,81,80,30,True,30,Right,Right
-Mitchell Santner,All-Rounder,81,70,80,True,34,Left,Left
-Matt Henry,Bowler (Fast),81,18,81,True,34,Right,Right
-Kyle Jamieson,Bowler (Fast),81,45,80,True,31,Right,Right
-Lungi Ngidi,Bowler (Fast),81,11,81,True,29,Right,Right
-Naman Dhir,Batsman,80,79,32,False,26,Right,Right
-Ayush Badoni,Batsman,80,79,42,False,26,Right,Right
-Nehal Wadhera,Batsman,80,80,15,False,25,Left,Right
-Abishek Porel,Wicketkeeper,80,80,10,False,23,Left,None
-Ashutosh Sharma,Batsman,80,80,20,False,27,Right,Right
-Lockie Ferguson,Bowler (Fast),80,12,80,True,35,Right,Right
-Azmatullah Omarzai,All-Rounder,80,75,77,True,26,Right,Right
-Rahul Tewatia,Batsman,80,78,46,False,31,Left,Right
-Prasidh Krishna,Bowler (Fast),80,11,80,False,30,Right,Right
-Glenn Phillips,Batsman,80,79,38,True,29,Right,Right
-Matthew Short,All-Rounder,80,78,68,True,30,Right,Right
-Rahul Tripathi,Batsman,80,80,10,False,35,Right,Right
-Nuwan Thushara,Bowler (Fast),79,11,79,True,31,Right,Right
-Shardul Thakur,All-Rounder,80,62,79,False,34,Right,Right
-Akash Deep,Bowler (Fast),80,20,80,False,29,Right,Right
-MS Dhoni,Wicketkeeper,80,80,10,False,44,Right,None
-Anshul Kamboj,Bowler (Fast),79,45,78,False,25,Right,Right
-Tim Seifert,Batsman,79,79,10,True,31,Right,None
-Sherfane Rutherford,Batsman,79,79,35,True,27,Left,Right
-Suyash Sharma,Bowler (Spin),79,11,79,False,23,Right,Right
-Shahbaz Ahmed,All-Rounder,79,73,76,False,31,Left,Left
-Nathan Ellis,Bowler (Fast),79,16,79,True,31,Right,Right
-Sai Kishore,Bowler (Spin),79,48,78,False,29,Left,Left
-Adam Milne,Bowler (Fast),79,15,79,True,34,Right,Right
-Tom Banton,Batsman,79,79,10,True,27,Right,None
-Prithvi Shaw,Batsman,79,79,10,False,26,Right,Right
-Jacob Bethell,All-Rounder,78,75,73,True,22,Left,Left
-Rovman Powell,Batsman,78,78,40,True,32,Right,Right
-Romario Shepherd,All-Rounder,78,74,75,True,31,Right,Right
-M Shahrukh Khan,Batsman,78,77,45,False,31,Right,Right
-Sarfaraz Khan,Batsman,78,78,10,False,28,Right,Right
-Angkrish Raghuvanshi,Wicketkeeper,78,78,10,False,20,Right,None
-Harpreet Brar,Bowler (Spin),78,45,77,False,30,Left,Left
-Ryan Rickelton,Batsman,78,78,10,True,29,Left,None
-Prashant Veer,All-Rounder,77,76,74,False,19,Left,Right
-Jack Edwards,All-Rounder,77,74,72,True,26,Right,Right
-Vaibhav Arora,Bowler (Fast),77,13,77,False,28,Right,Right
-Vijaykumar Vyshak,Bowler (Fast),77,18,77,False,29,Right,Right
-Yash Thakur,Bowler (Fast),77,12,77,False,27,Right,Right
-Kwena Maphaka,Bowler (Fast),77,11,77,True,20,Left,Left
-Jamie Overton,All-Rounder,77,70,74,True,32,Right,Right
-Deepak Hooda,Batsman,77,75,44,False,31,Right,Right
-Gurjapneet Singh,Bowler (Fast),76,12,76,False,27,Left,Left
-Jacob Duffy,Bowler (Fast),76,15,76,True,32,Right,Right
-Manimaran Siddharth,Bowler (Spin),76,11,76,False,27,Right,Left
-Dushmantha Chameera,Bowler (Fast),76,14,76,True,34,Right,Right
-Umran Malik,Bowler (Fast),76,11,76,False,26,Right,Right
-Jordan Cox,Batsman,76,76,10,True,25,Right,None
-Xavier Bartlett,Bowler (Fast),76,24,76,True,28,Right,Right
-Kuldeep Sen,Bowler (Fast),76,12,76,False,29,Right,Right
-Tejasvi Dahiya,Batsman,75,75,10,False,23,Right,None
-Urvil Patel,Batsman,75,75,10,False,27,Right,None
-Mukul Choudhary,Batsman,75,75,10,False,24,Right,None
-Donovan Ferreira,Batsman,75,75,35,True,27,Right,Right
-Sameer Rizvi,Batsman,75,74,30,False,22,Right,Right
-Karun Nair,Batsman,75,75,10,False,34,Right,Right
-Vijay Shankar,All-Rounder,75,73,60,False,34,Right,Right
-Ben Dwarshuis,Bowler (Fast),75,42,74,True,32,Left,Left
-Manish Pandey,Batsman,75,75,10,False,36,Right,Right
-Arshad Khan,Bowler (Fast),75,40,72,False,28,Left,Left
-Ishant Sharma,Bowler (Fast),75,11,75,False,37,Right,Right
-Shivam Mavi,Bowler (Fast),75,32,75,False,27,Right,Right
-Gurnoor Brar,Bowler (Fast),74,16,74,False,26,Right,Right
-Jayant Yadav,Bowler (Spin),74,48,72,False,36,Right,Right
-Anuj Rawat,Batsman,74,74,10,False,26,Left,None
-Lhuan-dre Pretorius,Batsman,74,74,10,True,20,Left,None
-Shubham Dubey,Batsman,74,74,10,False,21,Left,None
-Anukul Roy,Bowler (Spin),74,44,71,False,27,Left,Left
-Karn Sharma,Bowler (Spin),74,25,74,False,37,Left,Right
-Luke Wood,Bowler (Fast),74,22,74,True,30,Left,Left
-Zak Foulkes,All-Rounder,74,58,72,True,24,Right,Right
-Salil Arora,Batsman,74,74,10,False,23,Right,None
-Sushant Mishra,Bowler (Fast),73,13,73,False,25,Left,Left
-Naman Tiwari,Bowler (Fast),73,12,73,False,21,Left,Left
-Ashok Sharma,Bowler (Fast),73,11,73,False,23,Right,Right
-Kumar Kushagra,Batsman,73,73,10,False,21,Right,None
-Nishant Sindhu,Bowler (Spin),73,45,70,False,25,Left,Left
-Yudhvir Singh,Bowler (Fast),73,38,70,False,28,Right,Right
-Shreyas Gopal,Bowler (Spin),73,42,72,False,32,Right,Right
-Vishnu Vinod,Batsman,73,73,10,False,32,Right,None
-Robin Minz,Wicketkeeper,73,73,10,False,24,Left,None
-Mandeep Singh,Batsman,73,73,10,False,34,Right,None
-Siddharth Kaul,Bowler (Fast),73,14,73,False,36,Right,Right
-Mitchell Owen,Bowler (Fast),74,38,69,True,24,Right,Right
-Varun Aaron,Bowler (Fast),72,11,72,False,36,Right,Right
-Dhawan Rishi,Bowler (Fast),72,44,68,False,36,Right,Right
-Ravi Singh,Batsman,72,72,10,False,22,Right,None
-Vipraj Nigam,Batsman,71,50,48,False,22,Right,Right
-Madhav Tiwari,Bowler (Fast),71,22,67,False,23,Right,Right
-Ajay Mandal,Bowler (Spin),71,42,66,False,30,Left,Left
-Suryansh Shedge,Batsman,71,68,28,False,23,Right,Right
-Harnoor Singh,Batsman,71,71,10,False,23,Left,None
-Kartik Tyagi,Bowler (Fast),71,11,71,False,25,Right,Right
-Urvil Patel,Batsman,71,71,10,False,27,Right,None
-Tripurana Vijay,Batsman,70,55,35,False,23,Right,Right
-Ramakrishna Ghosh,Batsman,70,58,25,False,23,Right,Right
-Yash Raj Punja,Bowler (Fast),70,14,70,False,22,Right,Right
-Vignesh Puthur,Bowler (Fast),70,12,70,False,23,Right,Right
-Prashant Solanki,Bowler (Spin),70,11,70,False,26,Right,Right
-Shivang Kumar,Batsman,70,56,36,False,23,Right,Right
-Vihaan Malhotra,Batsman,70,58,22,False,22,Right,Right
-Prithvi Raj,Bowler (Fast),70,11,70,False,28,Left,Left
-Brijesh Sharma,Bowler (Fast),70,12,70,False,23,Right,Right
-Sahil Parakh,Batsman,70,70,10,False,21,Right,None
-Aman Rao,Batsman,70,70,10,False,21,Right,None
-Daksh Kamra,Batsman,70,52,35,False,22,Right,Right
-Sarthak Ranjan,Batsman,70,64,25,False,29,Right,Right
-Krains Fuletra,Batsman,70,54,35,False,23,Right,Right
-Praful Hinge,Bowler (Fast),70,11,70,False,23,Right,Right
-Atharva Ankolekar,Bowler (Spin),70,38,66,False,25,Right,Left
-Vishal Nishad,Bowler (Spin),70,11,70,False,23,Left,Left
-Amit Kumar,Bowler (Spin),70,12,70,False,23,Right,Right
-Onkar Tarmale,Bowler (Fast),70,11,70,False,23,Right,Right
-Mohd Izhar,Bowler (Fast),70,11,70,False,22,Right,Right
-Sakib Hussain,Bowler (Fast),70,11,70,False,23,Right,Right
-Mayank Rawat,Batsman,70,62,40,False,24,Right,Right
-Vicky Ostwal,Bowler (Spin),70,25,69,False,23,Left,Left
-Satvik Deswal,Batsman,70,55,32,False,23,Right,Right
-Danish Malewar,Batsman,70,70,10,False,22,Right,None
-Pyla Avinash,Batsman,70,70,10,False,23,Right,None
-Robin Uthappa,Batsman,70,70,10,False,40,Right,None
-Corbin Bosch,Bowler (Fast),74,42,70,True,31,Right,Right
-Shahbaz Ahmed,All-Rounder,79,73,76,False,31,Left,Left
-Mukesh Choudhary,Bowler (Fast),74,11,74,False,30,Left,Left
-Shahbaz Nadeem,Bowler (Spin),73,15,73,False,36,Right,Left
-Musheer Khan,All-Rounder,75,74,68,False,21,Right,Left
+name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand,batting_archetype,bowling_phase,bowling_type,strengths,weaknesses
+Jasprit Bumrah,Bowler (Fast),98,18,98,False,32,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Virat Kohli,Batsman,96,96,20,False,37,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Heinrich Klaasen,Wicketkeeper,96,96,10,True,34,Right,None,Spin Specialist,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Rashid Khan,Bowler (Spin),96,74,96,True,27,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Nicholas Pooran,Wicketkeeper,95,95,15,True,30,Left,Right,Spin Specialist,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Suryakumar Yadav,Batsman,95,95,10,False,35,Right,Right,Spin Specialist,Part-time,None,Strong middle-over spin hitting and matchup control,Can be tested by high pace and hard lengths
+Travis Head,Batsman,94,94,55,True,32,Left,Right,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Shreyas Iyer,Batsman,94,94,15,False,31,Right,Right,Spin Specialist,Part-time,None,Strong middle-over spin hitting and matchup control,Can be tested by high pace and hard lengths
+Shubman Gill,Batsman,94,94,10,False,26,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Yashasvi Jaiswal,Batsman,93,93,35,False,24,Left,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Sanju Samson,Wicketkeeper,93,93,10,False,31,Right,None,Spin Specialist,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Jos Buttler,Wicketkeeper,93,93,10,True,35,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Hardik Pandya,All-Rounder,93,89,86,False,32,Right,Right,Finisher,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Sunil Narine,Bowler (Spin),93,78,92,True,37,Left,Right,Aggressor,Middle Overs,Mystery Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Pat Cummins,All-Rounder,93,76,92,True,33,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Kuldeep Yadav,Bowler (Spin),93,22,93,False,31,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Rohit Sharma,Batsman,92,92,25,False,39,Right,Right,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Ruturaj Gaikwad,Batsman,92,92,10,False,29,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Axar Patel,All-Rounder,92,82,89,False,32,Left,Left,Strike Rotator,Middle Overs,Left-arm Orthodox,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Ravindra Jadeja,All-Rounder,92,81,91,False,37,Left,Left,Finisher,Middle Overs,Left-arm Orthodox,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Sai Sudharsan,Batsman,91,91,10,False,24,Left,None,Anchor,Part-time,None,"High-volume IPL run-scoring, left-hand anchor tempo, and proven consistency across multiple IPL seasons",Still building international tournament resume compared with global elite batters
+KL Rahul,Wicketkeeper,91,91,10,False,34,Right,None,Anchor,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Mitchell Starc,Bowler (Fast),91,28,91,True,36,Left,Left,Defensive Tailender,New Ball,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Bhuvneshwar Kumar,Bowler (Fast),91,24,91,False,36,Right,Right,Defensive Tailender,New Ball,Right-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Arshdeep Singh,Bowler (Fast),91,15,91,False,27,Left,Left,Defensive Tailender,Death Overs,Left-arm Swing,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Trent Boult,Bowler (Fast),91,14,91,True,36,Right,Left,Defensive Tailender,New Ball,Left-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Josh Hazlewood,Bowler (Fast),91,12,91,True,35,Left,Right,Defensive Tailender,New Ball,Right-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Abhishek Sharma,All-Rounder,90,90,65,False,25,Left,Left,Aggressor,Flexible,Left-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Yuzvendra Chahal,Bowler (Spin),90,11,90,False,35,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Cameron Green,All-Rounder,89,89,74,True,26,Right,Right,Strike Rotator,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Rinku Singh,Batsman,89,89,15,False,28,Left,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Phil Salt,Wicketkeeper,89,89,10,True,29,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Riyan Parag,All-Rounder,89,88,72,False,24,Right,Right,Strike Rotator,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Jofra Archer,Bowler (Fast),89,34,89,True,31,Right,Right,Lower-order Hitter,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mohammed Shami,Bowler (Fast),89,16,89,False,35,Right,Right,Defensive Tailender,New Ball,Right-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Varun Chakravarthy,Bowler (Spin),89,11,89,False,34,Right,Right,Defensive Tailender,Middle Overs,Mystery Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Matheesha Pathirana,Bowler (Fast),89,11,89,True,23,Right,Right,Defensive Tailender,Death Overs,Right-arm Variations,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mitchell Marsh,All-Rounder,88,88,75,True,34,Right,Right,Aggressive Opener,Flexible,Right-arm Medium,World Cup-winning international pedigree and 2026 IPL top-order power surge,Fitness history and bowling workload can fluctuate
+Tristan Stubbs,Wicketkeeper,88,88,35,True,25,Right,Right,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Ishan Kishan,Wicketkeeper,88,88,10,False,27,Left,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Dhruv Jurel,Wicketkeeper,88,88,10,False,25,Right,None,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Liam Livingstone,All-Rounder,88,86,76,True,32,Right,Right,Finisher,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Wanindu Hasaranga,All-Rounder,88,74,88,True,28,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,Proven international leg-spin wicket-taker with lower-order hitting,IPL consistency and economy can swing by conditions
+Noor Ahmad,Bowler (Spin),88,15,87,True,21,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Mohammed Siraj,Bowler (Fast),88,13,88,False,32,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Shivam Dube,All-Rounder,87,87,68,False,32,Left,Right,Spin Specialist,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Finn Allen,Wicketkeeper,87,87,20,True,26,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Shimron Hetmyer,Batsman,87,87,10,True,29,Left,None,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Rajat Patidar,Batsman,87,87,10,False,32,Right,Right,Spin Specialist,Part-time,None,Strong middle-over spin hitting and matchup control,Can be tested by high pace and hard lengths
+Jitesh Sharma,Wicketkeeper,87,87,10,False,32,Right,None,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Devdutt Padikkal,Batsman,87,87,10,False,25,Left,None,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Marcus Stoinis,All-Rounder,87,85,74,True,36,Right,Right,Finisher,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Mayank Yadav,Bowler (Fast),87,11,87,False,23,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Quinton de Kock,Wicketkeeper,86,86,10,True,33,Left,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Jonny Bairstow,Wicketkeeper,86,86,10,True,36,Right,None,Aggressive Opener,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Devon Conway,Wicketkeeper,86,86,10,True,34,Left,None,Anchor,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Tilak Varma,All-Rounder,86,85,60,False,23,Left,Right,Spin Specialist,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Ravi Bishnoi,Bowler (Spin),86,14,86,False,25,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+T Natarajan,Bowler (Fast),86,11,86,False,35,Left,Left,Defensive Tailender,Death Overs,Left-arm Medium,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Priyansh Arya,Batsman,85,85,10,False,25,Right,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Prabhsimran Singh,Wicketkeeper,85,85,10,False,25,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Venkatesh Iyer,All-Rounder,85,84,52,False,31,Left,Right,Strike Rotator,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Nitish Kumar Reddy,All-Rounder,85,83,76,False,22,Right,Right,Finisher,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Will Jacks,All-Rounder,84,84,66,True,25,Right,Right,Aggressor,Flexible,Off-spin,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Ayush Badoni,Batsman,84,84,45,False,26,Right,Right,Middle-over Rotator,Part-time,None,Reliable middle-order IPL batting with spin-hitting and game awareness,Power ceiling is lower than specialist finishers
+Dewald Brevis,Batsman,84,84,30,True,23,Right,Right,Spin Specialist,Part-time,None,Strong middle-over spin hitting and matchup control,Can be tested by high pace and hard lengths
+Vaibhav Sooryavanshi,Batsman,84,84,10,False,15,Left,None,Aggressive Opener,Part-time,None,Rare teenage power and fearless IPL hitting upside,Very small senior sample and no major international proof yet
+Kartik Sharma,Wicketkeeper,84,84,10,False,19,Right,None,Strike Rotator,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+David Miller,Batsman,84,84,10,True,36,Left,None,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Ajinkya Rahane,Batsman,84,84,10,False,37,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Rachin Ravindra,All-Rounder,84,83,74,True,26,Left,Left,Aggressor,Flexible,Left-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Washington Sundar,All-Rounder,84,78,84,False,26,Left,Right,Middle-over Rotator,Powerplay,Right-arm Offbreak,International off-spin all-rounder with powerplay control and left-hand batting utility,T20 batting impact can be role dependent
+Sam Curran,All-Rounder,84,78,82,True,27,Left,Left,Lower-order Hitter,Flexible,Left-arm Medium,"International tournament pedigree, left-arm seam, and batting flexibility",Not always explosive enough as a primary finisher
+Marco Jansen,All-Rounder,84,65,83,True,25,Right,Left,Lower-order Hitter,Flexible,Left-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Harshal Patel,All-Rounder,84,50,84,False,35,Right,Right,Lower-order Hitter,Flexible,Right-arm Variations,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Harshit Rana,Bowler (Fast),84,35,83,False,24,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Gerald Coetzee,Bowler (Fast),84,24,84,True,25,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mujeeb Ur Rahman,Bowler (Spin),84,20,84,True,25,Right,Right,Defensive Tailender,Powerplay,Mystery Spin,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Maheesh Theekshana,Bowler (Spin),84,18,84,True,25,Right,Right,Defensive Tailender,Powerplay,Mystery Spin,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Anrich Nortje,Bowler (Fast),84,16,84,True,32,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Kagiso Rabada,Bowler (Fast),84,15,84,True,30,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Eshan Malinga,Bowler (Fast),84,14,84,True,24,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,2026 IPL wicket-taking season and death-over threat for SRH,Can be expensive while hunting wickets
+Avesh Khan,Bowler (Fast),84,13,84,False,29,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Mukesh Kumar,Bowler (Fast),84,12,84,False,32,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Mustafizur Rahman,Bowler (Fast),84,11,84,True,30,Left,Left,Defensive Tailender,New Ball,Left-arm Variations,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Daryl Mitchell,All-Rounder,83,83,58,True,34,Right,Right,Middle-over Rotator,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Rishabh Pant,Wicketkeeper,83,83,12,False,28,Left,None,Spin Specialist,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Pathum Nissanka,Batsman,83,83,10,True,28,Right,None,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Josh Inglis,Wicketkeeper,83,83,10,True,31,Right,None,Spin Specialist,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Krunal Pandya,All-Rounder,83,76,80,False,35,Left,Left,Strike Rotator,Flexible,Left-arm Orthodox,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Jason Holder,All-Rounder,83,72,81,True,34,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Deepak Chahar,Bowler (Fast),83,55,81,False,34,Right,Right,Defensive Tailender,New Ball,Right-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Khaleel Ahmed,Bowler (Fast),83,11,83,False,28,Right,Left,Defensive Tailender,New Ball,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Aiden Markram,All-Rounder,82,82,55,True,31,Right,Right,Strike Rotator,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Shashank Singh,Batsman,82,82,40,False,34,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Tim David,Batsman,82,82,30,True,30,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Jake Fraser-McGurk,Batsman,82,82,12,True,24,Right,None,Aggressive Opener,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Rahmanullah Gurbaz,Wicketkeeper,82,82,10,True,24,Right,None,Aggressive Opener,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Ben Duckett,Wicketkeeper,82,82,10,True,31,Left,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Nitish Rana,All-Rounder,82,81,55,False,32,Left,Right,Strike Rotator,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Azmatullah Omarzai,All-Rounder,82,76,81,True,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Mitchell Santner,All-Rounder,82,72,82,True,34,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,World-class control spinner and dependable lower-order batting,Wicket-taking ceiling lower than attacking wrist-spinners
+Auqib Dar,Bowler (Fast),82,24,82,False,24,Right,Right,Defensive Tailender,New Ball,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Matt Henry,Bowler (Fast),82,18,82,True,34,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Prasidh Krishna,Bowler (Fast),82,11,82,False,30,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,High-release pace bowler with bounce and 2026 wicket value,Can leak runs if lengths miss at the death
+Glenn Phillips,Wicketkeeper,81,81,42,True,29,Right,Right,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Ramandeep Singh,All-Rounder,81,78,65,False,29,Right,Right,Finisher,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Mangesh Yadav,All-Rounder,81,75,76,False,24,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Auqib Nabi,All-Rounder,81,72,75,False,25,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Akeal Hosein,Bowler (Spin),81,60,81,True,33,Left,Left,Defensive Tailender,Powerplay,Left-arm Orthodox,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Sai Kishore,Bowler (Spin),81,48,81,False,29,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Accurate left-arm spin and strong domestic/IPL control,Limited batting and matchup dependent selection
+Rahul Chahar,Bowler (Spin),81,22,81,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Prince Yadav,Bowler (Fast),81,16,81,False,29,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,2026 IPL wicket-taking breakout with pace and attacking lengths,Needs more seasons of control before elite rating
+Nathan Ellis,Bowler (Fast),81,16,81,True,31,Right,Right,Defensive Tailender,Death Overs,Right-arm Variations,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mohsin Khan,Bowler (Fast),81,14,81,False,27,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Kamindu Mendis,All-Rounder,80,80,64,True,27,Left,Both,Middle-over Rotator,Flexible,Off-spin,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Abdul Samad,All-Rounder,80,80,46,False,24,Right,Right,Finisher,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Ashutosh Sharma,Batsman,80,80,20,False,27,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Ayush Mhatre,Batsman,80,80,12,False,18,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,Fearless young top-order hitter with standout CSK powerplay flashes,Teenage profile with injury interruption and limited senior sample
+Ryan Rickelton,Wicketkeeper,80,80,10,True,29,Left,None,Aggressive Opener,Part-time,None,Aggressive wicketkeeper-opener with international white-ball credentials,IPL sample still developing
+MS Dhoni,Wicketkeeper,80,80,10,False,44,Right,None,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Michael Bracewell,All-Rounder,80,79,73,True,35,Left,Right,Middle-over Rotator,Middle Overs,Right-arm Offbreak,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Prashant Veer,All-Rounder,80,78,77,False,19,Left,Right,Lower-order Hitter,Flexible,Right-arm Medium,Uncapped all-round value with late hitting and useful overs,Still needs defined role and sustained IPL output
+Rahul Tewatia,Batsman,80,78,46,False,31,Left,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Shardul Thakur,All-Rounder,80,62,79,False,34,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Anshul Kamboj,Bowler (Fast),80,45,80,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Tushar Deshpande,Bowler (Fast),80,18,80,False,30,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+AM Ghazanfar,Bowler (Spin),80,18,80,True,20,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Spencer Johnson,Bowler (Fast),80,14,80,True,30,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Yash Dayal,Bowler (Fast),80,12,80,False,28,Left,Left,Defensive Tailender,Death Overs,Left-arm Medium,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Sandeep Sharma,Bowler (Fast),80,12,80,False,33,Right,Right,Defensive Tailender,Powerplay,Right-arm Swing,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Lockie Ferguson,Bowler (Fast),80,12,80,True,35,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Fazalhaq Farooqi,Bowler (Fast),80,12,80,True,25,Right,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Matthew Short,All-Rounder,79,79,68,True,30,Right,Right,Aggressive Opener,Flexible,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Sherfane Rutherford,Batsman,79,79,35,True,27,Left,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Nehal Wadhera,Batsman,79,79,15,False,25,Left,Right,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Tim Seifert,Batsman,79,79,10,True,31,Right,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Rahul Tripathi,Batsman,79,79,10,False,35,Right,Right,Spin Specialist,Part-time,None,Strong middle-over spin hitting and matchup control,Can be tested by high pace and hard lengths
+Abishek Porel,Wicketkeeper,79,79,10,False,23,Left,None,Middle-over Rotator,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Jacob Bethell,All-Rounder,79,76,75,True,22,Left,Left,Middle-over Rotator,Flexible,Left-arm Medium,Young left-hand batting all-rounder with international upside,Still converting potential into consistent franchise output
+Shahbaz Ahmed,All-Rounder,79,73,76,False,31,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Brydon Carse,All-Rounder,79,58,79,True,30,Right,Right,Lower-order Hitter,Death Overs,Right-arm Fast,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Akash Deep,Bowler (Fast),79,20,79,False,29,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Adam Milne,Bowler (Fast),79,15,79,True,34,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Digvesh Rathi,Bowler (Spin),79,14,79,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Developing middle-over spin wicket threat,Still lacks long-term IPL and international sample
+Lungi Ngidi,Bowler (Fast),79,11,79,True,29,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Rovman Powell,Batsman,78,78,40,True,32,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Naman Dhir,Batsman,78,78,32,False,26,Right,Right,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Tom Banton,Wicketkeeper,78,78,10,True,27,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Jamie Smith,Wicketkeeper,78,78,10,True,25,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Angkrish Raghuvanshi,Wicketkeeper,78,78,10,False,20,Right,None,Anchor,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+M Shahrukh Khan,Batsman,78,77,45,False,31,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Wiaan Mulder,All-Rounder,78,76,78,True,28,Right,Right,Middle-over Rotator,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Romario Shepherd,All-Rounder,78,74,75,True,31,Right,Right,Lower-order Hitter,Death Overs,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Gus Atkinson,All-Rounder,78,52,78,True,28,Right,Right,Lower-order Hitter,Death Overs,Right-arm Fast,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Kyle Jamieson,Bowler (Fast),78,45,78,True,31,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Harpreet Brar,Bowler (Spin),78,45,77,False,30,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Rasikh Salam,Bowler (Fast),78,25,78,False,26,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Alzarri Joseph,Bowler (Fast),78,24,78,True,29,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Taskin Ahmed,Bowler (Fast),78,16,78,True,31,Left,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Nandre Burger,Bowler (Fast),78,16,78,True,30,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Suyash Sharma,Bowler (Spin),78,11,78,False,23,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Nuwan Thushara,Bowler (Fast),78,11,78,True,31,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Cooper Connolly,All-Rounder,77,77,66,True,22,Left,Left,Aggressor,Middle Overs,Left-arm Orthodox,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Abhinav Manohar,Batsman,77,77,12,False,31,Right,None,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Prithvi Shaw,Batsman,77,77,10,False,26,Right,Right,Aggressive Opener,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Matthew Breetzke,Wicketkeeper,77,77,10,True,27,Right,None,Aggressive Opener,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Jack Edwards,All-Rounder,77,74,72,True,26,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Jamie Overton,All-Rounder,77,70,74,True,32,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Sean Abbott,All-Rounder,77,48,77,True,34,Right,Right,Lower-order Hitter,Death Overs,Right-arm Fast,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Xavier Bartlett,Bowler (Fast),77,24,77,True,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Vijaykumar Vyshak,Bowler (Fast),77,18,77,False,29,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Jhye Richardson,Bowler (Fast),77,18,77,True,29,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mayank Markande,Bowler (Spin),77,16,77,False,28,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Vaibhav Arora,Bowler (Fast),77,13,77,False,28,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Yash Thakur,Bowler (Fast),77,12,77,False,27,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Kwena Maphaka,Bowler (Fast),77,11,77,True,20,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Dasun Shanaka,All-Rounder,76,76,58,True,34,Right,Right,Finisher,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Dan Lawrence,All-Rounder,76,76,55,True,28,Right,Right,Middle-over Rotator,Part-time,Right-arm Offbreak,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Sarfaraz Khan,Batsman,76,76,10,False,28,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Jordan Cox,Batsman,76,76,10,True,25,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Tanush Kotian,All-Rounder,76,72,76,False,27,Right,Right,Middle-over Rotator,Middle Overs,Right-arm Offbreak,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Jaydev Unadkat,Bowler (Fast),76,22,76,False,34,Right,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Jacob Duffy,Bowler (Fast),76,15,76,True,32,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Dushmantha Chameera,Bowler (Fast),76,14,76,True,34,Right,Right,Defensive Tailender,Flexible,Right-arm Variations,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Riley Meredith,Bowler (Fast),76,12,76,True,29,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Richard Gleeson,Bowler (Fast),76,12,76,True,38,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Kuldeep Sen,Bowler (Fast),76,12,76,False,29,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Gurjapneet Singh,Bowler (Fast),76,12,76,False,27,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Manimaran Siddharth,Bowler (Spin),76,11,76,False,27,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Mahipal Lomror,All-Rounder,75,75,58,False,26,Left,Left,Finisher,Part-time,Left-arm Orthodox,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Donovan Ferreira,Wicketkeeper,75,75,35,True,27,Right,Right,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Urvil Patel,Wicketkeeper,75,75,10,False,27,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Tejasvi Dahiya,Batsman,75,75,10,False,23,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Srikar Bharat,Wicketkeeper,75,75,10,False,32,Right,None,Anchor,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Mukul Choudhary,Batsman,75,75,10,False,24,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Karun Nair,Batsman,75,75,10,False,34,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Deepak Hooda,Batsman,75,74,44,False,31,Right,Right,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Sameer Rizvi,Batsman,75,74,30,False,22,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Swapnil Singh,All-Rounder,75,70,74,False,35,Left,Left,Middle-over Rotator,Middle Overs,Left-arm Orthodox,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Will Sutherland,All-Rounder,75,64,75,True,26,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Nathan Smith,All-Rounder,75,60,75,True,27,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Ben Dwarshuis,Bowler (Fast),75,42,75,True,32,Left,Left,Defensive Tailender,Death Overs,Left-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mitchell Owen,Bowler (Fast),75,42,72,True,24,Right,Right,Lower-order Hitter,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Arshad Khan,Bowler (Fast),75,42,72,False,28,Left,Left,Lower-order Hitter,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Shivam Mavi,Bowler (Fast),75,32,75,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Manav Suthar,Bowler (Spin),75,30,75,False,23,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Akash Madhwal,Bowler (Fast),75,14,75,False,32,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Praful Hinge,Bowler (Fast),75,13,75,False,23,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,Powerplay burst potential and early 2026 impact spells,"Tiny IPL sample, still unproven over a full season"
+Shubham Dubey,Batsman,74,74,10,False,21,Left,None,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Salil Arora,Batsman,74,74,10,False,23,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Manish Pandey,Batsman,74,74,10,False,36,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Lhuan-dre Pretorius,Batsman,74,74,10,True,20,Left,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Anmolpreet Singh,Batsman,74,74,10,False,27,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Aniket Verma,Batsman,74,74,10,False,24,Right,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Musheer Khan,All-Rounder,74,73,68,False,21,Right,Left,Middle-over Rotator,Flexible,Left-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Vijay Shankar,All-Rounder,74,72,60,False,34,Right,Right,Lower-order Hitter,Part-time,Right-arm Medium,Batting-first all-round profile with useful part-time overs,Bowling is matchup support rather than frontline quality
+Harsh Dubey,All-Rounder,74,70,74,False,23,Left,Left,Middle-over Rotator,Middle Overs,Left-arm Orthodox,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Vipraj Nigam,Batsman,74,70,70,False,22,Right,Right,Middle-over Rotator,Middle Overs,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Zak Foulkes,All-Rounder,74,58,72,True,24,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Jayant Yadav,Bowler (Spin),74,48,72,False,36,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Anukul Roy,Bowler (Spin),74,44,71,False,27,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Corbin Bosch,Bowler (Fast),74,42,70,True,31,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Karn Sharma,Bowler (Spin),74,25,74,False,37,Left,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Luke Wood,Bowler (Fast),74,22,74,True,30,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Kumar Kartikeya,Bowler (Spin),74,16,74,False,28,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Gurnoor Brar,Bowler (Fast),74,16,74,False,26,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Simarjeet Singh,Bowler (Fast),74,14,74,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Waqar Salamkheil,Bowler (Spin),74,12,74,True,24,Right,Left,Defensive Tailender,Middle Overs,Left-arm Wrist Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Umran Malik,Bowler (Fast),74,11,74,False,26,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Mukesh Choudhary,Bowler (Fast),74,11,74,False,30,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Ishant Sharma,Bowler (Fast),74,11,74,False,37,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Arshin Kulkarni,All-Rounder,73,73,64,False,21,Right,Right,Aggressive Opener,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Atharva Taide,Batsman,73,73,18,False,26,Left,Left,Anchor,Part-time,Left-arm Orthodox,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Vishnu Vinod,Wicketkeeper,73,73,10,False,32,Right,None,Anchor,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Robin Minz,Wicketkeeper,73,73,10,False,24,Left,None,Finisher,Part-time,None,Keeper-batter who can close innings and attack pace-off bowling,High variance when facing only a few balls
+Mandeep Singh,Batsman,73,73,10,False,34,Right,None,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Kumar Kushagra,Batsman,73,73,10,False,21,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Anuj Rawat,Wicketkeeper,73,73,10,False,26,Left,None,Middle-over Rotator,Part-time,None,Keeper-batter with stability and middle-over scoring options,Boundary rate can depend on matchup and venue
+Suryansh Shedge,Batsman,73,72,42,False,23,Right,Right,Finisher,Part-time,None,Late-over boundary hitting and chase-finishing profile,High variance role with limited balls to settle
+Raj Bawa,All-Rounder,73,70,72,False,23,Left,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Rajvardhan Hangargekar,All-Rounder,73,48,73,False,23,Right,Right,Lower-order Hitter,Death Overs,Right-arm Fast,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Nishant Sindhu,Bowler (Spin),73,48,70,False,25,Left,Left,Middle-over Rotator,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Shreyas Gopal,Bowler (Spin),73,42,72,False,32,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Yudhvir Singh,Bowler (Fast),73,38,70,False,28,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Shahbaz Nadeem,Bowler (Spin),73,15,73,False,36,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Siddharth Kaul,Bowler (Fast),73,14,73,False,36,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Murugan Ashwin,Bowler (Spin),73,14,73,False,35,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Sushant Mishra,Bowler (Fast),73,13,73,False,25,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Naman Tiwari,Bowler (Fast),73,12,73,False,21,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+KM Asif,Bowler (Fast),73,12,73,False,32,Right,Right,Defensive Tailender,Death Overs,Right-arm Fast,Death-over wicket-taking skill and pace-off pressure,Economy can rise when attacking at the back end
+Chetan Sakariya,Bowler (Fast),73,12,73,False,28,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Ashok Sharma,Bowler (Fast),73,11,73,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Yash Dhull,Batsman,72,72,12,False,23,Right,Right,Anchor,Part-time,Right-arm Offbreak,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Sediqullah Atal,Batsman,72,72,12,True,24,Left,Right,Aggressive Opener,Part-time,Right-arm Offbreak,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Ravi Singh,Batsman,72,72,10,False,22,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Himmat Singh,Batsman,72,72,10,False,29,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Manan Vohra,Batsman,72,72,8,False,32,Right,None,Aggressive Opener,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Sanvir Singh,All-Rounder,72,70,68,False,29,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Mayank Dagar,All-Rounder,72,50,72,False,29,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Dhawan Rishi,Bowler (Fast),72,44,68,False,36,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Arjun Tendulkar,Bowler (Fast),72,35,72,False,26,Left,Left,Lower-order Hitter,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Zeeshan Ansari,Bowler (Spin),72,16,72,False,25,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Akash Singh,Bowler (Fast),72,14,72,False,23,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Varun Aaron,Bowler (Fast),72,11,72,False,36,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Harnoor Singh,Batsman,71,71,10,False,23,Left,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Aman Khan,All-Rounder,71,68,70,False,29,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Ajay Mandal,Bowler (Spin),71,42,66,False,30,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Madhav Tiwari,Bowler (Fast),71,22,67,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Kartik Tyagi,Bowler (Fast),71,11,71,False,25,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Sahil Parakh,Batsman,70,70,10,False,21,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Robin Uthappa,Batsman,70,70,10,False,40,Right,None,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Ravichandran Smaran,Batsman,70,70,10,False,22,Left,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Pyla Avinash,Batsman,70,70,10,False,23,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Danish Malewar,Batsman,70,70,10,False,22,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Aman Rao,Batsman,70,70,10,False,21,Right,None,Strike Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Swastik Chikara,Batsman,70,70,8,False,21,Right,None,Aggressor,Part-time,None,Aggressive top-order intent and boundary option in the powerplay,Can be vulnerable when forced to reset after early movement
+Sarthak Ranjan,Batsman,70,64,25,False,29,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Manisankar Murasingh,All-Rounder,70,62,70,False,33,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Mayank Rawat,Batsman,70,62,40,False,24,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Ramakrishna Ghosh,Batsman,70,58,25,False,23,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Vihaan Malhotra,Batsman,70,58,22,False,22,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Tanay Thyagarajan,All-Rounder,70,56,70,False,30,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Shivang Kumar,Batsman,70,56,36,False,23,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Tripurana Vijay,Batsman,70,55,35,False,23,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Satvik Deswal,Batsman,70,55,32,False,23,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Krains Fuletra,Batsman,70,54,35,False,23,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Daksh Kamra,Batsman,70,52,35,False,22,Right,Right,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Atharva Ankolekar,Bowler (Spin),70,38,66,False,25,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Vicky Ostwal,Bowler (Spin),70,25,69,False,23,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Kamlesh Nagarkoti,Bowler (Fast),70,24,70,False,26,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Praveen Dubey,Bowler (Spin),70,18,70,False,33,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Yash Raj Punja,Bowler (Fast),70,14,70,False,22,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Vignesh Puthur,Bowler (Fast),70,12,70,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Brijesh Sharma,Bowler (Fast),70,12,70,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Ashwani Kumar,Bowler (Fast),70,12,70,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Amit Kumar,Bowler (Spin),70,12,70,False,23,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Vishal Nishad,Bowler (Spin),70,11,70,False,23,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Sakib Hussain,Bowler (Fast),70,11,70,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Prithvi Raj,Bowler (Fast),70,11,70,False,28,Left,Left,Defensive Tailender,Flexible,Left-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Prashant Solanki,Bowler (Spin),70,11,70,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Onkar Tarmale,Bowler (Fast),70,11,70,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Mohd Izhar,Bowler (Fast),70,11,70,False,22,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Raj Limbani,Bowler (Fast),69,18,69,False,21,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky
+Aarya Desai,Batsman,68,68,10,False,23,Left,None,Anchor,Part-time,None,Innings-building stability and strike rotation through middle overs,Needs support to keep tempo high against elite attacks
+Tushar Raheja,Wicketkeeper,68,68,8,False,25,Left,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Akshat Raghuwanshi,Batsman,68,68,8,False,22,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Utkarsh Singh,All-Rounder,68,66,64,False,27,Left,Right,Middle-over Rotator,Middle Overs,Right-arm Offbreak,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Karan Lal,All-Rounder,68,66,62,False,25,Right,Right,Middle-over Rotator,Flexible,Right-arm Offbreak,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Chama Milind,All-Rounder,68,42,68,False,31,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,Bowling-first all-round profile with lower-order batting value,Batting impact usually depends on short cameos
+Abhinandan Singh,Bowler (Fast),68,14,68,False,27,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+KC Cariappa,Bowler (Spin),68,12,68,False,32,Right,Right,Defensive Tailender,Middle Overs,Mystery Spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Vansh Bedi,Wicketkeeper,67,67,8,False,23,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Salman Nizar,Batsman,67,67,8,False,28,Left,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Mohit Rathee,Bowler (Spin),67,18,67,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Raghu Sharma,Bowler (Spin),67,12,67,False,31,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Shivam Shukla,Bowler (Spin),66,12,66,False,24,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Connor Esterhuizen,Wicketkeeper,65,65,8,True,24,Right,None,Aggressor,Part-time,None,Keeper-batter with powerplay intent and fast-start ability,High-risk starts can bring early dismissals
+Tejas Baroka,Bowler (Spin),65,12,65,False,30,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Ruchit Ahir,Batsman,64,64,8,False,23,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Abhinav Tejrana,Batsman,64,64,8,False,22,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Siddarth Yadav,All-Rounder,64,63,58,False,24,Left,Right,Middle-over Rotator,Part-time,Right-arm Offbreak,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Macneil Noronha,All-Rounder,64,62,62,False,25,Right,Right,Middle-over Rotator,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Kanishk Chouhan,All-Rounder,64,62,62,False,23,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Wahidullah Zadran,Bowler (Fast),64,14,64,True,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Money Grewal,Bowler (Fast),64,12,64,False,23,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Dheeraj Kumar,Batsman,63,63,8,False,23,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Daniel Lategan,Batsman,63,63,8,True,23,Right,None,Middle-over Rotator,Part-time,None,Middle-order tempo control and gap-finding ability,Can lack a clear power role against top attacks
+Ayush Vartak,All-Rounder,63,62,58,False,22,Right,Right,Middle-over Rotator,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+RS Ambrish,All-Rounder,63,60,62,False,24,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Eden Apple Tom,All-Rounder,63,58,63,False,23,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Chintal Gandhi,Bowler (Spin),63,14,63,False,26,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,Middle-over control and spin matchup value,Limited batting and can be targeted by set hitters
+Irfan Umair,Bowler (Fast),63,12,63,False,24,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Ritik Tada,All-Rounder,62,60,60,False,23,Right,Right,Lower-order Hitter,Flexible,Right-arm Medium,Two-way T20 flexibility across batting and bowling matchups,May lack one elite bankable skill compared with specialists
+Jikku Bright,Bowler (Fast),62,12,62,False,24,Right,Right,Defensive Tailender,Flexible,Right-arm Fast,Specialist bowling value with pace and role flexibility,Limited batting and consistency varies by conditions
+Izaz Sawariya,Bowler (Fast),62,12,62,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,New-ball wicket threat with useful early-over matchup value,Batting contribution is limited and death overs can be risky

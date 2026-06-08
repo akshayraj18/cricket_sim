@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IPL Cricket Sim</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <section id="titleScreen" class="title-screen">
+    <div class="title-copy">
+      <div class="ipl-mark">IPL</div>
+      <h1 id="titleHeading">IPL Franchise Universe</h1>
+      <p>Build a 21-player squad, run toss-to-trophy match days, manage retentions, and create a multi-season league history.</p>
+    </div>
+    <div class="title-panel">
+      <label>Choose Franchise</label>
+      <select id="teamSelect"></select>
+      <label>Franchise Difficulty</label>
+      <select id="difficultySelect">
+        <option value="easy">Easy - user team gets a strong match boost</option>
+        <option value="medium" selected>Medium - user team gets a modest match boost</option>
+        <option value="hard">Hard - ratings and match randomness only</option>
+      </select>
+      <button class="primary" id="newLeagueBtn">Create New League</button>
+      <button id="loadLeagueBtn">Load Existing Save</button>
+      <small id="saveHint"></small>
+      <div class="guide compact-guide">
+        <b>How to start</b>
+        <span>Create a new universe to draft from scratch, or load your saved league. Save manually after major roster or season changes.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="appShell" class="hidden">
+    <header class="app-header">
+      <div>
+        <div class="eyebrow" id="controlRoomLabel">IPL Control Room</div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="statusText"></p>
+      </div>
+      <div class="header-actions">
+        <button id="saveBtn">Save League</button>
+        <button id="homeBtn">Title Screen</button>
+      </div>
+    </header>
+
+    <nav id="tabs" class="tabs"></nav>
+    <section id="summary" class="summary"></section>
+    <section id="screenGuide" class="guide"></section>
+
+    <main>
+      <section id="viewDraft" class="view grid hidden">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Draft Board</h2>
+            <div class="toolbar">
+              <input id="draftSearch" placeholder="Search available players">
+              <select id="draftRole">
+                <option>All Roles</option>
+                <option>Batsman</option>
+                <option>Wicketkeeper</option>
+                <option>All-Rounder</option>
+                <option>Bowler (Fast)</option>
+                <option>Bowler (Spin)</option>
+              </select>
+              <select id="draftNation"><option>All</option><option>Indian</option><option>Overseas</option></select>
+              <select id="draftBatType"><option>All</option><option>Aggressive Opener</option><option>Anchor</option><option>Middle-over Rotator</option><option>Spin Specialist</option><option>Finisher</option><option>Lower-order Hitter</option><option>Defensive Tailender</option></select>
+              <select id="draftBowlType"><option>All</option><option>New-ball Bowler</option><option>Middle-over Spinner</option><option>Death-over Specialist</option><option>Flexible</option><option>Right-arm Fast</option><option>Left-arm Fast</option><option>Leg-spin</option><option>Left-arm Orthodox</option><option>Mystery Spin</option></select>
+            </div>
+          </div>
+          <div class="table-wrap"><table id="draftTable"></table></div>
+        </div>
+        <aside class="panel">
+          <h2>Squad Build</h2>
+          <div id="draftStatus" class="notice"></div>
+          <div id="draftNeeds" class="mini-grid"></div>
+          <h2>Recent Picks</h2>
+          <div class="table-wrap short"><table id="draftHistory"></table></div>
+        </aside>
+      </section>
+
+      <section id="viewRetention" class="view panel hidden">
+        <div class="section-head">
+          <h2>Retention Window</h2>
+          <button class="primary" id="submitRetentionBtn">Confirm Retentions</button>
+        </div>
+        <div id="retentionNotice" class="notice"></div>
+        <div id="retentionGrid" class="player-grid"></div>
+      </section>
+
+      <section id="viewSeason" class="view grid hidden">
+        <div class="panel">
+          <h2>Match Centre</h2>
+          <div class="notice" id="seasonNotice"></div>
+          <div class="toolbar">
+            <button class="primary" id="beginMatchBtn">Enter Match Hub</button>
+            <button id="simulateRoundBtn">Quick Sim Current Match Day</button>
+          </div>
+          <div id="fixturePanel"></div>
+        </div>
+        <div class="panel">
+          <h2>Recent Scorecards</h2>
+          <div id="recentMatches"></div>
+        </div>
+      </section>
+
+      <section id="viewMatch" class="view hidden">
+        <div id="matchHub"></div>
+      </section>
+
+      <section id="viewStandings" class="view panel hidden">
+        <h2>Points Table</h2>
+        <div class="table-wrap"><table id="pointsTable"></table></div>
+        <h2>Playoff Ladder</h2>
+        <div id="playoffCards" class="cards"></div>
+      </section>
+
+      <section id="viewStats" class="view panel hidden">
+        <div class="section-head">
+          <h2>Batting Statistics</h2>
+          <div class="toolbar"><input id="statsSearch" placeholder="Search any player"><small>Click any column header to sort.</small></div>
+        </div>
+        <div id="playerProfile" class="player-profile"></div>
+        <div class="table-wrap"><table id="battingStats"></table></div>
+        <div class="section-head gap-top">
+          <h2>Bowling Statistics</h2>
+          <small>Click any column header to sort.</small>
+        </div>
+        <div class="table-wrap"><table id="bowlingStats"></table></div>
+        <h2 class="gap-top">Awards and Leaders</h2>
+        <div id="leaderShowcase" class="leader-showcase"></div>
+      </section>
+
+      <section id="viewSquad" class="view panel hidden">
+        <div class="section-head">
+          <h2>My Squad</h2>
+          <div class="toolbar">
+            <select id="captainSelect"></select>
+            <select id="viceSelect"></select>
+            <select id="squadKeeper"></select>
+            <button class="primary" id="saveLeadershipBtn">Save Captain/Vice</button>
+          </div>
+        </div>
+        <div class="panel gap-top">
+          <div class="section-head sticky-actions">
+            <h2>Match Presets</h2>
+            <button class="primary" id="savePresetsBtn">Save Match Presets</button>
+          </div>
+          <div class="toolbar">
+            <button id="autoBatXiBtn">Autofill Batting XI</button>
+            <button id="clearBatXiBtn">Clear Batting XI</button>
+            <button id="autoBowlXiBtn">Autofill Bowling XI</button>
+            <button id="clearBowlXiBtn">Clear Bowling XI</button>
+          </div>
+          <div id="xiPreset"></div>
+          <div id="battingPreset" class="preset-grid hidden"></div>
+          <h2 class="gap-top">Default Bowling Plan</h2>
+          <div class="notice">Optional: fill all 20 overs, or leave every slot blank for smart auto-pick. No bowler can bowl more than 4 overs or consecutive overs.</div>
+          <div class="toolbar">
+            <button id="autoBowlPlanBtn">Autofill Bowling Plan</button>
+            <button id="clearBowlPlanBtn">Clear Bowling Plan</button>
+          </div>
+          <div id="bowlingPreset" class="over-grid"></div>
+        </div>
+        <div class="table-wrap"><table id="squadTable"></table></div>
+      </section>
+
+      <section id="viewHistory" class="view panel hidden">
+        <h2>League History</h2>
+        <div id="historyPanel"></div>
+      </section>
+    </main>
+  </section>
+
+  <script src="/app.js"></script>
+</body>
+</html>
