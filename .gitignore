@@ -8,8 +8,6 @@ venv/
 
 # Datasets
 player_datasets/
-players_alltime.csv
-players.csv
 
 # Notes
 ideas.txt
