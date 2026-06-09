@@ -1,4 +1,10 @@
 # players_data.py
+"""Seed data for a new league: the franchise list and the starting player pool.
+
+Players are loaded from `players.csv` (real-world-inspired ratings and
+profiles); if that file doesn't supply enough players for a full mega draft,
+the pool is topped up with randomly generated domestic prospects.
+"""
 import csv
 import os
 import random
@@ -11,12 +17,22 @@ IPL_TEAMS_LIST = [
 ]
 
 def get_initial_player_pool():
+    """Build the starting pool of draftable players for a brand-new league.
+
+    Reads every row of `players.csv` into a `Player`, then — if fewer than
+    180 players were loaded — fills the remainder with randomly generated
+    "Domestic_Prospect" players (young, role-appropriate ratings and a
+    generic archetype/strengths profile) so the mega draft always has enough
+    players for ten 21-player squads.
+
+    Raises `FileNotFoundError` if `players.csv` is missing.
+    """
     pool = []
     csv_path = "players.csv"
-    
+
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Missing custom file map sheet logic at target location: '{csv_path}'")
-        
+
     with open(csv_path, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -77,4 +93,38 @@ def get_initial_player_pool():
             
             pool.append(Player(f"Domestic_Prospect_{i+1}", role, base_ovr, bat_ovr, bowl_ovr, is_os, age, b_hand, bo_hand, batting_archetype, "Flexible", "None", strengths, weaknesses))
             
+    return pool
+
+
+def get_alltime_player_pool():
+    """Build the draft pool from `players_alltime.csv` (500+ all-time IPL greats).
+
+    Falls back to `get_initial_player_pool()` if the all-time CSV is missing.
+    The pool is large enough that no synthetic padding is added.
+    """
+    csv_path = "players_alltime.csv"
+    if not os.path.exists(csv_path):
+        return get_initial_player_pool()
+
+    pool = []
+    with open(csv_path, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = row['name'].strip()
+            role = row['role'].strip()
+            base_ovr = int(row['base_ovr'])
+            batting_ovr = int(row['batting_ovr'])
+            bowling_ovr = int(row['bowling_ovr'])
+            is_overseas = row['is_overseas'].strip().lower() == 'true'
+            age = int(row['age'])
+            batting_hand = row.get('batting_hand', 'Right').strip()
+            bowling_hand = row.get('bowling_hand', 'Right').strip()
+            batting_archetype = row.get('batting_archetype', 'Middle-over Rotator').strip()
+            bowling_phase = row.get('bowling_phase', 'Flexible').strip()
+            bowling_type = row.get('bowling_type', 'None').strip()
+            strengths = row.get('strengths', '').strip()
+            weaknesses = row.get('weaknesses', '').strip()
+            pool.append(Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age,
+                               batting_hand, bowling_hand, batting_archetype, bowling_phase,
+                               bowling_type, strengths, weaknesses))
     return pool

@@ -1,0 +1,123 @@
+"""Shared fixtures and helpers for the cricket-sim test suite.
+
+Tests drive `LeagueState`/`LiveMatch` directly (the same objects `ui_server.py`
+wraps with HTTP) so they exercise real game logic without a server process.
+"""
+import random
+
+import pytest
+
+from sim.league_state import LeagueState
+
+USER_TEAM = "Mumbai Indians"
+
+
+def fresh_league(user_team=USER_TEAM, difficulty="medium", seed=12345):
+    """A brand-new league, seeded for reproducibility, with the user assigned to `user_team`."""
+    random.seed(seed)
+    league = LeagueState()
+    league.new_league(user_team, difficulty)
+    return league
+
+
+def drafted_league(user_team=USER_TEAM, difficulty="medium", seed=12345):
+    """A league with the mega-draft fully autopiloted — every team has a full 21-player roster and the season is open."""
+    league = fresh_league(user_team, difficulty, seed)
+    league.start_draft()
+    league.autodraft_to_end()
+    return league
+
+
+def player(team, name):
+    """Resolve a roster member by exact name. Raises if absent — tests should fail loudly on a bad name."""
+    return next(p for p in team.roster if p.name == name)
+
+
+def names(players):
+    return [p.name for p in players]
+
+
+def resolve(team, player_names):
+    return [player(team, name) for name in player_names]
+
+
+def apply_smart_presets(league):
+    """Build and save batting-first/bowling-first XIs, orders, bowling plan, and impact subs from the `smart_*`/`default_*` helpers — the same defaults the UI offers the user. Returns the dict of generated preset names for assertions."""
+    team = league.user_team()
+    bat_xi_names = league.smart_batting_first_xi(team)
+    bowl_xi_names = league.smart_bowling_first_xi(team)
+    bat_order = league.smart_batting_order(resolve(team, bat_xi_names))
+    bowl_plan = league.default_bowling_plan(team)
+    impact_defaults = league.default_impact_subs(team)
+    league.set_user_presets(
+        batting_order=names(bat_order),
+        bowling_order=bowl_plan,
+        batting_first_xi=bat_xi_names,
+        bowling_first_xi=bowl_xi_names,
+        bat_to_bowl=impact_defaults["bat_to_bowl"],
+        bowl_to_bat=impact_defaults["bowl_to_bat"],
+    )
+    return {
+        "batting_first_xi": bat_xi_names,
+        "bowling_first_xi": bowl_xi_names,
+        "batting_order": names(bat_order),
+        "bowling_plan": bowl_plan,
+        "impact_defaults": impact_defaults,
+    }
+
+
+def play_through_innings(match):
+    """Auto-play overs until the live match leaves the "over" status (innings break, next-innings, or complete)."""
+    while match.status == "over":
+        match.play_over(auto=True, max_balls=6, stop_on_wicket=False)
+
+
+def force_toss(match, winner_team, decision):
+    """Override the random toss so a test can deterministically control who bats/bowls first."""
+    match.toss_winner = winner_team
+    match.status = "toss"
+    match.choose_toss(decision)
+
+
+def submit_user_xi_for_innings_role(league, match, presets):
+    """Submit the user's XI matching whichever role (batting-first vs bowling-first) they've been assigned by the toss, using the saved smart presets."""
+    team = league.user_team()
+    if match.inn1_bat == team:
+        xi_names = presets["batting_first_xi"]
+        order = league.smart_batting_order(resolve(team, xi_names))
+        context = "batting"
+    else:
+        xi_names = presets["bowling_first_xi"]
+        order = league.smart_batting_order(resolve(team, xi_names))
+        context = "bowling"
+    match.set_user_xi(
+        xi_names,
+        batting_order=names(order),
+        bowling_order=presets["bowling_plan"],
+        context=context,
+        wicketkeeper_name=team.saved_wicketkeeper_name,
+    )
+    return xi_names, context
+
+
+@pytest.fixture
+def league():
+    """A fresh, undrafted league for the user's team."""
+    return fresh_league()
+
+
+@pytest.fixture
+def drafted():
+    """A league with a completed mega-draft, ready to enter the season."""
+    return drafted_league()
+
+
+@pytest.fixture
+def ready_match():
+    """A drafted league with presets saved and `live_match` created, toss not yet decided."""
+    league = drafted_league()
+    team = league.user_team()
+    league.set_leadership(team.captain.name, team.vice_captain.name)
+    presets = apply_smart_presets(league)
+    league.begin_match_day(interactive=True)
+    return league, league.live_match, presets

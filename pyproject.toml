@@ -1,0 +1,19 @@
+[project]
+name = "cricket-sim"
+version = "0.1.0"
+description = "IPL franchise career simulation: web UI, match engine, and league management"
+requires-python = ">=3.12"
+dependencies = [
+    "kagglehub>=1.0.1",
+    "pandas>=3.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "pyflakes>=3.0",
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pkl
+.venv/
+venv/
+.env
+.pytest_cache/
+
+# Datasets
+player_datasets/
+players_alltime.csv
+players.csv
+
+# Notes
+ideas.txt

@@ -1,969 +1,59 @@
+"""Top-level career state machine: schedule, draft, playoffs, retention, persistence.
+
+`LeagueState` owns everything that spans matches — the player pool and ten
+franchises, the mega draft, the season schedule and standings, the live match
+in progress (a `LiveMatch`), the playoff bracket, end-of-season retention and
+regeneration, leaderboards/serialisation, and save/load to disk.
+"""
 import os
 import pickle
 import random
 
-from engine import MatchEngine
 from models import Player, Team
-from players_data import IPL_TEAMS_LIST, get_initial_player_pool
-
-
-SAVE_FILE = "ui_save_state.pkl"
-SQUAD_SIZE = 21
-RETAIN_NORMAL = 11
-RETAIN_RESET = 5
-
-INDIAN_FIRST_NAMES = [
-    "Aarav", "Vivaan", "Aditya", "Arjun", "Ishan", "Kabir", "Reyansh", "Rohan",
-    "Sai", "Vihaan", "Ayaan", "Dev", "Kiaan", "Krish", "Neel", "Pranav",
-    "Rahul", "Rudra", "Shivam", "Yash", "Arnav", "Dhruv", "Harsh", "Manav",
-]
-INDIAN_LAST_NAMES = [
-    "Sharma", "Patel", "Singh", "Yadav", "Reddy", "Iyer", "Nair", "Verma",
-    "Rana", "Gill", "Khan", "Choudhary", "Deshmukh", "Pawar", "Saxena", "Shetty",
-    "Tripathi", "Mishra", "Bishnoi", "Thakur", "Gaikwad", "Sundar", "Varma", "Jaiswal",
-]
-OVERSEAS_FIRST_NAMES = [
-    "Liam", "Noah", "Oliver", "Jack", "Harry", "Mason", "Ethan", "Lucas",
-    "James", "Logan", "Theo", "Oscar", "Finn", "Dylan", "Archie", "Cooper",
-    "Caleb", "Riley", "Max", "Jude", "Leo", "Sam", "Ben", "Tom",
-]
-OVERSEAS_LAST_NAMES = [
-    "Smith", "Brown", "Wilson", "Taylor", "Anderson", "Johnson", "Williams", "Miller",
-    "Thompson", "Walker", "Clark", "Robinson", "Campbell", "Bennett", "Carter", "Morgan",
-    "Phillips", "Turner", "Hughes", "Edwards", "Fletcher", "Marsh", "Allen", "Wright",
-]
-
-
-TEAM_META = {
-    "Chennai Super Kings": {"abbr": "CSK", "home": "MA Chidambaram Stadium", "primary": "#f7c948", "accent": "#22409a"},
-    "Mumbai Indians": {"abbr": "MI", "home": "Wankhede Stadium", "primary": "#045093", "accent": "#d1ab3e"},
-    "Royal Challengers Bengaluru": {"abbr": "RCB", "home": "M. Chinnaswamy Stadium", "primary": "#da1818", "accent": "#111111"},
-    "Kolkata Knight Riders": {"abbr": "KKR", "home": "Eden Gardens", "primary": "#3a225d", "accent": "#c6a76f"},
-    "Sunrisers Hyderabad": {"abbr": "SRH", "home": "Rajiv Gandhi Intl. Stadium", "primary": "#f26522", "accent": "#1f1f1f"},
-    "Rajasthan Royals": {"abbr": "RR", "home": "Sawai Mansingh Stadium", "primary": "#e91e8f", "accent": "#254aa5"},
-    "Delhi Capitals": {"abbr": "DC", "home": "Arun Jaitley Stadium", "primary": "#17479e", "accent": "#ef1b23"},
-    "Gujarat Titans": {"abbr": "GT", "home": "Narendra Modi Stadium", "primary": "#1b2133", "accent": "#b69249"},
-    "Lucknow Super Giants": {"abbr": "LSG", "home": "Ekana Cricket Stadium", "primary": "#00a3e0", "accent": "#f28c28"},
-    "Punjab Kings": {"abbr": "PBKS", "home": "New PCA Stadium", "primary": "#d71920", "accent": "#b7b7b7"},
-}
-
-
-def is_batting_role(player):
-    return player.role in ("Batsman", "Wicketkeeper", "All-Rounder")
-
-
-def is_bowling_role(player):
-    return "Bowler" in player.role or player.role == "All-Rounder"
-
-
-def allrounder_counts_as_bat(player):
-    return player.role == "All-Rounder" and player.current_batting >= player.current_bowling
-
-
-def allrounder_counts_as_bowl(player):
-    return player.role == "All-Rounder" and player.current_bowling >= player.current_batting
-
-
-def batting_slot_player(player):
-    return player.role in ("Batsman", "Wicketkeeper") or allrounder_counts_as_bat(player)
-
-
-def bowling_slot_player(player):
-    return "Bowler" in player.role or allrounder_counts_as_bowl(player)
-
-
-def counts_as_batter(player):
-    return player.role in ("Batsman", "Wicketkeeper", "All-Rounder")
-
-
-def counts_as_bowler(player):
-    return "Bowler" in player.role or player.role == "All-Rounder"
-
-
-def ordinal(number):
-    if 10 <= number % 100 <= 20:
-        suffix = "th"
-    else:
-        suffix = {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
-    return f"{number}{suffix}"
-
-
-def bowling_kind(player):
-    bowling_type = getattr(player, "bowling_type", "")
-    if any(word in bowling_type for word in ("Spin", "Orthodox", "Leg", "Off")):
-        return "spin"
-    if bowling_type and bowling_type != "None":
-        return "pace"
-    return "part-time"
-
-
-def is_wicketkeeper_option(player):
-    return player.role == "Wicketkeeper"
-
-
-def ensure_stat_fields(player):
-    defaults = {
-        "maidens": 0,
-        "motm": 0,
-        "best_bowling_wickets": 0,
-        "best_bowling_runs": 999,
-        "best_bowling_against": "",
-        "highest_score_against": "",
-        "catches": 0,
-        "stumpings": 0,
-        "runouts": 0,
-        "games": 0,
-        "team_wins": 0,
-    }
-    for key, value in defaults.items():
-        player.stats.setdefault(key, value)
-
-
-def innings_phase(over_num):
-    if over_num < 6:
-        return "Powerplay"
-    if over_num < 15:
-        return "Middle Overs"
-    return "Death Overs"
-
-
-def phase_fit_label(player, phase):
-    batting = getattr(player, "batting_archetype", "Strike Rotator")
-    bowling_phase = getattr(player, "bowling_phase", "Flexible")
-    bowling_type = getattr(player, "bowling_type", "None")
-    notes = []
-    if (batting == "Aggressor" and phase == "Powerplay") or (batting in ("Strike Rotator", "Spin Specialist") and phase == "Middle Overs") or (batting == "Finisher" and phase == "Death Overs"):
-        notes.append("batting strength")
-    if bowling_phase == phase:
-        notes.append("bowling phase")
-    if phase == "Powerplay" and "Swing" in bowling_type:
-        notes.append("new-ball movement")
-    if phase == "Middle Overs" and ("Spin" in bowling_type or "Orthodox" in bowling_type):
-        notes.append("middle-over spin")
-    if phase == "Death Overs" and ("Variations" in bowling_type or "Fast" in bowling_type):
-        notes.append("death skill")
-    return ", ".join(notes)
-
-
-def expanded_batting_archetype(player):
-    archetype = getattr(player, "batting_archetype", "Strike Rotator")
-    if archetype == "Aggressor":
-        return "Aggressive Opener" if player.current_batting >= 70 else "Pace Specialist"
-    if archetype == "Strike Rotator":
-        return "Middle-over Rotator"
-    if archetype == "Lower-order Hitter":
-        return "Lower-order Hitter"
-    if archetype == "Defensive Tailender":
-        return "Defensive Tailender"
-    return archetype
-
-
-def expanded_bowling_phase(player):
-    phase = getattr(player, "bowling_phase", "Flexible")
-    btype = getattr(player, "bowling_type", "")
-    if "Mystery" in btype:
-        return "Mystery Spinner" if bowling_kind(player) == "spin" else "Mystery Pace"
-    if phase == "New Ball":
-        return "New-ball Bowler"
-    if phase == "Death Overs":
-        return "Death-over Specialist"
-    if phase == "Middle Overs" and bowling_kind(player) == "spin":
-        return "Middle-over Spinner"
-    if phase == "Part-time":
-        return "Part-time Option"
-    return phase
-
-
-class LiveMatch:
-    def __init__(self, league, team1, team2, stage):
-        self.league = league
-        self.team1 = team1
-        self.team2 = team2
-        self.stage = stage
-        self.engine = MatchEngine(team1, team2, league.user_team_name, getattr(league, "difficulty", "hard"))
-        self.engine.fast_sim_active = True
-        self.toss_winner = random.choice([team1, team2])
-        self.decision = None
-        self.status = "toss"
-        self.message = f"{self.toss_winner.name} won the toss."
-        self.inn1_bat = None
-        self.inn1_bowl = None
-        self.xis = {}
-        self.batting_orders = {}
-        self.bowling_pools = {}
-        self.bowling_plan_for = {}
-        self.wicketkeepers = {}
-        self.current_innings = 1
-        self.target = None
-        self.innings = []
-        self.score = None
-        self.card = None
-        self.pending_second_lineup = False
-        self.super_over = None
-        self.impact_subs = []
-        if self.toss_winner.name != league.user_team_name:
-            self.choose_toss(random.choice(["bat", "bowl"]))
-
-    def choose_toss(self, decision):
-        if self.status != "toss":
-            raise ValueError("Toss is already complete.")
-        if decision not in ("bat", "bowl"):
-            raise ValueError("Choose bat or bowl.")
-        self.decision = decision
-        toss_loser = self.team2 if self.toss_winner == self.team1 else self.team1
-        self.inn1_bat = self.toss_winner if decision == "bat" else toss_loser
-        self.inn1_bowl = toss_loser if decision == "bat" else self.toss_winner
-        self.status = "lineup"
-        self.message = f"{self.toss_winner.name} chose to {decision} first."
-        self.auto_cpu_xis()
-
-    def auto_cpu_xis(self):
-        for team in (self.team1, self.team2):
-            if team.name != self.league.user_team_name:
-                xi = self.league.smart_cpu_xi(team)
-                self.xis[team.name] = xi
-                self.batting_orders[team.name] = self.league.smart_batting_order(xi)
-                self.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
-                self.bowling_plan_for[team.name] = []
-                self.wicketkeepers[team.name] = self.default_keeper(team, xi)
-
-    def default_keeper(self, team, xi):
-        saved = getattr(team, "saved_wicketkeeper_name", "")
-        keeper = next((p for p in xi if p.name == saved and is_wicketkeeper_option(p)), None)
-        if keeper:
-            return keeper
-        return sorted([p for p in xi if is_wicketkeeper_option(p)], key=lambda p: p.current_batting, reverse=True)[0] if any(is_wicketkeeper_option(p) for p in xi) else xi[0]
-
-    def default_batting_order(self, xi):
-        return self.league.smart_batting_order(xi)
-
-    def suggested_roster(self, bowling_first=False):
-        team = self.league.user_team()
-        if bowling_first:
-            return sorted(team.roster, key=lambda p: (0 if is_bowling_role(p) else 1, -p.current_bowling, -p.current_ovr))
-        return sorted(team.roster, key=lambda p: (0 if is_batting_role(p) else 1, -p.current_batting, -p.current_ovr))
-
-    def set_user_xi(self, names, batting_order=None, bowling_order=None, intents=None, save=False, context="batting", wicketkeeper_name=""):
-        if self.status not in ("lineup", "batting_order"):
-            raise ValueError("Lineup selection is not open.")
-        team = self.league.user_team()
-        if self.status == "batting_order" and team.name in self.xis:
-            xi = self.xis[team.name]
-        else:
-            xi = [next((p for p in team.roster if p.name == name), None) for name in names]
-            xi = [p for p in xi if p]
-        if len(xi) != 11:
-            raise ValueError("Pick exactly 11 players.")
-        if sum(1 for p in xi if p.is_overseas) > 4:
-            raise ValueError("Playing XI cannot include more than 4 overseas players.")
-        if context == "batting" and len([p for p in xi if counts_as_batter(p)]) < 6:
-            raise ValueError("Batting First XI needs at least 6 batting options including all-rounders and wicketkeepers.")
-        if context == "bowling" and len([p for p in xi if counts_as_bowler(p)]) < 5:
-            raise ValueError("Bowling First XI needs at least 5 bowling options including all-rounders.")
-        for player in xi:
-            player.intent = (intents or {}).get(player.name, "Normal")
-        order_names = batting_order or names
-        order = [next((p for p in xi if p.name == name), None) for name in order_names]
-        order = [p for p in order if p]
-        if len(order) != 11:
-            order = self.default_batting_order(xi)
-        self.xis[team.name] = xi
-        keeper = next((p for p in xi if p.name == wicketkeeper_name and is_wicketkeeper_option(p)), None) or self.default_keeper(team, xi)
-        self.wicketkeepers[team.name] = keeper
-        self.batting_orders[team.name] = order
-        self.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
-        self.set_bowling_plan(team, bowling_order or [])
-        if save:
-            team.saved_playing_xi_names = [p.name for p in xi]
-            team.saved_wicketkeeper_name = keeper.name
-            team.saved_batting_order_names = [p.name for p in order]
-            if bowling_order:
-                team.saved_bowling_over_names = list(bowling_order)
-        if self.status == "batting_order":
-            self.start_second_innings()
-            return
-        self.start_first_innings_if_ready()
-
-    def set_bowling_plan(self, team, names):
-        valid = [p.name for p in self.bowling_pools.get(team.name, [])]
-        clean = [name for name in names if name in valid]
-        if len(clean) == 20 and all(clean.count(name) <= 4 for name in set(clean)):
-            self.bowling_plan_for[team.name] = clean
-        else:
-            self.bowling_plan_for[team.name] = []
-
-    def start_first_innings_if_ready(self):
-        if self.team1.name in self.xis and self.team2.name in self.xis:
-            self.start_innings(self.inn1_bat, self.inn1_bowl, self.batting_orders[self.inn1_bat.name], self.bowling_pools[self.inn1_bowl.name])
-
-    def start_innings(self, batting_team, bowling_team, batting_order, bowling_pool):
-        self.score = {
-            "batting_team": batting_team,
-            "bowling_team": bowling_team,
-            "batting_order": batting_order,
-            "bowling_pool": bowling_pool,
-            "runs": 0,
-            "wickets": 0,
-            "balls": 0,
-            "striker_idx": 0,
-            "non_striker_idx": 1,
-            "last_bowler": None,
-            "overs_tracked": {},
-            "bat_stats": {p.name: {"runs": 0, "balls": 0, "fours": 0, "sixes": 0} for p in batting_order},
-            "bowl_stats": {p.name: {"runs": 0, "wickets": 0, "balls": 0} for p in bowling_pool},
-            "dismissals": {},
-            "partnership_runs": 0,
-            "partnership_balls": 0,
-            "over_log": [],
-            "current_over_events": [],
-            "active_bowler": None,
-            "batting_aggression": {p.name: 3 for p in batting_order},
-            "bowling_aggression": {p.name: 2 for p in bowling_pool},
-            "pending_next_batter": False,
-        }
-        self.status = "over"
-        self.message = f"{batting_team.name} innings started. Pick the next bowler."
-
-    def available_bowlers(self):
-        if self.status != "over" or not self.score:
-            return []
-        tracked = self.score["overs_tracked"]
-        last = self.score["last_bowler"]
-        options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < 4 and p != last]
-        if not options:
-            options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < 4]
-        if not options:
-            options = list(self.score["bowling_pool"])
-        phase = innings_phase(self.score["balls"] // 6)
-        return sorted(options, key=lambda p: self.bowler_phase_score(p, phase), reverse=True)
-
-    def cpu_bowler(self):
-        return self.available_bowlers()[0]
-
-    def bowler_phase_score(self, player, phase):
-        score = player.current_bowling
-        bowling_type = getattr(player, "bowling_type", "")
-        bowling_phase = getattr(player, "bowling_phase", "Flexible")
-        if bowling_phase == phase:
-            score += 8
-        if phase in ("Powerplay", "Death Overs") and ("Fast" in bowling_type or "Swing" in bowling_type or "Medium" in bowling_type or "Seam" in bowling_type):
-            score += 5
-        if phase == "Middle Overs" and ("Spin" in bowling_type or "Orthodox" in bowling_type or "Leg" in bowling_type or "Off" in bowling_type):
-            score += 6
-        if phase == "Death Overs" and "Variations" in bowling_type:
-            score += 5
-        return score
-
-    def ensure_active_bowler(self, bowler_name=None, auto=False):
-        if self.status != "over":
-            raise ValueError("No over is ready.")
-        if self.score.get("active_bowler") and self.score["balls"] % 6 != 0:
-            return self.score["active_bowler"]
-        bowling_team = self.score["bowling_team"]
-        user_bowling = bowling_team.name == self.league.user_team_name and not auto
-        bowler = None
-        if user_bowling:
-            planned = self.planned_bowler_name()
-            chosen_name = bowler_name or planned
-            bowler = next((p for p in self.available_bowlers() if p.name == chosen_name), None)
-            if not bowler and not bowler_name:
-                bowler = self.available_bowlers()[0]
-            if not bowler:
-                raise ValueError("Choose an eligible bowler.")
-        else:
-            bowler = self.cpu_bowler()
-
-        self.score["last_bowler"] = bowler
-        self.score["overs_tracked"][bowler.name] = self.score["overs_tracked"].get(bowler.name, 0) + 1
-        self.score["active_bowler"] = bowler
-        self.score["current_over_events"] = []
-        return bowler
-
-    def play_over(self, bowler_name=None, auto=False, max_balls=6, stop_on_wicket=True):
-        if self.status != "over":
-            raise ValueError("No over is ready.")
-        if self.innings_is_over():
-            self.finish_innings()
-            return
-        bowler = self.ensure_active_bowler(bowler_name, auto)
-        start_balls = self.score["balls"]
-        end_ball = min(((start_balls // 6) + 1) * 6, start_balls + max_balls, 120)
-        self.score["last_event_wicket"] = False
-        while self.score["balls"] < end_ball and not self.innings_is_over():
-            if self.target and self.score["runs"] >= self.target:
-                break
-            event = self.play_ball(bowler)
-            self.score["current_over_events"].append(event)
-            self.score["last_event_wicket"] = event["kind"] == "wicket"
-            if event["kind"] == "wicket" and stop_on_wicket and not auto and self.score["batting_team"].name == self.league.user_team_name and self.score["wickets"] < 10 and self.score["balls"] < 120:
-                self.score["pending_next_batter"] = True
-                self.status = "next_batter"
-                self.message = f"{event['description']}. Choose who comes in next."
-                return
-            if event["kind"] == "wicket" and stop_on_wicket and not auto and self.score["batting_team"].name == self.league.user_team_name:
-                break
-
-        if self.score["balls"] % 6 == 0 or self.score["balls"] >= 120 or self.innings_is_over() or (self.target and self.score["runs"] >= self.target):
-            self.close_current_over()
-
-        if self.score["balls"] >= 120 or self.innings_is_over() or (self.target and self.score["runs"] >= self.target):
-            self.finish_innings()
-        else:
-            marker = "End of over" if self.score["balls"] % 6 == 0 else "Ball complete"
-            self.message = f"{marker} {self.score['balls'] // 6}.{self.score['balls'] % 6}: {self.scoreline()}."
-
-    def innings_is_over(self):
-        if not self.score:
-            return False
-        order_len = len(self.score.get("batting_order", []))
-        all_out_wickets = min(10, max(0, order_len - 1))
-        return self.score.get("wickets", 0) >= all_out_wickets
-
-    def close_current_over(self):
-        bowler = self.score.get("active_bowler")
-        events = list(self.score.get("current_over_events", []))
-        if bowler and events:
-            over_runs = sum(e.get("runs", 0) for e in events)
-            over_number = (self.score["balls"] + 5) // 6
-            self.score["over_log"].append({"over": over_number, "bowler": bowler.name, "events": events, "runs": over_runs})
-        self.score["active_bowler"] = None
-        self.score["current_over_events"] = []
-
-    def set_aggression(self, batting=None, bowling=None):
-        if not self.score:
-            return
-        for name, value in (batting or {}).items():
-            if name in self.score["batting_aggression"]:
-                self.score["batting_aggression"][name] = max(1, min(5, int(value)))
-        for name, value in (bowling or {}).items():
-            if name in self.score["bowling_aggression"]:
-                self.score["bowling_aggression"][name] = max(1, min(5, int(value)))
-
-    def select_next_batter(self, name):
-        if self.status != "next_batter" or not self.score.get("pending_next_batter"):
-            raise ValueError("No wicket is waiting for a next batter.")
-        order = self.score["batting_order"]
-        next_idx = self.score["striker_idx"]
-        chosen_idx = next((i for i, p in enumerate(order) if p.name == name and i >= next_idx), None)
-        if chosen_idx is None:
-            raise ValueError("Choose an available batter who has not batted yet.")
-        order[next_idx], order[chosen_idx] = order[chosen_idx], order[next_idx]
-        self.score["pending_next_batter"] = False
-        self.status = "over"
-        if self.score["balls"] % 6 == 0:
-            self.close_current_over()
-        self.message = f"{order[next_idx].name} walks in next. {self.scoreline()}."
-
-    def planned_bowler_name(self):
-        team_name = self.score["bowling_team"].name
-        plan = self.bowling_plan_for.get(team_name, [])
-        over_index = self.score["balls"] // 6
-        if over_index < len(plan):
-            return plan[over_index]
-        return None
-
-    def play_ball(self, bowler):
-        batting_order = self.score["batting_order"]
-        if self.innings_is_over() or self.score["striker_idx"] >= len(batting_order):
-            self.score["wickets"] = max(self.score["wickets"], min(10, max(0, len(batting_order) - 1)))
-            return {"kind": "innings_end", "label": "", "runs": 0}
-        striker = batting_order[self.score["striker_idx"]]
-        self.score["bat_stats"].setdefault(striker.name, {"runs": 0, "balls": 0, "fours": 0, "sixes": 0})
-        self.score["bowl_stats"].setdefault(bowler.name, {"runs": 0, "wickets": 0, "balls": 0})
-        over_num = self.score["balls"] // 6
-        phase = innings_phase(over_num)
-        striker.match_phase = phase
-        bowler.match_phase = phase
-        striker.batting_aggression = self.score["batting_aggression"].get(striker.name, 3)
-        bowler.bowling_aggression = self.score["bowling_aggression"].get(bowler.name, 2)
-        outcome = self.engine.simulate_ball(striker, bowler)
-        self.score["balls"] += 1
-        self.score["partnership_balls"] += 1
-        self.score["bat_stats"][striker.name]["balls"] += 1
-        self.score["bowl_stats"][bowler.name]["balls"] += 1
-        striker.stats["balls_faced"] += 1
-        bowler.stats["balls_bowled"] += 1
-        if outcome == "W":
-            dismissal = self.resolve_dismissal(striker, bowler)
-            self.score["wickets"] += 1
-            striker.stats["outs"] += 1
-            if dismissal["bowler_gets_wicket"]:
-                bowler.stats["wickets"] += 1
-                self.score["bowl_stats"][bowler.name]["wickets"] += 1
-            self.score["partnership_runs"] = 0
-            self.score["partnership_balls"] = 0
-            self.score["striker_idx"] = max(self.score["striker_idx"], self.score["non_striker_idx"]) + 1
-            self.score["dismissals"][striker.name] = dismissal["description"]
-            return {"kind": "wicket", "label": "W", **dismissal}
-        runs = int(outcome)
-        self.score["runs"] += runs
-        self.score["partnership_runs"] += runs
-        self.score["bat_stats"][striker.name]["runs"] += runs
-        self.score["bowl_stats"][bowler.name]["runs"] += runs
-        striker.stats["runs"] += runs
-        bowler.stats["runs_conceded"] += runs
-        if runs == 4:
-            striker.stats["fours"] += 1
-            self.score["bat_stats"][striker.name]["fours"] += 1
-        elif runs == 6:
-            striker.stats["sixes"] += 1
-            self.score["bat_stats"][striker.name]["sixes"] += 1
-        if runs in (1, 3):
-            self.score["striker_idx"], self.score["non_striker_idx"] = self.score["non_striker_idx"], self.score["striker_idx"]
-        if self.score["balls"] % 6 == 0:
-            self.score["striker_idx"], self.score["non_striker_idx"] = self.score["non_striker_idx"], self.score["striker_idx"]
-        return {"kind": "runs", "runs": runs, "label": outcome}
-
-    def resolve_dismissal(self, striker, bowler):
-        keeper = self.wicketkeepers.get(self.score["bowling_team"].name) or next((p for p in self.xis[self.score["bowling_team"].name] if is_wicketkeeper_option(p)), None)
-        fielders = [p for p in self.xis[self.score["bowling_team"].name] if p != bowler]
-        is_spin = "Spin" in getattr(bowler, "bowling_type", "") or "Orthodox" in getattr(bowler, "bowling_type", "") or "Spin" in bowler.role
-        roll = random.random()
-        batting_aggression = self.score["batting_aggression"].get(striker.name, 3)
-        runout_cutoff = 0.18 + max(0, batting_aggression - 3) * 0.04
-        if is_spin and keeper and roll < 0.14:
-            keeper.stats["stumpings"] += 1
-            return {
-                "dismissal": "stumped",
-                "batter": striker.name,
-                "bowler": bowler.name,
-                "fielder": keeper.name,
-                "description": f"{striker.name} st {keeper.name} b {bowler.name}",
-                "bowler_gets_wicket": True,
-            }
-        if roll < runout_cutoff:
-            fielder = random.choice(fielders) if fielders else bowler
-            fielder.stats["runouts"] += 1
-            return {
-                "dismissal": "run out",
-                "batter": striker.name,
-                "bowler": bowler.name,
-                "fielder": fielder.name,
-                "description": f"{striker.name} run out ({fielder.name})",
-                "bowler_gets_wicket": False,
-            }
-        catcher_pool = ([keeper] * 2 if keeper else []) + fielders
-        catcher = random.choice(catcher_pool) if catcher_pool else bowler
-        catcher.stats["catches"] += 1
-        return {
-            "dismissal": "caught",
-            "batter": striker.name,
-            "bowler": bowler.name,
-            "fielder": catcher.name,
-            "description": f"{striker.name} c {catcher.name} b {bowler.name}",
-            "bowler_gets_wicket": True,
-        }
-
-    def scoreline(self):
-        overs = f"{self.score['balls'] // 6}.{self.score['balls'] % 6}"
-        return f"{self.score['batting_team'].name} {self.score['runs']}/{self.score['wickets']} ({overs})"
-
-    def finish_innings(self):
-        batting_team = self.score["batting_team"]
-        bowling_team = self.score["bowling_team"]
-        runs = self.score["runs"]
-        wickets = self.score["wickets"]
-        balls = self.score["balls"]
-        for name, data in self.score["bat_stats"].items():
-            player = next((p for p in self.score["batting_order"] if p.name == name), None)
-            if not player:
-                continue
-            if data["runs"] > player.stats["highest_score"]:
-                player.stats["highest_score"] = data["runs"]
-                player.stats["highest_score_against"] = bowling_team.name
-            if data["runs"] >= 100:
-                player.stats["hundreds"] += 1
-            elif data["runs"] >= 50:
-                player.stats["fifties"] += 1
-        final_balls = 120 if wickets == 10 else balls
-        batting_team.runs_scored += runs
-        batting_team.balls_faced += final_balls
-        bowling_team.runs_conceded += runs
-        bowling_team.balls_bowled += final_balls
-        self.innings.append({
-            "team": batting_team,
-            "bowling_team": bowling_team,
-            "runs": runs,
-            "wickets": wickets,
-            "balls": balls,
-            "bat_stats": self.score["bat_stats"],
-            "bowl_stats": self.score["bowl_stats"],
-            "batting_order": [p.name for p in self.score["batting_order"]],
-            "dismissals": dict(self.score.get("dismissals", {})),
-        })
-        if self.current_innings == 1:
-            self.current_innings = 2
-            self.target = runs + 1
-            self.status = "impact"
-            self.message = f"Innings break. Target is {self.target}. Use one Impact Player sub if you want."
-        else:
-            self.complete_match()
-
-    def setup_super_over(self):
-        self.super_over = {
-            "batting_first": self.inn1_bowl,
-            "batting_second": self.inn1_bat,
-            "batters": {},
-            "bowlers": {},
-            "innings": [],
-            "winner": "",
-            "message": f"Match tied. Super Over: {self.inn1_bowl.name} bat first.",
-        }
-        for team in (self.team1, self.team2):
-            if team.name != self.league.user_team_name:
-                self.super_over["batters"][team.name] = self.cpu_super_batters(team)
-                self.super_over["bowlers"][team.name] = self.cpu_super_bowler(team)
-        self.status = "super_over_setup"
-        self.message = self.super_over["message"]
-
-    def cpu_super_batters(self, team):
-        xi = self.xis.get(team.name, self.league.smart_cpu_xi(team))
-        return sorted(xi, key=lambda p: (p.current_batting + (8 if getattr(p, "batting_archetype", "") in ("Finisher", "Aggressor") else 0), p.current_ovr), reverse=True)[:3]
-
-    def cpu_super_bowler(self, team):
-        pool = [p for p in self.xis.get(team.name, []) if is_bowling_role(p)] or self.xis.get(team.name, [])
-        return sorted(pool, key=lambda p: (self.bowler_phase_score(p, "Death Overs"), p.current_ovr), reverse=True)[0]
-
-    def auto_missing_super_over_lineups(self):
-        for team in (self.team1, self.team2):
-            self.super_over["batters"].setdefault(team.name, self.cpu_super_batters(team))
-            self.super_over["bowlers"].setdefault(team.name, self.cpu_super_bowler(team))
-
-    def set_super_over_lineup(self, batter_names, bowler_name):
-        if self.status != "super_over_setup":
-            raise ValueError("Super Over selection is not open.")
-        team = self.league.user_team()
-        xi = self.xis.get(team.name, [])
-        batters = [next((p for p in xi if p.name == name), None) for name in batter_names]
-        batters = [p for p in batters if p]
-        if len(batters) != 3 or len({p.name for p in batters}) != 3:
-            raise ValueError("Pick exactly three unique Super Over batters.")
-        bowlers = [p for p in xi if is_bowling_role(p)]
-        bowler = next((p for p in bowlers if p.name == bowler_name), None)
-        if not bowler:
-            raise ValueError("Pick one eligible Super Over bowler.")
-        self.super_over["batters"][team.name] = batters
-        self.super_over["bowlers"][team.name] = bowler
-        self.play_super_over()
-
-    def play_super_over(self):
-        first_team = self.super_over["batting_first"]
-        second_team = self.super_over["batting_second"]
-        first = self.simulate_super_over_innings(first_team, self.super_over["bowlers"][second_team.name])
-        second = self.simulate_super_over_innings(second_team, self.super_over["bowlers"][first_team.name], target=first["runs"] + 1)
-        self.super_over["innings"] = [first, second]
-        if second["runs"] >= first["runs"] + 1:
-            winner = second_team
-            loser = first_team
-            margin = "won in the Super Over"
-        elif first["runs"] > second["runs"]:
-            winner = first_team
-            loser = second_team
-            margin = "won in the Super Over"
-        else:
-            winner = first_team if random.random() < 0.5 else second_team
-            loser = second_team if winner == first_team else first_team
-            margin = "won the tied Super Over on the reserve tiebreak"
-        self.super_over["winner"] = winner.name
-        self.finalize_match(winner, loser, margin)
-
-    def simulate_super_over_innings(self, batting_team, bowler, target=None):
-        batters = self.super_over["batters"][batting_team.name]
-        striker_idx, non_striker_idx, next_idx = 0, 1, 2
-        runs = wickets = balls = 0
-        batting = {p.name: {"runs": 0, "balls": 0, "fours": 0, "sixes": 0} for p in batters}
-        bowling = {bowler.name: {"runs": 0, "wickets": 0, "balls": 0}}
-        events = []
-        while balls < 6 and wickets < 2 and (not target or runs < target):
-            striker = batters[striker_idx]
-            striker.match_phase = "Death Overs"
-            bowler.match_phase = "Death Overs"
-            striker.batting_aggression = 5
-            bowler.bowling_aggression = 3
-            outcome = self.engine.simulate_ball(striker, bowler)
-            balls += 1
-            batting[striker.name]["balls"] += 1
-            bowling[bowler.name]["balls"] += 1
-            if outcome == "W":
-                wickets += 1
-                bowling[bowler.name]["wickets"] += 1
-                events.append({"kind": "wicket", "label": "W", "description": f"{striker.name} out b {bowler.name}"})
-                if wickets < 2:
-                    striker_idx = next_idx
-                continue
-            ball_runs = int(outcome)
-            runs += ball_runs
-            batting[striker.name]["runs"] += ball_runs
-            bowling[bowler.name]["runs"] += ball_runs
-            if ball_runs == 4:
-                batting[striker.name]["fours"] += 1
-            if ball_runs == 6:
-                batting[striker.name]["sixes"] += 1
-            events.append({"kind": "runs", "label": outcome, "runs": ball_runs})
-            if ball_runs in (1, 3):
-                striker_idx, non_striker_idx = non_striker_idx, striker_idx
-        return {
-            "team": batting_team.name,
-            "runs": runs,
-            "wickets": wickets,
-            "balls": balls,
-            "bowler": bowler.name,
-            "batting": [{"name": n, **d} for n, d in batting.items()],
-            "bowling": [{"name": bowler.name, **bowling[bowler.name], "overs": f"0.{balls}", "econ": round(bowling[bowler.name]["runs"] / (balls / 6), 2) if balls else 0}],
-            "events": events,
-            "score": f"{runs}/{wickets}",
-        }
-
-    def apply_impact_sub(self, out_name=None, in_name=None, auto=False):
-        user_team = self.league.user_team()
-        if self.status != "impact":
-            raise ValueError("Impact sub is only available at innings break.")
-        if out_name and in_name:
-            xi = self.xis[user_team.name]
-            bench = [p for p in user_team.roster if p not in xi]
-            out_player = next((p for p in xi if p.name == out_name), None)
-            in_player = next((p for p in bench if p.name == in_name), None)
-            if not out_player or not in_player:
-                raise ValueError("Choose one player from XI and one from bench.")
-            new_xi = [in_player if p == out_player else p for p in xi]
-            if sum(1 for p in new_xi if p.is_overseas) > 4:
-                raise ValueError("Impact sub would break the overseas limit.")
-            self.xis[user_team.name] = new_xi
-            order = [p for p in self.batting_orders[user_team.name] if p != out_player]
-            if in_player not in order:
-                order.append(in_player)
-            self.batting_orders[user_team.name] = order[:11]
-            self.bowling_pools[user_team.name] = [p for p in new_xi if is_bowling_role(p)] or new_xi
-            if self.wicketkeepers.get(user_team.name) == out_player or self.wicketkeepers.get(user_team.name) not in new_xi:
-                self.wicketkeepers[user_team.name] = self.default_keeper(user_team, new_xi)
-            self.impact_subs.append(f"{user_team.name}: {out_player.name} out, {in_player.name} in")
-        if auto:
-            self.start_second_innings()
-        else:
-            self.prepare_second_innings()
-
-    def prepare_second_innings(self):
-        user_team = self.league.user_team()
-        if user_team == self.inn1_bowl:
-            self.status = "batting_order"
-            self.message = "Set your batting order for the chase."
-            return
-        self.start_innings(self.inn1_bowl, self.inn1_bat, self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name])
-
-    def start_second_innings(self):
-        self.start_innings(self.inn1_bowl, self.inn1_bat, self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name])
-
-    def complete_match(self):
-        first = self.innings[0]
-        second = self.innings[1]
-        if second["runs"] >= first["runs"] + 1:
-            winner = self.inn1_bowl
-            loser = self.inn1_bat
-            margin = f"won by {10 - second['wickets']} wickets"
-        elif first["runs"] > second["runs"]:
-            winner = self.inn1_bat
-            loser = self.inn1_bowl
-            margin = f"won by {first['runs'] - second['runs']} runs"
-        else:
-            self.setup_super_over()
-            return
-        self.finalize_match(winner, loser, margin)
-
-    def finalize_match(self, winner, loser, margin):
-        first = self.innings[0]
-        second = self.innings[1]
-        winner.wins += 1
-        winner.points += 2
-        loser.losses += 1
-        involved_by_team = {winner.name: set(), loser.name: set()}
-        for innings in (first, second):
-            involved_by_team.setdefault(innings["team"].name, set()).update(innings.get("batting_order", []))
-            involved_by_team.setdefault(innings["bowling_team"].name, set()).update(innings.get("bowl_stats", {}).keys())
-        seen_players = set()
-        for name in involved_by_team.get(winner.name, set()):
-            player = self.league.find_player_anywhere(name)
-            if not player:
-                continue
-            ensure_stat_fields(player)
-            player.stats["games"] += 1
-            player.stats["team_wins"] += 1
-            seen_players.add(player.name)
-        for name in involved_by_team.get(loser.name, set()):
-            player = self.league.find_player_anywhere(name)
-            if not player:
-                continue
-            ensure_stat_fields(player)
-            if player.name not in seen_players:
-                player.stats["games"] += 1
-        all_bat = {**first["bat_stats"], **second["bat_stats"]}
-        all_bowl = {**first["bowl_stats"], **second["bowl_stats"]}
-        players = [
-            p for name in set().union(*involved_by_team.values())
-            for p in [self.league.find_player_anywhere(name)] if p
-        ]
-        motm = self.league.select_motm(all_bat, all_bowl, players, winner)
-        ensure_stat_fields(motm)
-        motm.stats["motm"] += 1
-        self.league.update_bowling_bests(self.bowling_pools[self.inn1_bowl.name], first["bowl_stats"], self.inn1_bat.name)
-        self.league.update_bowling_bests(self.bowling_pools[self.inn1_bat.name], second["bowl_stats"], self.inn1_bowl.name)
-        self.engine.eval_match_performances_for_form(self.batting_orders[self.inn1_bat.name], self.bowling_pools[self.inn1_bowl.name], first["bat_stats"], first["bowl_stats"])
-        self.engine.eval_match_performances_for_form(self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name], second["bat_stats"], second["bowl_stats"])
-        self.card = {
-            "round": self.league.round_num,
-            "stage": self.stage,
-            "team1": self.team1.name,
-            "team2": self.team2.name,
-            "venue": TEAM_META[self.team1.name]["home"],
-            "toss": f"{self.toss_winner.name} chose to {self.decision}",
-            "winner": winner.name,
-            "margin": margin,
-            "summary": f"{winner.name} {margin}",
-            "motm": motm.name,
-            "innings": [self.league.innings_card(first), self.league.innings_card(second)],
-            "impact_subs": list(self.impact_subs),
-            "super_over": self.super_over_card(),
-        }
-        self.league.match_log.append(self.card)
-        if not hasattr(self.league, "fixture_results"):
-            self.league.fixture_results = []
-        self.league.fixture_results.append(self.card)
-        self.status = "complete"
-        self.message = self.card["summary"]
-
-    def payload(self):
-        user_team = self.league.user_team()
-        innings_payload = []
-        for inn in self.innings:
-            innings_payload.append(self.league.innings_card(inn))
-        suggested_players = self.suggested_roster(self.lineup_context() == "bowling")
-        if self.status == "batting_order" and user_team.name in self.xis:
-            suggested_players = self.xis[user_team.name]
-        return {
-            "status": self.status,
-            "stage": self.stage,
-            "team1": self.team1.name,
-            "team2": self.team2.name,
-            "toss_winner": self.toss_winner.name,
-            "decision": self.decision,
-            "message": self.message,
-            "user_toss": self.status == "toss" and self.toss_winner.name == user_team.name,
-            "lineup_context": self.lineup_context(),
-            "impact_context": self.impact_context(),
-            "suggested": [self.league.player_dict(p) for p in suggested_players],
-            "saved_xi": user_team.saved_playing_xi_names,
-            "saved_wicketkeeper": getattr(user_team, "saved_wicketkeeper_name", ""),
-            "batting_first_xi": getattr(user_team, "saved_batting_first_xi_names", []) or self.league.smart_batting_first_xi(user_team),
-            "bowling_first_xi": getattr(user_team, "saved_bowling_first_xi_names", []) or self.league.smart_bowling_first_xi(user_team),
-            "saved_order": user_team.saved_batting_order_names,
-            "saved_bowling_order": getattr(user_team, "saved_bowling_over_names", []),
-            "score": self.live_score_payload(),
-            "available_bowlers": [self.live_bowler_dict(p) for p in self.available_bowlers()],
-            "impact": self.impact_payload(),
-            "super_over": self.super_over_payload(),
-            "innings": innings_payload,
-            "card": self.card,
-        }
-
-    def live_bowler_dict(self, player):
-        data = self.score["bowl_stats"].get(player.name, {}) if self.score else {}
-        payload = self.league.player_dict(player)
-        balls = data.get("balls", 0)
-        runs = data.get("runs", 0)
-        payload["match_econ"] = round(runs / (balls / 6), 2) if balls else "-"
-        payload["match_overs"] = f"{balls // 6}.{balls % 6}"
-        payload["match_wickets"] = data.get("wickets", 0)
-        return payload
-
-    def lineup_context(self):
-        if self.status not in ("lineup", "batting_order"):
-            return ""
-        if self.status == "batting_order":
-            return "batting"
-        user = self.league.user_team()
-        if user == self.inn1_bowl:
-            return "bowling"
-        return "batting"
-
-    def impact_context(self):
-        if self.status != "impact":
-            return ""
-        user = self.league.user_team()
-        return "bat_to_bowl" if user == self.inn1_bat else "bowl_to_bat"
-
-    def live_score_payload(self):
-        if not self.score:
-            return None
-        order = self.score["batting_order"]
-        striker = order[min(self.score["striker_idx"], len(order) - 1)] if order else None
-        non_striker = order[min(self.score["non_striker_idx"], len(order) - 1)] if order else striker
-        striker_name = striker.name if striker else ""
-        non_striker_name = non_striker.name if non_striker else ""
-        return {
-            "scoreline": self.scoreline(),
-            "runs": self.score["runs"],
-            "wickets": self.score["wickets"],
-            "balls": self.score["balls"],
-            "target": self.target,
-            "batting_team": self.score["batting_team"].name,
-            "bowling_team": self.score["bowling_team"].name,
-            "user_bowling": self.score["bowling_team"].name == self.league.user_team_name,
-            "user_batting": self.score["batting_team"].name == self.league.user_team_name,
-            "striker": striker_name,
-            "non_striker": non_striker_name,
-            "partnership": f"{self.score['partnership_runs']} off {self.score['partnership_balls']}",
-            "phase": innings_phase(self.score["balls"] // 6),
-            "active_bowler": self.score["active_bowler"].name if self.score.get("active_bowler") else "",
-            "pending_next_batter": self.score.get("pending_next_batter", False),
-            "striker_aggression": self.score["batting_aggression"].get(striker_name, 3),
-            "non_striker_aggression": self.score["batting_aggression"].get(non_striker_name, 3),
-            "bowler_aggression": self.score["bowling_aggression"].get(self.score["active_bowler"].name, 2) if self.score.get("active_bowler") else 2,
-            "current_over": self.score.get("current_over_events", []),
-            "next_batter_options": [self.league.player_dict(p) for p in self.score["batting_order"][self.score["striker_idx"]:] if self.score.get("pending_next_batter")],
-            "last_wicket": self.score.get("current_over_events", [])[-1] if self.score.get("current_over_events", []) and self.score.get("current_over_events", [])[-1].get("kind") == "wicket" else None,
-            "bat_stats": [{"name": n, "dismissal": self.score.get("dismissals", {}).get(n, ""), **d} for n, d in self.score["bat_stats"].items()],
-            "bowl_stats": [{"name": n, **d, "overs": f"{d['balls'] // 6}.{d['balls'] % 6}", "econ": round(d["runs"] / (d["balls"] / 6), 2) if d["balls"] else 0} for n, d in self.score["bowl_stats"].items()],
-            "over_log": self.score["over_log"][-6:],
-        }
-
-    def impact_payload(self):
-        if self.status != "impact":
-            return None
-        user = self.league.user_team()
-        xi = self.xis[user.name]
-        bench = [p for p in user.roster if p not in xi]
-        return {
-            "xi": [self.league.player_dict(p) for p in xi],
-            "bench": [self.league.player_dict(p) for p in bench],
-        }
-
-    def super_over_payload(self):
-        if self.status != "super_over_setup" or not self.super_over:
-            return self.super_over_card()
-        user = self.league.user_team()
-        xi = self.xis.get(user.name, [])
-        return {
-            "message": self.super_over["message"],
-            "batting_first": self.super_over["batting_first"].name,
-            "batting_second": self.super_over["batting_second"].name,
-            "batters": [self.league.player_dict(p) for p in sorted(xi, key=lambda p: p.current_batting, reverse=True)],
-            "bowlers": [self.league.player_dict(p) for p in sorted([p for p in xi if is_bowling_role(p)], key=lambda p: p.current_bowling, reverse=True)],
-            "innings": self.super_over.get("innings", []),
-            "winner": self.super_over.get("winner", ""),
-        }
-
-    def super_over_card(self):
-        if not self.super_over:
-            return None
-        return {
-            "batting_first": self.super_over["batting_first"].name,
-            "batting_second": self.super_over["batting_second"].name,
-            "innings": list(self.super_over.get("innings", [])),
-            "winner": self.super_over.get("winner", ""),
-            "message": self.super_over.get("message", ""),
-        }
+from players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool
+from sim.constants import (
+    SAVE_FILE,
+    SAVES_DIR,
+    SQUAD_SIZE,
+    RETAIN_NORMAL,
+    RETAIN_RESET,
+    INDIAN_FIRST_NAMES,
+    INDIAN_LAST_NAMES,
+    OVERSEAS_FIRST_NAMES,
+    OVERSEAS_LAST_NAMES,
+    TEAM_META,
+)
+from sim.helpers import (
+    batting_slot_player,
+    bowling_slot_player,
+    bowling_kind,
+    counts_as_batter,
+    counts_as_bowler,
+    ensure_stat_fields,
+    expanded_batting_archetype,
+    expanded_bowling_phase,
+    innings_phase,
+    is_batting_role,
+    is_bowling_role,
+    is_wicketkeeper_option,
+    ordinal,
+    phase_fit_label,
+)
+from sim.live_match import LiveMatch
 
 
 class LeagueState:
+    """Top-level state for an entire IPL franchise career: drives the game's overall flow.
+
+    `phase` is the master state machine ("title" -> "draft" -> "season" ->
+    "playoffs" -> "offseason" -> ...), and this class owns everything that
+    spans matches: the player pool and ten franchises, the mega draft, the
+    round-robin schedule and standings, the live match in progress
+    (`live_match`), the playoff bracket, end-of-season retention/regen, and
+    persistence (pickled to `SAVE_FILE`). `payload()` serialises the relevant
+    slice of all this for whatever screen the frontend is currently showing.
+    """
+
     def __init__(self):
         self.phase = "title"
         self.season_year = 2026
@@ -992,21 +82,110 @@ class LeagueState:
         self.live_match = None
         self.retention_limit = RETAIN_NORMAL
         self.last_standings = []
+        self.save_name = ""
+        self.draft_pool_type = "current"
 
-    def save(self):
-        with open(SAVE_FILE, "wb") as handle:
+    @staticmethod
+    def save_slug(name):
+        """Turn a user-supplied save name into a filesystem-safe slug (lowercase, alnum/dash/underscore only)."""
+        slug = "".join(c if c.isalnum() or c in "-_" else "-" for c in name.strip().lower())
+        slug = "-".join(filter(None, slug.split("-")))
+        return slug
+
+    @staticmethod
+    def save_path(name):
+        return os.path.join(SAVES_DIR, f"{LeagueState.save_slug(name)}.pkl")
+
+    def save(self, name=None):
+        """Pickle the entire league state (including any in-progress match) to a named slot under `SAVES_DIR`.
+
+        Uses `name` if given, else the save's existing `save_name`, else a
+        name derived from the user's franchise. Raises `ValueError` if no
+        usable name can be determined or the resulting slug is empty.
+        """
+        chosen = (name or self.save_name or self.user_team_name or "career").strip()
+        if not self.save_slug(chosen):
+            raise ValueError("Enter a valid save name.")
+        self.save_name = chosen
+        os.makedirs(SAVES_DIR, exist_ok=True)
+        with open(self.save_path(chosen), "wb") as handle:
             pickle.dump(self, handle)
 
     @classmethod
-    def load(cls):
-        if not os.path.exists(SAVE_FILE):
-            raise ValueError("No local UI save exists yet.")
-        with open(SAVE_FILE, "rb") as handle:
+    def list_saves(cls):
+        """List available save slots, newest first: each entry has `name`, `team`, `season`, and `updated_at` (file mtime)."""
+        if not os.path.isdir(SAVES_DIR):
+            return []
+        entries = []
+        for filename in os.listdir(SAVES_DIR):
+            if not filename.endswith(".pkl"):
+                continue
+            full_path = os.path.join(SAVES_DIR, filename)
+            try:
+                with open(full_path, "rb") as handle:
+                    state = pickle.load(handle)
+                entries.append({
+                    "name": getattr(state, "save_name", "") or filename[:-4],
+                    "team": getattr(state, "user_team_name", ""),
+                    "season": getattr(state, "season_year", ""),
+                    "phase": getattr(state, "phase", ""),
+                    "updated_at": os.path.getmtime(full_path),
+                })
+            except Exception:
+                continue
+        entries.sort(key=lambda e: e["updated_at"], reverse=True)
+        return entries
+
+    @classmethod
+    def load(cls, name=None):
+        """Load and return a previously saved `LeagueState` by name, migrated to the current schema.
+
+        Falls back to the most recently updated save when `name` isn't
+        given (and to the legacy single-file `SAVE_FILE` if that's all that
+        exists, migrating it into the new saves folder). Raises `ValueError`
+        if no matching save exists.
+        """
+        path = None
+        if name:
+            candidate = cls.save_path(name)
+            if os.path.exists(candidate):
+                path = candidate
+            else:
+                raise ValueError(f'No save named "{name}" exists.')
+        else:
+            saves = cls.list_saves()
+            if saves:
+                path = cls.save_path(saves[0]["name"])
+            elif os.path.exists(SAVE_FILE):
+                path = SAVE_FILE
+            else:
+                raise ValueError("No local UI save exists yet.")
+        with open(path, "rb") as handle:
             state = pickle.load(handle)
         state.migrate()
+        if path == SAVE_FILE and not state.save_name:
+            state.save_name = state.user_team_name or "career"
+            state.save()
         return state
 
+    @classmethod
+    def delete_save(cls, name):
+        """Remove a named save slot from disk. Raises `ValueError` if it doesn't exist."""
+        path = cls.save_path(name)
+        if not os.path.exists(path):
+            raise ValueError(f'No save named "{name}" exists.')
+        os.remove(path)
+
     def migrate(self):
+        """Backfill attributes that may be missing from an older save file.
+
+        Lets saves created before a feature existed (e.g. `fixture_results`,
+        `retention_limit`) load without `AttributeError`s, and re-syncs each
+        saved player's static data (ratings, archetypes, profile fields) with
+        the current `players.csv`/generation logic — so balance tweaks made
+        between sessions apply retroactively to existing careers without
+        discarding their season stats, form, or roster assignments.
+        """
         self.fixture_results = getattr(self, "fixture_results", [])
         self.match_log = getattr(self, "match_log", [])
         self.playoff_results = getattr(self, "playoff_results", [])
@@ -1014,6 +193,8 @@ class LeagueState:
         self.draft_started = getattr(self, "draft_started", self.phase != "draft" or bool(self.draft_history))
         self.last_standings = getattr(self, "last_standings", [])
         self.retention_limit = getattr(self, "retention_limit", RETAIN_NORMAL)
+        self.save_name = getattr(self, "save_name", "")
+        self.draft_pool_type = getattr(self, "draft_pool_type", "current")
         self.difficulty = getattr(self, "difficulty", "hard")
         if self.difficulty not in ("easy", "medium", "hard"):
             self.difficulty = "hard"
@@ -1027,7 +208,6 @@ class LeagueState:
                 self.live_match.engine.user_team_name = self.user_team_name
             self.live_match.super_over = getattr(self.live_match, "super_over", None)
             self.live_match.impact_subs = getattr(self.live_match, "impact_subs", [])
-            self.live_match.pending_second_lineup = getattr(self.live_match, "pending_second_lineup", False)
             if getattr(self.live_match, "score", None):
                 self.live_match.score.setdefault("active_bowler", None)
                 self.live_match.score.setdefault("current_over_events", [])
@@ -1072,14 +252,20 @@ class LeagueState:
                 ensure_stat_fields(player)
                 self.player_pool.append(player)
 
-    def new_league(self, user_team_name, difficulty="hard"):
+    def new_league(self, user_team_name, difficulty="hard", draft_pool="current"):
+        """Reset to a brand-new career: fresh player pool and ten empty franchises, the user assigned to `user_team_name`, and a shuffled mega-draft order ready to start.
+
+        `draft_pool` can be "current" (2026 players only) or "alltime" (500+ all-time IPL greats).
+        Raises `ValueError` if `user_team_name` isn't a real IPL franchise.
+        """
         if user_team_name not in IPL_TEAMS_LIST:
             raise ValueError("Choose a valid IPL franchise.")
         self.__init__()
         self.season_year = 2026
         self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
+        self.draft_pool_type = draft_pool if draft_pool in ("current", "alltime") else "current"
         self.user_team_name = user_team_name
-        self.player_pool = get_initial_player_pool()
+        self.player_pool = get_alltime_player_pool() if self.draft_pool_type == "alltime" else get_initial_player_pool()
         self.teams = [Team(name) for name in IPL_TEAMS_LIST]
         self.phase = "draft"
         self.draft_type = "mega"
@@ -1093,6 +279,14 @@ class LeagueState:
         self.status_message = f"{user_team_name} enter a blank-franchise mega draft on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
 
     def build_schedule(self):
+        """Build a 14-round league-stage schedule by randomly shuffling and pairing all ten teams each round.
+
+        This guarantees every team plays exactly once per round (no byes) and
+        14 games across the season, though — unlike a true round-robin — it
+        doesn't guarantee each pair of teams meets an even number of times.
+        That's an intentional simplification that keeps scheduling simple
+        while still producing a full, balanced-in-aggregate season.
+        """
         schedule = []
         for _ in range(14):
             teams = list(self.teams)
@@ -1101,25 +295,31 @@ class LeagueState:
         return schedule
 
     def user_team(self):
+        """The `Team` the human user controls."""
         return self.find_team(self.user_team_name)
 
     def find_team(self, name):
+        """Look up a `Team` by exact name. Raises `StopIteration` if no team has that name."""
         return next(t for t in self.teams if t.name == name)
 
     def standings(self, reverse=True):
+        """Teams ranked by points, then net run rate, then wins — the standard IPL points-table tiebreak order."""
         return sorted(self.teams, key=lambda t: (t.points, t.net_run_rate, t.wins), reverse=reverse)
 
     def current_draft_order(self):
+        """The pick order for the current draft round — reversed on even rounds for a mega draft (snake order, so no team is permanently advantaged by always picking last)."""
         if self.draft_type == "mega" and self.draft_round % 2 == 0:
             return list(reversed(self.draft_order))
         return list(self.draft_order)
 
     def current_draft_team(self):
+        """The team on the clock right now, or `None` if the draft isn't active."""
         if self.phase != "draft":
             return None
         return self.current_draft_order()[self.draft_index]
 
     def start_draft(self):
+        """Open the draft room and let CPU teams pick up to (but not including) the user's first turn."""
         if self.phase != "draft":
             raise ValueError("Draft room is closed.")
         self.draft_started = True
@@ -1127,6 +327,7 @@ class LeagueState:
         self.cpu_until_user()
 
     def roster_needs(self, team):
+        """How many more players of each kind (`wk`, `bat`, `bowl`, `ar`, `fast`, `spin`) this team should target to reach a balanced 21-player squad, based on simple minimum-count targets."""
         return {
             "wk": max(0, 2 - sum(1 for p in team.roster if is_wicketkeeper_option(p))),
             "bat": max(0, 9 - sum(1 for p in team.roster if batting_slot_player(p))),
@@ -1137,6 +338,15 @@ class LeagueState:
         }
 
     def draft_score(self, team, player):
+        """Heuristic CPU draft-pick value of `player` for `team`: higher is more attractive.
+
+        Blends overall rating and youth with role-fit bonuses scaled by
+        `roster_needs` (e.g. a wicketkeeper is worth more to a team that
+        still needs one), penalises over-stacking a role or overseas slots
+        (hard cutoffs near the 8/10 limits), and penalises picks that don't
+        address any remaining need once roster spots are running out. A small
+        random jitter keeps CPU drafts from being perfectly deterministic.
+        """
         needs = self.roster_needs(team)
         picks_left = SQUAD_SIZE - len(team.roster)
         score = player.current_ovr * 10 + max(0, 30 - player.age) * 1.6
@@ -1177,6 +387,7 @@ class LeagueState:
         return score + random.uniform(-10, 10)
 
     def player_matches_need(self, player, needs):
+        """Whether drafting `player` would address at least one of `team`'s outstanding roster needs."""
         return (
             (is_wicketkeeper_option(player) and needs["wk"]) or
             (player.role == "All-Rounder" and needs["ar"]) or
@@ -1187,10 +398,12 @@ class LeagueState:
         )
 
     def cpu_pick(self, team):
+        """Have the CPU draft its single best-scoring available player for `team` (see `draft_score`)."""
         candidates = sorted(self.player_pool, key=lambda p: self.draft_score(team, p), reverse=True)
         self.draft_player(team, candidates[0])
 
     def draft_player(self, team, player):
+        """Move `player` from the pool onto `team`'s roster, log the pick, advance the draft clock (snaking the round when the order wraps), and start the season once every squad reaches `SQUAD_SIZE`."""
         self.player_pool.remove(player)
         team.roster.append(player)
         player.team_name = team.name
@@ -1213,12 +426,14 @@ class LeagueState:
             self.start_regular_season()
 
     def capture_season_baselines(self):
+        """Snapshot every player's overall/batting/bowling ratings at the start of a season, so end-of-season summaries can show how much they've grown or declined."""
         for player in self.all_players():
             player.season_start_ovr = player.current_ovr
             player.season_start_bat = player.current_batting
             player.season_start_bowl = player.current_bowling
 
     def cpu_until_user(self):
+        """Auto-pick for every CPU team in turn until it's the user's turn to draft (or the draft ends)."""
         while self.phase == "draft":
             team = self.current_draft_team()
             if team.name == self.user_team_name:
@@ -1226,6 +441,11 @@ class LeagueState:
             self.cpu_pick(team)
 
     def user_pick(self, player_name):
+        """Draft the named player to the user's team on their turn, then let CPU teams pick until it's the user's turn again.
+
+        Raises `ValueError` if the draft isn't open or the player is no
+        longer available.
+        """
         if self.phase != "draft":
             raise ValueError("Draft room is closed.")
         if not getattr(self, "draft_started", True):
@@ -1237,6 +457,7 @@ class LeagueState:
         self.cpu_until_user()
 
     def autodraft_user_pick(self):
+        """Let the CPU make the user's pick for them on their current turn (per the same `draft_score` heuristic), then continue to the next user turn."""
         if self.phase != "draft":
             raise ValueError("Draft room is closed.")
         if not getattr(self, "draft_started", True):
@@ -1249,6 +470,7 @@ class LeagueState:
         self.cpu_until_user()
 
     def autodraft_to_end(self):
+        """Run the entire remaining draft on autopilot, including the user's picks, until every squad is full and the season starts."""
         if self.phase != "draft":
             raise ValueError("Draft room is closed.")
         if not getattr(self, "draft_started", True):
@@ -1257,6 +479,7 @@ class LeagueState:
             self.cpu_pick(self.current_draft_team())
 
     def start_regular_season(self):
+        """Transition from the draft to the league stage: build the schedule, reset match/playoff history, ensure every team has leadership assigned, and snapshot season-start ratings."""
         self.phase = "season"
         self.round_num = 1
         self.schedule = self.build_schedule()
@@ -1274,6 +497,12 @@ class LeagueState:
         self.status_message = f"IPL {self.season_year} league stage is ready."
 
     def set_leadership(self, captain_name, vice_name, wicketkeeper_name=""):
+        """Assign the user's captain, vice-captain, and (optionally) preferred wicketkeeper from their squad.
+
+        Raises `ValueError` if the named captain/vice can't be resolved to
+        two distinct squad members, or the named keeper isn't an eligible
+        wicketkeeper option.
+        """
         team = self.user_team()
         captain = next((p for p in team.roster if p.name == captain_name), None)
         vice = next((p for p in team.roster if p.name == vice_name), None)
@@ -1288,6 +517,18 @@ class LeagueState:
             team.saved_wicketkeeper_name = keeper.name
 
     def set_user_presets(self, batting_order, bowling_order, batting_first_xi=None, bowling_first_xi=None, bat_to_bowl=None, bowl_to_bat=None, wicketkeeper_name=""):
+        """Save the user's reusable match-day defaults: separate batting-first/bowling-first XIs, a default batting order, a default 20-over bowling plan, Impact Player swap pairings for each scenario, and a preferred keeper.
+
+        Validates XI composition (11 unique squad members, overseas limit,
+        minimum batting/bowling options for the relevant scenario) and that
+        the two scenario XIs differ by at most one player (since the Impact
+        Player rule only allows a single swap). When the user hasn't set
+        explicit Impact Player pairings but both XIs are valid and differ by
+        exactly one player each way, infers sensible swap pairings
+        automatically — e.g. if XI A drops a bowler that XI B includes (and
+        vice versa), assume that's the intended bat-to-bowl/bowl-to-bat sub.
+        Raises `ValueError` on any invalid combination.
+        """
         team = self.user_team()
         roster_names = {p.name for p in team.roster}
         for attr, names in (("saved_batting_first_xi_names", batting_first_xi or []), ("saved_bowling_first_xi_names", bowling_first_xi or [])):
@@ -1342,6 +583,11 @@ class LeagueState:
         team.saved_bowling_over_names = bowling
 
     def default_bowling_plan(self, team):
+        """Build a 20-over bowling plan for `team`: the user's saved plan if they have one, otherwise auto-build one from their bowling-first XI by greedily picking the best phase-fit bowler for each over (never the same bowler in consecutive overs, never more than 4 overs each).
+
+        Returns an empty list if the team can't field at least 5 recognised
+        bowlers — the UI then falls back to choosing a bowler each over live.
+        """
         saved = list(getattr(team, "saved_bowling_over_names", []))
         if saved:
             return saved
@@ -1359,8 +605,6 @@ class LeagueState:
             if non_repeat:
                 candidates = non_repeat
             return sorted(candidates, key=lambda p: self.bowler_phase_score(p, phase), reverse=True)[0]
-        if not bowlers:
-            return []
         used = {}
         plan = []
         for over in range(20):
@@ -1371,6 +615,7 @@ class LeagueState:
         return plan
 
     def default_batting_order(self, team):
+        """A sensible default batting order (player names) for `team`'s batting-first XI: the user's saved order if usable, else freshly computed via `smart_batting_order`. Returns an empty list if the squad has fewer than 11 players."""
         if len(team.roster) < 11:
             return []
         xi_names = getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team)
@@ -1379,6 +624,7 @@ class LeagueState:
         return [p.name for p in self.smart_batting_order(xi)]
 
     def bowler_phase_score(self, player, phase):
+        """League-level heuristic for how well-suited this bowler is to the given match phase — used when auto-building bowling plans and CPU XIs (a slightly different weighting than `LiveMatch.bowler_phase_score`, which ranks live in-match options)."""
         score = player.current_bowling
         kind = bowling_kind(player)
         bowling_phase = getattr(player, "bowling_phase", "Flexible")
@@ -1396,6 +642,7 @@ class LeagueState:
         return score
 
     def batting_phase_score(self, player, phase):
+        """Heuristic for how well this batter's archetype fits the given match phase, used to slot players into a sensible batting order (`smart_batting_order`)."""
         score = player.current_batting
         archetype = getattr(player, "batting_archetype", "")
         if phase == "Powerplay" and archetype in ("Aggressive Opener", "Aggressor", "Pace Specialist"):
@@ -1413,55 +660,73 @@ class LeagueState:
         return score
 
     def smart_batting_order(self, players):
+        """Arrange `players` (an XI) into a 1-11 batting order driven by each player's natural slot.
+
+        Every player carries a `preferred_position` (derived from real-world
+        IPL batting-position tendencies for their role/archetype — see
+        `models.derive_preferred_position`), e.g. an "Aggressor" wicketkeeper
+        like Buttler naturally opens, while a "Finisher" walks in around #5-6.
+        This assigns slots via a stable best-fit pass: each player is matched
+        to the open slot closest to their natural position, with ties broken
+        by phase fit and batting rating — so collisions (two natural openers)
+        resolve sensibly instead of clumping at the top.
+        """
         remaining = list(dict.fromkeys(players))
-        order = []
+        slots = {i: None for i in range(1, 12)}
 
         def archetype(player):
             return getattr(player, "batting_archetype", "")
 
-        def batting_capable(player):
-            return counts_as_batter(player) or (player.current_batting >= 65 and archetype(player) != "Defensive Tailender")
+        def natural(player):
+            return getattr(player, "preferred_position", 6)
 
         def is_tail(player):
-            return archetype(player) == "Defensive Tailender" or not batting_capable(player)
+            return archetype(player) == "Defensive Tailender" and not counts_as_batter(player)
 
-        def pick_one(predicate, phase, fallback=True):
-            nonlocal remaining
-            pool = [p for p in remaining if predicate(p)]
-            if not pool and fallback:
-                pool = [p for p in remaining if not is_tail(p)]
-            if not pool and fallback:
-                pool = list(remaining)
-            if not pool:
-                return None
-            chosen = sorted(pool, key=lambda p: (self.batting_phase_score(p, phase), p.current_batting, p.current_ovr), reverse=True)[0]
-            order.append(chosen)
-            remaining.remove(chosen)
-            return chosen
-
-        opener = lambda p: archetype(p) in ("Aggressor", "Aggressive Opener", "Pace Specialist", "Anchor", "Strike Rotator", "Middle-over Rotator") and batting_capable(p)
-        top_middle = lambda p: archetype(p) in ("Aggressor", "Aggressive Opener", "Pace Specialist", "Anchor", "Strike Rotator", "Middle-over Rotator", "Spin Specialist") and batting_capable(p)
-        middle = lambda p: archetype(p) in ("Anchor", "Strike Rotator", "Middle-over Rotator", "Spin Specialist") and batting_capable(p)
-        finisher = lambda p: archetype(p) in ("Finisher", "Lower-order Hitter", "Lower-order Power Hitter") and batting_capable(p)
-
-        pick_one(opener, "Powerplay")
-        pick_one(opener, "Powerplay")
-        pick_one(top_middle, "Middle Overs")
-        pick_one(middle, "Middle Overs")
-        pick_one(middle, "Middle Overs")
-        pick_one(lambda p: finisher(p) or middle(p), "Death Overs")
-        pick_one(lambda p: finisher(p) or (batting_capable(p) and not is_tail(p)), "Death Overs")
-        pick_one(lambda p: finisher(p) or (batting_capable(p) and not is_tail(p)), "Death Overs")
-
-        tail = sorted(remaining, key=lambda p: (is_tail(p), -p.current_batting, -p.current_ovr))
-        for player in tail:
-            if len(order) >= 11:
+        ranked = sorted(remaining, key=lambda p: (is_tail(p), abs(natural(p) - 6), -p.current_batting))
+        for player in ranked:
+            open_slots = [s for s, occupant in slots.items() if occupant is None]
+            if not open_slots:
                 break
-            order.append(player)
+            target = min(open_slots, key=lambda s: (abs(s - natural(player)), -self.batting_phase_score(player, innings_phase(s - 1))))
+            slots[target] = player
+            remaining.remove(player)
 
+        order = [slots[i] for i in range(1, 12) if slots[i] is not None]
+        order += [p for p in remaining if p not in order]
         return order[:11]
 
+    def _ensure_natural_top_order_cover(self, selected, roster):
+        """Swap in a bench batter if `selected` lacks anyone who naturally opens or anchors the top order (preferred_position 1-3).
+
+        A pure-rating XI pick can accidentally collect six middle-order/finisher
+        types and nobody suited to actually face the new ball — this nudges in
+        the best available natural top-order batter at the expense of the
+        weakest-fit specialist batter already picked, keeping the XI realistic.
+        """
+        def natural(p):
+            return getattr(p, "preferred_position", 6)
+        if any(counts_as_batter(p) and natural(p) <= 3 for p in selected):
+            return
+        bench_top_order = sorted(
+            [p for p in roster if p not in selected and counts_as_batter(p) and natural(p) <= 3],
+            key=lambda p: p.current_batting, reverse=True,
+        )
+        if not bench_top_order:
+            return
+        candidates = sorted([p for p in selected if counts_as_batter(p)], key=lambda p: (-natural(p), p.current_batting))
+        if candidates:
+            selected[selected.index(candidates[0])] = bench_top_order[0]
+
     def smart_cpu_xi(self, team):
+        """Auto-pick a balanced playing XI for a CPU-controlled `team`.
+
+        Always includes the captain/vice-captain and the best-batting
+        wicketkeeper, then fills out to 6 specialist-ish batters and 5
+        bowlers ranked by combined across-phase fit scores, topping up with
+        the highest-rated remaining names — finally passed through
+        `enforce_role_balance` to guarantee the minimums are actually met.
+        """
         roster = list(team.roster)
         selected = []
 
@@ -1485,6 +750,7 @@ class LeagueState:
             if len([p for p in selected if counts_as_batter(p)]) >= 6:
                 break
             add(player)
+        self._ensure_natural_top_order_cover(selected, roster)
 
         bowlers = sorted([p for p in roster if p not in selected and counts_as_bowler(p)], key=lambda p: (
             self.bowler_phase_score(p, "Powerplay") + self.bowler_phase_score(p, "Middle Overs") + self.bowler_phase_score(p, "Death Overs"),
@@ -1503,6 +769,7 @@ class LeagueState:
         return self.enforce_role_balance(selected, roster, min_batters=6, min_bowlers=5)
 
     def smart_batting_first_xi(self, team):
+        """Auto-pick a batting-friendly XI for `team` (used when they'll set the total): best-batting keeper first, then up to 7 batting options ranked by combined phase fit, then the best death-overs bowlers to round out to 11 — passed through `enforce_role_balance`. Returns a list of player names."""
         roster = list(team.roster)
         selected = []
         keepers = sorted([p for p in roster if is_wicketkeeper_option(p)], key=lambda p: p.current_batting, reverse=True)
@@ -1519,6 +786,17 @@ class LeagueState:
         return [p.name for p in self.enforce_role_balance(selected, roster, min_batters=6, min_bowlers=4)]
 
     def smart_bowling_first_xi(self, team):
+        """Auto-pick a bowling-friendly XI for `team` (used when they'll defend a total), derived by lightly adjusting the batting-first XI toward more bowling depth.
+
+        Starts from `smart_batting_first_xi`, protects the top 5 batters from
+        being dropped, and swaps one mid-order spot for the best available
+        bench bowler. If that still leaves the XI identical to the batting
+        XI's full 11, tries swapping in bowling-capable bench players at a
+        few candidate slots until at least one name differs (so the two XIs
+        aren't forced to be byte-identical when better bowling options exist)
+        — all while respecting the overseas cap and bowler-count minimum.
+        Returns a list of player names.
+        """
         roster = list(team.roster)
         bat_names = getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team)
         selected = [next((p for p in roster if p.name == name), None) for name in bat_names]
@@ -1547,6 +825,7 @@ class LeagueState:
         return [p.name for p in balanced]
 
     def enforce_xi_limits(self, selected, roster):
+        """Trim `selected` to 11 and swap out the lowest-rated overseas players for the best available domestic ones until the squad respects the 4-overseas-player limit."""
         selected = selected[:11]
         while sum(1 for p in selected if p.is_overseas) > 4:
             overseas = [p for p in selected if p.is_overseas]
@@ -1560,10 +839,14 @@ class LeagueState:
         return selected[:11]
 
     def enforce_role_balance(self, selected, roster, min_batters=0, min_bowlers=0):
+        """Top up `selected` until it has at least `min_batters` batting options and `min_bowlers` bowling options, swapping in the best-suited bench player for the worst-suited non-matching incumbent each time (then re-applying `enforce_xi_limits`).
+
+        Stops early (rather than looping forever) if no valid swap exists —
+        e.g. a squad that genuinely can't field enough specialists.
+        """
         selected = list(dict.fromkeys(selected))[:11]
         pool = sorted([p for p in roster if p not in selected], key=lambda p: p.current_ovr, reverse=True)
         def add_for(predicate, remove_key):
-            nonlocal selected, pool
             candidate = next((p for p in pool if predicate(p)), None)
             if not candidate:
                 return False
@@ -1585,27 +868,90 @@ class LeagueState:
         return self.enforce_xi_limits(selected, roster)
 
     def default_impact_subs(self, team):
-        bat_xi = set(getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team))
-        bowl_xi = set(getattr(team, "saved_bowling_first_xi_names", []) or self.smart_bowling_first_xi(team))
-        bat_only = list(bat_xi - bowl_xi)
-        bowl_only = list(bowl_xi - bat_xi)
-        if bat_only and bowl_only:
-            return {
-                "bat_to_bowl": {"out": bat_only[0], "in": bowl_only[0]},
-                "bowl_to_bat": {"out": bowl_only[0], "in": bat_only[0]},
-            }
-        bench_after_bat = [p for p in team.roster if p.name not in bat_xi]
-        bench_after_bowl = [p for p in team.roster if p.name not in bowl_xi]
-        bat_out = sorted([p for p in team.roster if p.name in bat_xi], key=lambda p: p.current_bowling)[0] if bat_xi else None
-        bowl_in = sorted([p for p in bench_after_bat if is_bowling_role(p)], key=lambda p: p.current_bowling, reverse=True)
-        bowl_out = sorted([p for p in team.roster if p.name in bowl_xi], key=lambda p: p.current_batting)[0] if bowl_xi else None
-        bat_in = sorted([p for p in bench_after_bowl if is_batting_role(p)], key=lambda p: p.current_batting, reverse=True)
+        """Suggest Impact Player swap pairings for `team` in both directions (bat-first -> bowl-first and vice versa), modelled on real IPL Impact Player tendencies.
+
+        In the IPL, sides overwhelmingly use the rule to load up on their
+        strength for the situation: defending a total, teams bring on an
+        extra specialist bowler (often for their weakest-bowling top-order
+        batter); chasing, they bring on an extra hitter — typically a
+        finisher or floater whose `preferred_position` sits in the lower-
+        middle order (5-8) — for their most expendable bowling-only option.
+
+        For each direction, candidates are drawn first from the player the
+        two saved XIs naturally disagree on (when they fit the needed role —
+        a pure specialist bowler makes a poor "extra hitter" suggestion just
+        because they happened to be the odd one out), then from the bench at
+        large, ranked by bowling rating / hitter-score respectively. The
+        paired "out" player is whichever XI incumbent the swap can drop
+        without breaching the 4-overseas cap — `pick_pairing` walks
+        candidates in score order on both sides until it finds a legal
+        combination, so the suggestion is always immediately playable.
+        """
+        def natural(p):
+            return getattr(p, "preferred_position", 6)
+
+        def hitter_score(p):
+            return (5 <= natural(p) <= 8) * 20 + p.current_batting
+
+        bat_xi_names = set(getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team))
+        bowl_xi_names = set(getattr(team, "saved_bowling_first_xi_names", []) or self.smart_bowling_first_xi(team))
+        bat_xi = [p for p in team.roster if p.name in bat_xi_names]
+        bowl_xi = [p for p in team.roster if p.name in bowl_xi_names]
+        bat_only = [p for p in bat_xi if p.name not in bowl_xi_names]
+        bowl_only = [p for p in bowl_xi if p.name not in bat_xi_names]
+        bench_after_bat = [p for p in team.roster if p.name not in bat_xi_names]
+        bench_after_bowl = [p for p in team.roster if p.name not in bowl_xi_names]
+
+        def overseas_count(players):
+            return sum(1 for p in players if p.is_overseas)
+
+        def overseas_ok(xi, out_player, in_player):
+            return overseas_count(xi) - int(out_player.is_overseas) + int(in_player.is_overseas) <= 4
+
+        def pick_pairing(xi, bench, in_priority_pool, in_score, out_score):
+            """Choose a valid (out, in) pairing for swapping into `xi` from `bench`.
+
+            Tries `in_priority_pool` candidates first (best-fit role-wise),
+            falling back to the full bench, always preferring the highest
+            `in_score` candidate paired with the lowest-`out_score` incumbent
+            that keeps the resulting XI within the overseas cap.
+            """
+            for in_pool in (in_priority_pool, bench):
+                for in_player in sorted(in_pool, key=in_score, reverse=True):
+                    out_candidates = sorted([p for p in xi if p != in_player], key=out_score)
+                    out_player = next((p for p in out_candidates if overseas_ok(xi, p, in_player)), None)
+                    if out_player:
+                        return out_player, in_player
+            return None, None
+
+        bowl_to_bat_in_pool = [p for p in bat_only if is_batting_role(p)] or [p for p in bench_after_bowl if is_batting_role(p)]
+        bat_to_bowl_in_pool = [p for p in bowl_only if is_bowling_role(p)] or [p for p in bench_after_bat if is_bowling_role(p)]
+
+        bat_out, extra_bowler = pick_pairing(
+            bat_xi, bench_after_bat, bat_to_bowl_in_pool,
+            in_score=lambda p: p.current_bowling, out_score=lambda p: p.current_bowling,
+        )
+        bowl_out, extra_hitter = pick_pairing(
+            bowl_xi, bench_after_bowl, bowl_to_bat_in_pool,
+            in_score=hitter_score, out_score=hitter_score,
+        )
         return {
-            "bat_to_bowl": {"out": bat_out.name if bat_out else "", "in": bowl_in[0].name if bowl_in else ""},
-            "bowl_to_bat": {"out": bowl_out.name if bowl_out else "", "in": bat_in[0].name if bat_in else ""},
+            "bat_to_bowl": {"out": bat_out.name if bat_out else "", "in": extra_bowler.name if extra_bowler else ""},
+            "bowl_to_bat": {"out": bowl_out.name if bowl_out else "", "in": extra_hitter.name if extra_hitter else ""},
         }
 
     def begin_match_day(self, interactive=True):
+        """Start the next match day.
+
+        In the league stage: auto-simulates every fixture except the user's,
+        then either hands the user's match to a `LiveMatch` for interactive
+        play (`interactive=True`) or quick-simulates it too and advances the
+        round (rolling into playoffs once round 14 completes). In the
+        playoffs: unlocks the next bracket match if needed and starts a
+        `LiveMatch` for it. Raises `ValueError` if the match centre isn't
+        open, or (in playoffs) if the user's team isn't part of the next
+        scheduled match.
+        """
         if self.phase not in ("season", "playoffs"):
             raise ValueError("Match centre is not open.")
         if self.live_match and self.live_match.status != "complete":
@@ -1635,6 +981,10 @@ class LeagueState:
             self.live_match = LiveMatch(self, self.find_team(match["team1"]), self.find_team(match["team2"]), match["name"])
 
     def complete_live_match(self):
+        """Acknowledge the finished live match: advance the league round (rolling into playoffs at round 15) or record the playoff result, then clear `live_match`.
+
+        Raises `ValueError` if there's no completed live match to close out.
+        """
         if not self.live_match or self.live_match.status != "complete":
             raise ValueError("Live match is not complete.")
         if self.phase == "season":
@@ -1646,45 +996,31 @@ class LeagueState:
         self.live_match = None
 
     def simulate_match_auto(self, team1, team2, stage):
+        """Run an entire match to completion without any user interaction (used for non-user fixtures and "quick sim").
+
+        Builds lineups for both sides — using the user's saved presets when
+        their team is involved, falling back to `smart_*` selections
+        otherwise — sets a default bowling plan and Impact Player choice, and
+        plays it out over-by-over on autopilot. Returns the finished
+        `LiveMatch`.
+        """
         match = LiveMatch(self, team1, team2, stage)
-        if match.status == "toss":
-            match.choose_toss(random.choice(["bat", "bowl"]))
-        for team in (team1, team2):
-            if team.name not in match.xis:
-                if team.name == self.user_team_name:
-                    preset_names = getattr(team, "saved_batting_first_xi_names", []) if team == match.inn1_bat else getattr(team, "saved_bowling_first_xi_names", [])
-                    xi = [next((p for p in team.roster if p.name == name), None) for name in preset_names]
-                    xi = [p for p in xi if p]
-                    if len(xi) != 11:
-                        xi_names = self.smart_batting_first_xi(team) if team == match.inn1_bat else self.smart_bowling_first_xi(team)
-                        xi = [next(p for p in team.roster if p.name == name) for name in xi_names]
-                else:
-                    xi = self.smart_cpu_xi(team)
-                match.xis[team.name] = xi
-                saved_order = getattr(team, "saved_batting_order_names", []) if team.name == self.user_team_name else []
-                order = [next((p for p in xi if p.name == name), None) for name in saved_order]
-                order = [p for p in order if p]
-                match.batting_orders[team.name] = order if len(order) == 11 else self.smart_batting_order(xi)
-                match.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
-                if team.name == self.user_team_name:
-                    match.set_bowling_plan(team, getattr(team, "saved_bowling_over_names", []))
-        match.start_first_innings_if_ready()
-        while match.status == "over":
-            match.play_over(auto=True)
-        if match.status == "impact":
-            match.apply_impact_sub(auto=True)
-        while match.status == "over":
-            match.play_over(auto=True)
-        if match.status == "super_over_setup":
-            match.auto_missing_super_over_lineups()
-            match.play_super_over()
-        return match.card
+        return match.auto_finish()
 
     def simulate_current_round(self):
+        """Quick-sim everything left to resolve the current round/match without launching an interactive `LiveMatch`.
+
+        In the league stage: finishes an in-progress live match (or simulates
+        the user's fixture fresh) and the rest of the round in one go,
+        advancing to the next round (or playoffs) and updating the status
+        message; if no live match exists yet, simulates the entire round's 5
+        fixtures. In the playoffs: unlocks and simulates the next bracket
+        match and records its result.
+        """
         if self.phase == "season":
             if self.live_match:
                 if self.live_match.status != "complete":
-                    card = self.simulate_match_auto(self.live_match.team1, self.live_match.team2, self.live_match.stage)
+                    card = self.live_match.auto_finish()
                     self.live_match = None
                 else:
                     card = self.live_match.card
@@ -1710,14 +1046,21 @@ class LeagueState:
                 else:
                     self.status_message = f"Round {self.round_num - 1} quick-simmed all 5 matches."
         elif self.phase == "playoffs":
-            match = self.playoff_matches[self.playoff_index]
-            if match["status"] == "locked":
-                self.unlock_playoff_match()
+            if self.live_match and self.live_match.status != "complete":
+                card = self.live_match.auto_finish()
+            elif self.live_match:
+                card = self.live_match.card
+            else:
                 match = self.playoff_matches[self.playoff_index]
-            card = self.simulate_match_auto(self.find_team(match["team1"]), self.find_team(match["team2"]), match["name"])
+                if match["status"] == "locked":
+                    self.unlock_playoff_match()
+                    match = self.playoff_matches[self.playoff_index]
+                card = self.simulate_match_auto(self.find_team(match["team1"]), self.find_team(match["team2"]), match["name"])
+            self.live_match = None
             self.record_playoff_result(card["winner"])
 
     def finish_league_stage(self):
+        """Close out the 14-round league stage: snapshot final standings, record the qualifying top four, and move to "league_complete" awaiting the user to start playoffs."""
         self.last_standings = self.standings()
         self.pending_playoff_top_four = [t.name for t in self.last_standings[:4]]
         self.phase = "league_complete"
@@ -1726,6 +1069,7 @@ class LeagueState:
         self.status_message = "League stage complete. Review the table and season stats, then start playoffs." if qualified else "League stage complete. Your team missed the top four; review the season, then start or quick-sim playoffs."
 
     def start_playoffs(self):
+        """Set up the IPL playoff bracket from the qualifying top four and open the playoffs phase. Raises `ValueError` if the league stage hasn't finished yet."""
         if self.phase != "league_complete":
             raise ValueError("Playoffs are not ready to start.")
         top_names = self.pending_playoff_top_four or [t.name for t in self.standings()[:4]]
@@ -1735,6 +1079,7 @@ class LeagueState:
         self.status_message = "Playoffs are ready. Enter the Match Hub if your team is playing, or quick-sim playoff matches one at a time."
 
     def setup_playoffs(self, top_four):
+        """Lay out the standard IPL playoff bracket from the top-four-ranked teams: Qualifier 1 (1st vs 2nd) and the Eliminator (3rd vs 4th) start open; Qualifier 2 and the Final start "locked" until their participants are decided."""
         p1, p2, p3, p4 = top_four
         self.phase = "playoffs"
         self.playoff_index = 0
@@ -1747,6 +1092,7 @@ class LeagueState:
         ]
 
     def record_playoff_result(self, winner):
+        """Mark the just-finished playoff match complete, store its result, and either advance to the next bracket match (unlocking it if needed) or — once the Final is done — crown the champion and move to the post-season retention window."""
         match = self.playoff_matches[self.playoff_index]
         loser = match["team2"] if winner == match["team1"] else match["team1"]
         match.update({"status": "complete", "winner": winner, "loser": loser})
@@ -1761,12 +1107,17 @@ class LeagueState:
             self.status_message = "Playoff match complete. Review scorecards, then continue to the next playoff when ready."
 
     def unlock_playoff_match(self):
+        """Fill in the participants for Qualifier 2 (Q1 loser vs Eliminator winner) and the Final (Q1 winner vs Q2 winner) once their feeder matches have results — the standard IPL bracket progression."""
         if self.playoff_index == 2 and self.playoff_matches[2]["status"] == "locked":
             self.playoff_matches[2].update({"team1": self.playoff_results[0]["loser"], "team2": self.playoff_results[1]["winner"], "status": "pending"})
         if self.playoff_index == 3 and self.playoff_matches[3]["status"] == "locked":
             self.playoff_matches[3].update({"team1": self.playoff_results[0]["winner"], "team2": self.playoff_results[2]["winner"], "status": "pending"})
 
     def open_retention(self):
+        """Open the post-season retention window: alternate the keep-limit between a normal reset (`RETAIN_NORMAL`) and a deeper reset (`RETAIN_RESET`) every other season, mirroring the IPL's periodic mega-auction cycle.
+
+        Raises `ValueError` if the season hasn't actually finished.
+        """
         if self.phase != "season_end":
             raise ValueError("Retention opens after the season ends.")
         self.completed_seasons += 1
@@ -1775,6 +1126,20 @@ class LeagueState:
         self.status_message = f"Retention window: keep {self.retention_limit} players."
 
     def submit_retentions(self, names):
+        """Apply the user's retention choices and roll every franchise into next season's mega draft.
+
+        For the user's team, keeps exactly the named players; CPU teams keep
+        their best players by `mvp_score` (tie-broken by rating, then youth).
+        Released players return to the pool as free agents. All retained and
+        released players age up and reset their season stats
+        (`apply_offseason_progression`/`reset_stats`), team season records
+        reset to zero, ~30 fresh "regen" prospects are generated, and a new
+        draft begins in **reverse-standings order with no snake** — a
+        deliberate IPL-style mechanic that gives the previous season's
+        weakest teams first crack at the now-thinned player pool.
+        Raises `ValueError` if retention isn't open or the wrong number of
+        names was submitted.
+        """
         if self.phase != "retention":
             raise ValueError("Retention window is closed.")
         if len(names) != self.retention_limit:
@@ -1819,6 +1184,7 @@ class LeagueState:
         self.cpu_until_user()
 
     def add_regens(self):
+        """Generate ~30 fresh young prospects (age 18-21, randomly rolled ratings/profile by role, names suffixed with "*" to mark them as regens) and add them to the free-agent pool ahead of the next mega draft, replenishing talent lost to retirement/release."""
         for i in range(30):
             role = random.choice(["Batsman", "Bowler (Fast)", "Bowler (Spin)", "All-Rounder", "Wicketkeeper"])
             if role == "Batsman":
@@ -1844,6 +1210,7 @@ class LeagueState:
             ))
 
     def generated_name(self, is_overseas):
+        """Generate a unique regen player name (Indian or overseas name pools depending on `is_overseas`), suffixed with "*" to flag it as a generated player and distinguish it from real-world names in `players.csv`."""
         existing = {p.name for p in self.player_pool}
         for team in self.teams:
             existing.update(p.name for p in team.roster)
@@ -1856,6 +1223,17 @@ class LeagueState:
         return f"{random.choice(first_names)} {random.choice(last_names)} {random.randint(2, 99)} *"
 
     def select_motm(self, batting, bowling, players, winner):
+        """Pick the Man of the Match from this game's batting/bowling figures.
+
+        Scores every involved player on a runs/strike-rate/wickets/economy
+        blend, then strongly prefers a standout performer from the winning
+        side — but allows a losing-side player to take it instead if they
+        produced a clearly "legacy" performance (a century or 5-wicket haul)
+        that decisively outscores the best winning performance, mirroring how
+        real-world MOTM voting occasionally rewards a heroic losing effort.
+        Falls back to the winning side's best-rated player if no one's match
+        figures resolve to a real player (e.g. a rain-shortened/odd game).
+        """
         lookup = {p.name: p for p in players}
         for player in self.all_players() + list(getattr(self, "player_pool", [])):
             lookup.setdefault(player.name, player)
@@ -1882,6 +1260,7 @@ class LeagueState:
         return lookup[winning_name]
 
     def update_bowling_bests(self, bowlers, stats, against_name=""):
+        """Update each bowler's career-best bowling figures (most wickets, fewest runs as the tiebreak) if this match's spell beats their existing record, recording who it came against."""
         for player in bowlers:
             ensure_stat_fields(player)
             data = stats.get(player.name)
@@ -1891,6 +1270,7 @@ class LeagueState:
                 player.stats["best_bowling_against"] = against_name
 
     def innings_card(self, innings):
+        """Build the JSON scorecard for one completed innings: top performers (4 best batters/bowlers for the summary view) plus the full batting/bowling lineups with computed economy and "not out"/"did not bat" labels for the detailed view."""
         batting = sorted(innings["bat_stats"].items(), key=lambda x: (x[1]["runs"], -x[1]["balls"]), reverse=True)[:4]
         bowling = sorted(
             innings["bowl_stats"].items(),
@@ -1919,6 +1299,7 @@ class LeagueState:
         }
 
     def archive_season(self, champion, runner_up):
+        """Snapshot the just-finished season into `season_history`: champion, runner-up, season MVP, final points table, and top batting/bowling leaderboards — preserved across the retention/draft reset that follows."""
         mvp = self.leaderboard(lambda p: self.mvp_score(p), True, None, 1)[0]
         self.season_history.append({
             "season": self.season_year,
@@ -1932,6 +1313,7 @@ class LeagueState:
         })
 
     def mvp_score(self, player):
+        """Season-long value heuristic for ranking players (retention priority, MVP award, leaderboards): a weighted blend of run-scoring and strike-rate bonus, wicket-taking and economy bonus, fielding contributions, MOTM awards, and a "won games while playing" share — rewarding well-rounded, winning contributions over single-category stuffing."""
         ensure_stat_fields(player)
         s = player.stats
         batting = s["runs"] + s["fours"] * 2 + s["sixes"] * 3 + s["fifties"] * 8 + s["hundreds"] * 18
@@ -1946,12 +1328,14 @@ class LeagueState:
         return batting + bowling + fielding + s["motm"] * 35 + win_share
 
     def all_players(self):
+        """Every player currently on a franchise roster (excludes free agents in `player_pool`)."""
         players = []
         for team in self.teams:
             players.extend(team.roster)
         return players
 
     def find_player_anywhere(self, name):
+        """Look up a player by name across rosters first, then the free-agent pool. Returns `None` if not found anywhere."""
         for player in self.all_players():
             if player.name == name:
                 return player
@@ -1961,6 +1345,15 @@ class LeagueState:
         return None
 
     def player_dict(self, player):
+        """Serialise a player into the rich JSON dict the frontend uses for rosters, draft cards, lineup pickers, and profile views.
+
+        Beyond raw ratings/stats, computes derived figures (average, bowling
+        average/strike rate), season rating-progression strings, and
+        dynamically generated strength/weakness notes that reflect this
+        season's in-form/out-of-form trends (overriding the player's static
+        profile text once they've faced/bowled enough deliveries to be
+        meaningful) plus phase-fit summaries for each match phase.
+        """
         ensure_stat_fields(player)
         s = player.stats
         avg = s["runs"] / s["outs"] if s["outs"] else float(s["runs"])
@@ -1988,6 +1381,7 @@ class LeagueState:
             "bat_progression": f"{getattr(player, 'season_start_bat', player.batting_ovr)} -> {player.current_batting}",
             "bowl_progression": f"{getattr(player, 'season_start_bowl', player.bowling_ovr)} -> {player.current_bowling}",
             "batting_hand": player.batting_hand, "bowling_hand": player.bowling_hand,
+            "preferred_position": getattr(player, "preferred_position", 6),
             "batting_archetype": expanded_batting_archetype(player),
             "bowling_phase": expanded_bowling_phase(player),
             "bowling_type": getattr(player, "bowling_type", "None"),
@@ -2012,12 +1406,14 @@ class LeagueState:
         }
 
     def best_bowling_label(self, player):
+        """Format a player's career-best bowling figures as "wickets/runs" (e.g. "4/22"), or "-" if they've never taken a wicket."""
         ensure_stat_fields(player)
         wkts = player.stats["best_bowling_wickets"]
         runs = player.stats["best_bowling_runs"]
         return f"{wkts}/{runs}" if wkts else "-"
 
     def team_dict(self, team):
+        """Serialise a franchise into the JSON dict the frontend uses for standings, squad, and lineup-planning views: branding, season record/NRR, leadership, saved/suggested lineups and orders, Impact Player default pairings, and the full roster (best-rated first)."""
         meta = TEAM_META[team.name]
         saved_batting = list(getattr(team, "saved_batting_order_names", []))
         saved_bowling = list(getattr(team, "saved_bowling_over_names", []))
@@ -2043,6 +1439,7 @@ class LeagueState:
         }
 
     def leaderboard(self, key, reverse=True, minimum=None, limit=20):
+        """Rank all rostered players by `key` (a sort-key function), optionally filtering to those meeting a `(stat_name, minimum_value)` qualification threshold (e.g. a minimum-balls cutoff for batting/bowling tables), and return up to `limit` as serialised player dicts."""
         players = self.all_players()
         if minimum:
             stat, value = minimum
@@ -2053,20 +1450,30 @@ class LeagueState:
         return [self.player_dict(p) for p in ranked]
 
     def batting_table(self):
+        """Full season run-scoring leaderboard (the "Orange Cap" race), ranked by runs then overall season value, restricted to players who've actually faced a ball."""
         return self.leaderboard(lambda p: (p.stats["runs"], self.mvp_score(p)), True, ("balls_faced", 1), None)
 
     def bowling_table(self):
+        """Full season wicket-taking leaderboard (the "Purple Cap" race), ranked by wickets then overall season value, restricted to players who've actually bowled a ball."""
         return self.leaderboard(lambda p: (p.stats["wickets"], self.mvp_score(p)), True, ("balls_bowled", 1), None)
 
     def payload(self):
+        """Serialise the entire league state into the JSON dict the frontend renders for whatever screen is active — title, draft room, season hub, live match, retention, or season history.
+
+        Bundles together team/standings data, the live match payload (if
+        any), draft state and available pool, schedule/results, season
+        leaderboards, and history — essentially everything the single-page
+        frontend needs to redraw itself after any action.
+        """
         available = sorted(self.player_pool, key=lambda p: p.current_ovr, reverse=True)
         current = self.current_draft_team()
         user = self.user_team() if self.teams and self.user_team_name else None
         return {
-            "save_exists": os.path.exists(SAVE_FILE),
+            "save_exists": bool(self.list_saves()) or os.path.exists(SAVE_FILE),
+            "save_name": self.save_name,
             "phase": self.phase, "season": self.season_year, "completed_seasons": self.completed_seasons,
             "draft_type": self.draft_type, "round": self.round_num, "user_team": self.user_team_name,
-            "difficulty": self.difficulty,
+            "difficulty": self.difficulty, "draft_pool_type": self.draft_pool_type,
             "status": self.status_message, "teams": [self.team_dict(t) for t in self.teams],
             "standings": [self.team_dict(t) for t in self.standings()] if self.teams else [],
             "squad_size": SQUAD_SIZE, "retention_limit": self.retention_limit,
@@ -2088,6 +1495,7 @@ class LeagueState:
         }
 
     def leaderboards(self):
+        """Build the full set of season award-race leaderboards (Orange/Purple Cap, sixes, fours, strike rate, economy, fielding, MVP, etc.) shown on the stats screen, each independently ranked and qualification-filtered where relevant (e.g. minimum balls faced/bowled for rate-based stats)."""
         return {
             "orange_cap": self.leaderboard(lambda p: p.stats["runs"], limit=50),
             "purple_cap": self.leaderboard(lambda p: p.stats["wickets"], limit=50),

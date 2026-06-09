@@ -1,10 +1,19 @@
+"""Local HTTP server for the IPL franchise sim's web UI.
+
+A small stdlib `http.server` that does two jobs: serves the static frontend
+(`static/index.html`, `app.js`, `styles.css`) and exposes a JSON action API
+under `/api/...`. Each POST to `/api/<action>` mutates the single shared
+`LeagueState` (and its `live_match`, when one is active) and responds with
+the full state payload so the frontend can re-render. `/api/state` (GET)
+returns that same payload without mutating anything, e.g. on page load.
+"""
 import json
 import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-from sim_app import LeagueState
+from sim import LeagueState
 
 
 PORT = 8765
@@ -13,12 +22,16 @@ STATE = LeagueState()
 
 
 def replace_state(new_state):
+    """Swap in a freshly loaded `LeagueState` (used by `/api/load`)."""
     global STATE
     STATE = new_state
 
 
 class Handler(BaseHTTPRequestHandler):
+    """Routes static asset requests and `/api/...` JSON actions to `STATE`."""
+
     def send_json(self, payload, status=200):
+        """Write `payload` to the response body as JSON with the given HTTP status."""
         data = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -27,10 +40,16 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def read_body(self):
+        """Parse the request body as JSON, defaulting to an empty object."""
         length = int(self.headers.get("Content-Length", "0"))
         return json.loads(self.rfile.read(length) or b"{}")
 
     def serve_static(self, path):
+        """Serve a file from `static/`, defaulting `/` to `index.html`.
+
+        Resolves the path within `STATIC_DIR` and rejects anything that
+        would escape it (e.g. via `..`) or doesn't exist, returning a 404.
+        """
         if path == "/":
             path = "/index.html"
         full_path = os.path.abspath(os.path.join(STATIC_DIR, path.lstrip("/")))
@@ -47,21 +66,34 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        """Serve `/api/state` as JSON, otherwise fall through to static files."""
         parsed = urlparse(self.path)
         if parsed.path == "/api/state":
             self.send_json(STATE.payload())
             return
+        if parsed.path == "/api/saves":
+            self.send_json({"saves": LeagueState.list_saves()})
+            return
         self.serve_static(parsed.path)
 
     def do_POST(self):
+        """Dispatch a `/api/<action>` request to the matching `LeagueState`/`LiveMatch` method.
+
+        On success, responds with the refreshed state payload; any exception
+        raised by the action (e.g. invalid move, out-of-turn request) is
+        caught and reported to the frontend as a 400 with the error message,
+        so a single bad request can't crash the server or corrupt state.
+        """
         body = self.read_body()
         try:
             if self.path == "/api/new":
-                STATE.new_league(body.get("team", "Mumbai Indians"), body.get("difficulty", "hard"))
+                STATE.new_league(body.get("team", "Mumbai Indians"), body.get("difficulty", "hard"), body.get("draft_pool", "current"))
             elif self.path == "/api/load":
-                replace_state(LeagueState.load())
+                replace_state(LeagueState.load(body.get("name") or None))
             elif self.path == "/api/save":
-                STATE.save()
+                STATE.save(body.get("name") or None)
+            elif self.path == "/api/delete-save":
+                LeagueState.delete_save(body["name"])
             elif self.path == "/api/draft":
                 STATE.user_pick(body["player"])
             elif self.path == "/api/start-draft":

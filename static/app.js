@@ -10,12 +10,22 @@ let draftTimer = { seconds: 60, paused: true, key: "", id: null };
 let viewedScorecard = null;
 let dragPayload = null;
 let selectedFixtureWeek = null;
+let savesLoaded = false;
 
 const teams = [
   "Chennai Super Kings", "Mumbai Indians", "Royal Challengers Bengaluru",
   "Kolkata Knight Riders", "Sunrisers Hyderabad", "Rajasthan Royals",
   "Delhi Capitals", "Gujarat Titans", "Lucknow Super Giants", "Punjab Kings"
 ];
+
+const NAV_ICONS = {
+  draft: "🎯", retention: "🔁", season: "🏏", match: "🔴",
+  standings: "🏆", stats: "📊", squad: "👥", history: "📜"
+};
+const NAV_SHORT = {
+  draft: "Draft", retention: "Retain", season: "Matches", match: "Live",
+  standings: "Table", stats: "Stats", squad: "Squad", history: "History"
+};
 
 async function api(path, body = null) {
   const opts = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
@@ -243,22 +253,46 @@ function renderGuide() {
 function draftStartingXi(roster) {
   const selected = [];
   const add = p => { if (p && !selected.includes(p.name) && selected.length < 11) selected.push(p.name); };
+  const isBatter = p => p.role === "Batsman" || p.role === "Wicketkeeper" || p.role === "All-Rounder";
+  const isBowler = p => p.role.includes("Bowler") || p.role === "All-Rounder";
   [...roster].filter(p => p.role === "Wicketkeeper").sort((a,b)=>b.bat-a.bat).slice(0,1).forEach(add);
-  [...roster].filter(p => ["Aggressive Opener","Anchor","Middle-over Rotator","Spin Specialist"].includes(p.batting_archetype)).sort((a,b)=>b.bat-a.bat).forEach(add);
-  [...roster].filter(p => p.role === "All-Rounder").sort((a,b)=>(b.bat+b.bowl)-(a.bat+a.bowl)).forEach(add);
-  [...roster].filter(p => p.role.includes("Bowler")).sort((a,b)=>b.bowl-a.bowl).forEach(add);
+  [...roster].filter(p => isBatter(p)).sort((a,b)=>b.bat-a.bat).forEach(p => { if (selected.filter(n => isBatter(playerByName(n))).length < 6) add(p); });
+  [...roster].filter(p => isBowler(p)).sort((a,b)=>b.bowl-a.bowl).forEach(p => { if (selected.filter(n => isBowler(playerByName(n))).length < 5) add(p); });
   [...roster].sort((a,b)=>b.ovr-a.ovr).forEach(add);
-  return selected;
+  // Arrange the selected XI into a batting order by natural slot — mirrors the
+  // server's `smart_batting_order` best-fit pass, so a #4/#5 type like Klaasen
+  // previews in the right spot even before the user sets a real lineup.
+  const xi = selected.map(playerByName).filter(Boolean);
+  const slots = Array.from({length: 11}, () => null);
+  const ranked = [...xi].sort((a, b) => Math.abs((a.preferred_position||6) - 6) - Math.abs((b.preferred_position||6) - 6) || b.bat - a.bat);
+  const remaining = [...ranked];
+  ranked.forEach(p => {
+    let bestIdx = -1, bestDist = Infinity;
+    for (let i = 0; i < 11; i++) {
+      if (slots[i]) continue;
+      const dist = Math.abs((i + 1) - (p.preferred_position || 6));
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    }
+    if (bestIdx >= 0) {
+      slots[bestIdx] = p.name;
+      const idx = remaining.indexOf(p);
+      if (idx >= 0) remaining.splice(idx, 1);
+    }
+  });
+  return slots.map((name, i) => name || (remaining.shift()?.name || ""));
 }
 
 function draggableList(id, names, length = names.length, editable = true, options = {}) {
   const items = Array.from({length}, (_, i) => names[i] || "");
   const group = options.group || id;
   const fixed = options.pool ? "0" : "1";
-  return `<div id="${id}" class="drag-list ${options.pool ? "pool-list" : ""}" data-editable="${editable ? "1" : "0"}" data-group="${esc(group)}" data-fixed="${fixed}" data-allow-duplicates="${options.allowDuplicates ? "1" : "0"}" data-copy-source="${options.copySource ? "1" : "0"}">${items.map((name, i) => `
+  const extra = name => `${options.showNaturalSlot ? naturalSlotChip(name) : ""}${options.showMeta ? playerLineupMeta(name) : ""}${playerBadges(name)}`;
+  const rows = items.map((name, i) => `
     <div class="drag-item ${name ? "" : "empty"}" draggable="${editable && name ? "true" : "false"}" data-name="${esc(name)}">
-      <span>${i + 1}</span><b>${name ? playerLink(name) + playerBadges(name) : "Empty"}</b>
-    </div>`).join("")}</div>`;
+      <span>${i + 1}</span><b>${name ? playerLink(name) + extra(name) : "Empty"}</b>
+    </div>`).join("");
+  const zonesAttr = options.showZones ? ` data-zones="${options.zones === OVER_PHASE_ZONES ? "overs" : "order"}"` : "";
+  return `<div id="${id}" class="drag-list ${options.pool ? "pool-list" : ""} ${options.showZones ? "zoned-list" : ""}" data-editable="${editable ? "1" : "0"}" data-group="${esc(group)}" data-fixed="${fixed}" data-allow-duplicates="${options.allowDuplicates ? "1" : "0"}" data-copy-source="${options.copySource ? "1" : "0"}"${zonesAttr}>${rows}</div>`;
 }
 
 function playerBadges(name) {
@@ -271,6 +305,37 @@ function playerBadges(name) {
   const selectedKeeper = $("squadKeeper")?.value || t.saved_wicketkeeper;
   if (player?.role === "Wicketkeeper" && name === selectedKeeper) bits.push("WK");
   return bits.length ? ` <small class="role-badges">${bits.join(" · ")}</small>` : "";
+}
+
+const ORDER_ZONES = [
+  { key: "top", label: "Top Order", range: [1, 3], className: "zone-top" },
+  { key: "middle", label: "Middle Order", range: [4, 6], className: "zone-middle" },
+  { key: "death", label: "Death Overs", range: [7, 8], className: "zone-death" },
+  { key: "tail", label: "Tail", range: [9, 11], className: "zone-tail" },
+];
+
+const OVER_PHASE_ZONES = [
+  { key: "powerplay", label: "Powerplay", range: [1, 6], className: "zone-top" },
+  { key: "middle", label: "Middle Overs", range: [7, 15], className: "zone-middle" },
+  { key: "death", label: "Death Overs", range: [16, 20], className: "zone-death" },
+];
+
+function zoneForSlot(slotNumber, zones = ORDER_ZONES) {
+  return zones.find(z => slotNumber >= z.range[0] && slotNumber <= z.range[1]) || zones[Math.floor(zones.length / 2)];
+}
+
+function naturalSlotChip(name) {
+  const player = playerByName(name);
+  if (!player) return "";
+  const pos = player.preferred_position || 6;
+  const zone = zoneForSlot(pos);
+  return ` <small class="slot-chip ${zone.className}" title="Naturally bats around #${pos} (${zone.label})">#${pos} · ${zone.label}</small>`;
+}
+
+function playerLineupMeta(name) {
+  const player = playerByName(name);
+  if (!player) return "";
+  return ` <small class="lineup-meta">${esc(player.role)} · ${esc(player.batting_archetype || "")} · Bat ${player.bat} / Bowl ${player.bowl}</small>`;
 }
 
 function dragListNames(id) {
@@ -417,11 +482,27 @@ function refreshDragBadges() {
 }
 
 function renumberList(list) {
-  [...list.querySelectorAll(".drag-item")].forEach((item, i) => {
+  list.querySelectorAll(".zone-divider").forEach(d => d.remove());
+  const items = [...list.querySelectorAll(".drag-item")];
+  items.forEach((item, i) => {
     const marker = item.querySelector("span");
     if (marker) marker.textContent = i + 1;
     item.draggable = !!item.dataset.name && list.dataset.editable === "1";
   });
+  if (list.classList.contains("zoned-list")) {
+    const zones = list.dataset.zones === "overs" ? OVER_PHASE_ZONES : ORDER_ZONES;
+    let lastZoneKey = null;
+    items.forEach((item, i) => {
+      const zone = zoneForSlot(i + 1, zones);
+      if (zone.key !== lastZoneKey) {
+        lastZoneKey = zone.key;
+        const divider = document.createElement("div");
+        divider.className = `zone-divider ${zone.className}`;
+        divider.innerHTML = `${zone.label} <small>(slots ${zone.range[0]}-${Math.min(zone.range[1], items.length)})</small>`;
+        list.insertBefore(divider, item);
+      }
+    });
+  }
 }
 
 function benchNames(roster, xi) {
@@ -430,6 +511,10 @@ function benchNames(roster, xi) {
 
 function bowlingOptions(names) {
   return names.map(playerByName).filter(p => p && (p.role.includes("Bowler") || p.role === "All-Rounder")).map(p => p.name);
+}
+
+function impactOptions(roster) {
+  return roster.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("");
 }
 
 function refreshBowlingPlanPools() {
@@ -454,12 +539,14 @@ function refreshBowlingPlanPools() {
   });
 }
 
-function setDragListNames(id, names, length = names.length) {
+function setDragListNames(id, names, length = names.length, options = {}) {
   const list = $(id);
   if (!list) return;
+  if (options.showZones) list.classList.add("zoned-list");
   list.innerHTML = Array.from({ length }, (_, i) => {
     const name = names[i] || "";
-    return `<div class="drag-item ${name ? "" : "empty"}" draggable="${name ? "true" : "false"}" data-name="${esc(name)}"><span>${i + 1}</span><b>${name ? playerLink(name) + playerBadges(name) : "Empty"}</b></div>`;
+    const extra = name ? `${options.showNaturalSlot ? naturalSlotChip(name) : ""}${playerBadges(name)}` : "";
+    return `<div class="drag-item ${name ? "" : "empty"}" draggable="${name ? "true" : "false"}" data-name="${esc(name)}"><span>${i + 1}</span><b>${name ? playerLink(name) + extra : "Empty"}</b></div>`;
   }).join("");
   list.querySelectorAll(".drag-item").forEach(bindDragItem);
   renumberList(list);
@@ -543,15 +630,15 @@ function seedTeamSelect() {
 }
 
 async function newLeague() {
-  state = await api("/api/new", { team: $("teamSelect").value, difficulty: $("difficultySelect")?.value || "hard" });
+  state = await api("/api/new", { team: $("teamSelect").value, difficulty: $("difficultySelect")?.value || "hard", draft_pool: $("draftPoolSelect")?.value || "current" });
   selectedFixtureWeek = null;
   viewedScorecard = null;
   activeView = "draft";
   render();
 }
 
-async function loadLeague() {
-  state = await api("/api/load", {});
+async function loadLeague(name) {
+  state = await api("/api/load", { name: name || "" });
   selectedFixtureWeek = null;
   viewedScorecard = null;
   activeView = defaultView();
@@ -559,9 +646,49 @@ async function loadLeague() {
 }
 
 async function saveLeague() {
-  if (!confirm("Save the current league state? This will overwrite the existing local save.")) return;
-  state = await api("/api/save", {});
+  const suggested = state?.save_name || state?.user_team || "My Career";
+  const name = prompt("Name this save:", suggested);
+  if (name === null) return;
+  if (!name.trim()) { alert("Enter a save name."); return; }
+  state = await api("/api/save", { name: name.trim() });
+  await refreshSavesPanel();
   render();
+}
+
+async function deleteSave(name) {
+  if (!confirm(`Delete the save "${name}"? This cannot be undone.`)) return;
+  await api("/api/delete-save", { name });
+  await refreshSavesPanel();
+}
+
+async function refreshSavesPanel() {
+  const panel = $("savesList");
+  const hint = $("savesHint");
+  if (!panel) return;
+  try {
+    const { saves } = await api("/api/saves");
+    if (!saves.length) {
+      hint.textContent = "No saves yet — start a league and save it to see it here.";
+      panel.innerHTML = "";
+      return;
+    }
+    hint.textContent = `${saves.length} save${saves.length === 1 ? "" : "s"} available.`;
+    panel.innerHTML = saves.map(s => `
+      <div class="save-row">
+        <div class="save-row-info">
+          <strong>${esc(s.name)}</strong>
+          <small>${esc(s.team || "Unassigned")} · IPL ${esc(s.season)} · ${esc((s.phase || "").replace(/_/g, " "))} · ${new Date(s.updated_at * 1000).toLocaleString()}</small>
+        </div>
+        <div class="save-row-actions">
+          <button data-load="${esc(s.name)}">Load</button>
+          <button data-delete="${esc(s.name)}" class="danger">Delete</button>
+        </div>
+      </div>`).join("");
+    panel.querySelectorAll("[data-load]").forEach(btn => btn.onclick = () => loadLeague(btn.dataset.load));
+    panel.querySelectorAll("[data-delete]").forEach(btn => btn.onclick = () => deleteSave(btn.dataset.delete));
+  } catch {
+    hint.textContent = "Couldn't load saves.";
+  }
 }
 
 function defaultView() {
@@ -599,8 +726,11 @@ function setView(view) {
 function render() {
   $("titleScreen").classList.toggle("hidden", state && state.phase !== "title");
   $("appShell").classList.toggle("hidden", !state || state.phase === "title");
-  $("loadLeagueBtn").disabled = state && !state.save_exists;
-  $("saveHint").textContent = state && state.save_exists ? "A local save is available." : "No local save yet.";
+  if (!state || state.phase === "title") {
+    if (!savesLoaded) { savesLoaded = true; refreshSavesPanel(); }
+  } else {
+    savesLoaded = false;
+  }
   const displayYear = state?.season || 2026;
   document.title = `IPL ${displayYear} Cricket Sim`;
   if ($("titleHeading")) $("titleHeading").textContent = `IPL ${displayYear} Franchise Universe`;
@@ -609,7 +739,7 @@ function render() {
 
   const views = visibleViews();
   if (!views.find(v => v.id === activeView)) activeView = defaultView();
-  $("tabs").innerHTML = views.map(v => `<button class="${v.id === activeView ? "active" : ""}" onclick="setView('${v.id}')">${v.label}</button>`).join("");
+  $("tabs").innerHTML = views.map(v => `<button class="${v.id === activeView ? "active" : ""}" onclick="setView('${v.id}')"><span class="nav-icon">${NAV_ICONS[v.id] || "•"}</span><span class="nav-label">${NAV_SHORT[v.id] || v.label}</span></button>`).join("");
   document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
   const node = $(`view${activeView[0].toUpperCase()}${activeView.slice(1)}`);
   if (node) node.classList.remove("hidden");
@@ -706,10 +836,12 @@ function renderDraft() {
     (bowlType === "All" || p.bowling_phase === bowlType || p.bowling_type === bowlType)
   ), draftSort);
   $("draftTable").innerHTML = table(
-    [["Player","name"], ["Role","role"], ["Age","age"], ["OVR","ovr"], ["Bat","bat"], ["Bowl","bowl"], ["Bat Type","batting_archetype"], ["Bowl Type","bowling_type"], ["Slot","overseas"], ""],
+    [["Player","name"], ["Role","role"], ["Age","age"], ["OVR","ovr"], ["Bat","bat"], ["Bowl","bowl"], ["Bat Type","batting_archetype"], ["Bowl Type","bowling_type"], ["Natural Slot","preferred_position"], ["Origin","overseas"], ""],
     players.slice(0, 160).map(p => [
       `${playerLink(p.name)}<br><small>${esc(p.batting_hand)} bat · ${esc(p.bowling_hand)} bowl</small>`,
-      `${p.role}${p.allrounder_style ? `<br><small>${esc(p.allrounder_style)}</small>` : ""}`, p.age, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), esc(p.bowling_type), p.overseas ? "OS" : "IND",
+      `${p.role}${p.allrounder_style ? `<br><small>${esc(p.allrounder_style)}</small>` : ""}`, p.age, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), esc(p.bowling_type),
+      `<span class="slot-chip ${zoneForSlot(p.preferred_position || 6).className}">#${p.preferred_position || 6}</span>`,
+      p.overseas ? "OS" : "IND",
       state.phase === "draft" && draftStarted && state.draft.current_team === state.user_team ? `<button class="good" onclick='draftPlayer(${JSON.stringify(p.name)})'>Pick</button>` : "",
     ]), "draft:"
   );
@@ -725,7 +857,7 @@ function renderDraft() {
   $("draftHistory").innerHTML = table(["Pick", "Rnd", "Type", "Team", "Player", "OVR"], state.draft.history.slice().reverse().map(h => [h.pick, h.round, h.type, h.team, h.player, h.ovr]));
   const draftXi = draftStartingXi(user.roster);
   $("draftExtra")?.remove();
-  $("draftNeeds").insertAdjacentHTML("afterend", `<div id="draftExtra"><h2 class="gap-top">Drafted XI Preview</h2><div class="notice">This is a planning preview only. Reorder it while drafting to visualize combinations; final match XIs are set on My Squad.</div>${draggableList("draftXiPreview", draftXi, 11, true)}<h2 class="gap-top">My Drafted Squad</h2><div class="table-wrap short"><table>${table(["Player","Role","OVR","Bat","Bowl","Type","Slot"], user.roster.map(p => [playerLink(p.name), p.role, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), p.overseas ? "OS" : "IND"]))}</table></div></div>`);
+  $("draftNeeds").insertAdjacentHTML("afterend", `<div id="draftExtra"><h2 class="gap-top">Drafted XI Preview</h2><div class="notice">A planning preview only — players are slotted by where they naturally bat (e.g. a #4/#5 type lands in the middle order automatically), grouped into top/middle/death/tail zones. Reorder it to visualize combinations; final match XIs are set on My Squad.</div>${draggableList("draftXiPreview", draftXi, 11, true, { showZones: true, showNaturalSlot: true })}<h2 class="gap-top">My Drafted Squad</h2><div class="table-wrap short"><table>${table(["Player","Role","OVR","Bat","Bowl","Type","Natural Slot","Origin"], user.roster.map(p => [playerLink(p.name), p.role, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), `<span class="slot-chip ${zoneForSlot(p.preferred_position || 6).className}">#${p.preferred_position || 6}</span>`, p.overseas ? "OS" : "IND"]))}</table></div></div>`);
   enableDragLists();
 }
 
@@ -994,12 +1126,12 @@ function renderLineupHub(match) {
   $("matchHub").innerHTML = `
     <div class="panel">
       <div class="section-head"><h2>${context}</h2><button class="primary" onclick="submitLineup()">Confirm XI</button></div>
-      <div class="notice">${esc(match.message)} Drag within the XI to reorder. Drag a player to the bench pool to free a slot, then drag a bench player into the empty slot.</div>
-      ${draggableList(isBowling ? "matchBowlXI" : "matchBatXI", preset, 11, true, { group: isBowling ? "matchBowl" : "matchBat" })}
+      <div class="notice">${esc(match.message)} The list below is grouped by where each player naturally bats — top order, middle order, death overs, tail. Drag within the XI to reorder, or drag a player to the bench pool to free a slot, then drag a bench player in.</div>
+      ${draggableList(isBowling ? "matchBowlXI" : "matchBatXI", preset, 11, true, { group: isBowling ? "matchBowl" : "matchBat", showZones: true, showNaturalSlot: true })}
       <h2 class="gap-top">Bench</h2>
-      ${draggableList(isBowling ? "matchBowlBenchPool" : "matchBatBenchPool", bench, bench.length, true, { group: isBowling ? "matchBowl" : "matchBat", pool: true })}
+      ${draggableList(isBowling ? "matchBowlBenchPool" : "matchBatBenchPool", bench, bench.length, true, { group: isBowling ? "matchBowl" : "matchBat", pool: true, showNaturalSlot: true })}
     </div>
-    ${isBowling ? `<div class="panel gap-top"><h2>20-Over Bowling Plan</h2><p class="notice">Drag eligible bowlers into blank over slots. Blank means smart auto-pick.</p>${draggableList("matchBowlPlan", savedBowl, 20, true, { group: "matchPlan", allowDuplicates: true })}<h2 class="gap-top">Eligible Bowlers</h2>${draggableList("matchBowlPlanPool", bowlPool, bowlPool.length, true, { group: "matchPlan", pool: true, copySource: true })}</div>` : ""}`;
+    ${isBowling ? `<div class="panel gap-top"><h2>20-Over Bowling Plan</h2><p class="notice">Grouped by phase — Powerplay (1-6), Middle (7-15), Death (16-20). Drag eligible bowlers into blank over slots; blank means smart auto-pick. Max 4 overs each, never in consecutive overs.</p>${draggableList("matchBowlPlan", savedBowl, 20, true, { group: "matchPlan", allowDuplicates: true, showZones: true, zones: OVER_PHASE_ZONES })}<h2 class="gap-top">Eligible Bowlers</h2>${draggableList("matchBowlPlanPool", bowlPool, bowlPool.length, true, { group: "matchPlan", pool: true, copySource: true, showMeta: true })}</div>` : ""}`;
   enableDragLists();
 }
 
@@ -1023,10 +1155,10 @@ function renderImpactHub(match) {
       <div class="scoreboard"><small>Innings Break</small><div class="scoreline">Impact Sub</div><p>${esc(match.message)}</p></div>
       <div class="panel">
         <h2>Substitution Desk</h2>
-        <div class="notice">Pick one player from the current XI to remove and one bench player to bring in. Your saved impact preset is preselected when available.</div>
+        <div class="notice">Pick one player from the current XI to remove and one bench player to bring in for the second innings. The usual IPL approach: defending, bring on an extra specialist bowler for your weakest batting option in the XI; chasing, bring on an extra hitter (often a finisher around #5-8) for your most expendable bowler. Your saved impact preset is preselected when available.</div>
         <div class="toolbar">
-          <select id="subOut">${impact.xi.map(p => `<option value="${esc(p.name)}">${esc(p.name)} out</option>`).join("")}</select>
-          <select id="subIn">${impact.bench.map(p => `<option value="${esc(p.name)}">${esc(p.name)} in</option>`).join("")}</select>
+          <label>Out <select id="subOut">${impact.xi.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
+          <label>In <select id="subIn">${impact.bench.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
           <button class="primary" onclick="impactSub()">Use Impact Sub</button>
           <button onclick="api('/api/impact-sub',{}).then(s=>{state=s;render();})">Skip</button>
         </div>
@@ -1174,24 +1306,62 @@ function sortedRows(items, sort) {
   });
 }
 
+function teamCell(name) {
+  const t = team(name);
+  return t ? teamLabel(t) : esc(name);
+}
+
+function teamName(name) {
+  const t = team(name);
+  return esc(t ? t.name : name);
+}
+
 function renderStats() {
   if (!state.teams.length) return;
   const allPlayers = state.teams.flatMap(t => t.roster);
   const query = ($("statsSearch")?.value || "").toLowerCase();
+  const teamFilter = $("statsTeamFilter");
+  if (teamFilter && !teamFilter.dataset.filled) {
+    teamFilter.innerHTML = `<option value="">All Teams</option>${state.teams.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("")}`;
+    teamFilter.dataset.filled = "1";
+    teamFilter.onchange = renderStats;
+  }
+  const teamPick = teamFilter?.value || "";
   const found = query ? allPlayers.find(p => p.name.toLowerCase().includes(query)) : null;
-  $("playerProfile").innerHTML = found ? `<div class="profile-card"><h2>${esc(found.name)}</h2><p>${esc(found.team)} · ${esc(found.role)} · Form ${found.form} · OVR ${esc(found.ovr_progression)}</p><div class="mini-grid"><span>Runs <b>${found.runs}</b></span><span>SR <b>${found.sr}</b></span><span>Wkts <b>${found.wickets}</b></span><span>Econ <b>${found.econ}</b></span><span>Ct/St/RO <b>${found.catches}/${found.stumpings}/${found.runouts}</b></span><span>MVP <b>${found.mvp}</b></span></div><small>${esc(found.strengths)} · ${esc(found.weaknesses)}</small></div>` : "";
+  if (found) {
+    const t = team(found.team);
+    $("playerProfile").innerHTML = `<div class="profile-card" style="--team-primary:${t?.primary || "#0f172a"};--team-accent:${t?.accent || "#0f172a"}">
+      <div class="profile-head">
+        ${t ? `<span class="crest lg" style="background:linear-gradient(135deg,${t.primary},${t.accent})">${t.abbr}</span>` : ""}
+        <div><h2>${esc(found.name)}</h2><p>${esc(found.team)} · ${esc(found.role)} · Form ${found.form} · OVR ${esc(found.ovr_progression)}</p></div>
+      </div>
+      <div class="stat-chip-row">
+        <span class="stat-chip">Runs<b>${found.runs}</b></span>
+        <span class="stat-chip">SR<b>${found.sr}</b></span>
+        <span class="stat-chip">Wkts<b>${found.wickets}</b></span>
+        <span class="stat-chip">Econ<b>${found.econ}</b></span>
+        <span class="stat-chip">Ct/St/RO<b>${found.catches}/${found.stumpings}/${found.runouts}</b></span>
+        <span class="stat-chip">MVP<b>${found.mvp}</b></span>
+      </div>
+      <small>${esc(found.strengths)} · ${esc(found.weaknesses)}</small>
+    </div>`;
+  } else {
+    $("playerProfile").innerHTML = "";
+  }
   const batHeaders = [["#",""],["Player","name"],["Team","team"],["Runs","runs"],["Balls","balls"],["Avg","avg"],["SR","sr"],["HS","hs"],["4s","fours"],["6s","sixes"],["Boundaries","boundaries"],["50s","fifties"],["100s","hundreds"],["MOTM","motm"],["MVP","mvp"]];
   const bowlHeaders = [["#",""],["Player","name"],["Team","team"],["Wkts","wickets"],["Balls","balls_bowled"],["Runs","runs_conceded"],["Econ","econ"],["Avg","bowling_avg"],["SR","bowling_sr"],["Best","best_bowling"],["Ct","catches"],["St","stumpings"],["RO","runouts"],["MOTM","motm"],["MVP","mvp"]];
-  $("battingStats").innerHTML = table(batHeaders, sortedPlayers(state.tables.batting, batSort).map((p, i) => [i + 1, playerLink(p.name), p.team, p.runs, p.balls, p.avg, p.sr, p.hs, p.fours, p.sixes, p.boundaries, p.fifties, p.hundreds, p.motm, p.mvp]), "bat:");
-  $("bowlingStats").innerHTML = table(bowlHeaders, sortedPlayers(state.tables.bowling, bowlSort).map((p, i) => [i + 1, playerLink(p.name), p.team, p.wickets, p.balls_bowled, p.runs_conceded, p.econ, p.bowling_avg, p.bowling_sr, p.best_bowling, p.catches, p.stumpings, p.runouts, p.motm, p.mvp]), "bowl:");
+  const batRows = state.tables.batting.filter(p => !teamPick || p.team === teamPick);
+  const bowlRows = state.tables.bowling.filter(p => !teamPick || p.team === teamPick);
+  $("battingStats").innerHTML = table(batHeaders, sortedPlayers(batRows, batSort).map((p, i) => [i + 1, playerLink(p.name), teamCell(p.team), p.runs, p.balls, p.avg, p.sr, p.hs, p.fours, p.sixes, p.boundaries, p.fifties, p.hundreds, p.motm, p.mvp]), "bat:");
+  $("bowlingStats").innerHTML = table(bowlHeaders, sortedPlayers(bowlRows, bowlSort).map((p, i) => [i + 1, playerLink(p.name), teamCell(p.team), p.wickets, p.balls_bowled, p.runs_conceded, p.econ, p.bowling_avg, p.bowling_sr, p.best_bowling, p.catches, p.stumpings, p.runouts, p.motm, p.mvp]), "bowl:");
   const batLeaderDefs = [["Orange Cap","orange_cap","runs","#f97316"],["MVP Race","mvp","mvp","#0f172a"],["Most Sixes","sixes","sixes","#dc2626"],["Most Fours","fours","fours","#2563eb"],["Most Boundaries","boundaries","boundaries","#059669"],["Highest Score","highest_score","hs","#b45309"],["Best SR","strike_rate","sr","#db2777"]];
   const bowlLeaderDefs = [["Purple Cap","purple_cap","wickets","#7c3aed"],["Best Economy","economy","econ","#0891b2"],["Best Bowling","best_figures","best_bowling","#6d28d9"],["Most Catches","catches","catches","#16a34a"],["Most Stumpings","stumpings","stumpings","#0d9488"],["Most Run Outs","runouts","runouts","#ca8a04"]];
   const listHtml = defs => defs.map(([title, listKey, statKey, color]) => {
-    const rows = (state.leaderboards[listKey] || []).slice(0, 50);
+    const rows = (state.leaderboards[listKey] || []).filter(p => !teamPick || p.team === teamPick).slice(0, 50);
     return `<div class="leader-list tall" style="--award:${color}"><h3>${title}</h3>${rows.map((p, i) => {
       const against = title === "Highest Score" && p.hs_against ? ` vs ${esc(p.hs_against)}` : title === "Best Bowling" && p.best_bowling_against ? ` vs ${esc(p.best_bowling_against)}` : "";
-      return `<div class="leader-row"><b>${i + 1}</b><span>${playerLink(p.name)}<small>${esc(p.team)}${against}</small></span><strong>${esc(p[statKey])}</strong></div>`;
-    }).join("")}</div>`;
+      return `<div class="leader-row"><b>${i + 1}</b><span>${playerLink(p.name)}<small>${teamName(p.team)}${against}</small></span><strong>${esc(p[statKey])}</strong></div>`;
+    }).join("") || `<div class="notice compact">No qualifying players for ${esc(team(teamPick)?.name || "this team")}.</div>`}</div>`;
   }).join("");
   $("leaderShowcase").innerHTML = `<section class="award-section"><h3>Batting Awards</h3><div class="award-grid">${listHtml(batLeaderDefs)}</div></section><section class="award-section"><h3>Bowling and Fielding Awards</h3><div class="award-grid">${listHtml(bowlLeaderDefs)}</div></section>`;
   if ($("statsSearch")) $("statsSearch").oninput = renderStats;
@@ -1247,7 +1417,6 @@ function renderSquad() {
   const batFirst = uniqueXi(t.batting_first_xi?.length ? t.batting_first_xi : t.roster.slice(0, 11).map(p => p.name), t.roster);
   const bowlFirst = uniqueXi(t.bowling_first_xi?.length ? t.bowling_first_xi : batFirst, t.roster);
   const bowlDefault = t.saved_bowling_order?.length ? t.saved_bowling_order : [];
-  const rosterOptions = t.roster.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join("");
   const keeperOptions = t.roster.filter(p => p.role === "Wicketkeeper").map(p => `<option value="${esc(p.name)}">Keeper: ${esc(p.name)}</option>`).join("") || `<option value="">Draft a wicketkeeper first</option>`;
   const batBench = benchNames(t.roster, batFirst);
   const bowlBench = benchNames(t.roster, bowlFirst);
@@ -1256,23 +1425,24 @@ function renderSquad() {
   $("squadKeeper").onchange = refreshDragBadges;
   $("battingPreset").innerHTML = "";
   $("bowlingPreset").innerHTML = `
-    ${draggableList("squadBowlPlan", bowlDefault, 20, true, { group: "squadPlan", allowDuplicates: true })}
+    <p class="notice compact">Overs are grouped by phase — Powerplay (1-6), Middle (7-15), Death (16-20) — so you can see your plan's shape at a glance. Drag bowlers from the pool below into blank slots; max 4 overs each, never in consecutive overs.</p>
+    ${draggableList("squadBowlPlan", bowlDefault, 20, true, { group: "squadPlan", allowDuplicates: true, showZones: true, zones: OVER_PHASE_ZONES })}
     <h2 class="gap-top">Eligible Bowlers</h2>
-    ${draggableList("squadBowlPlanPool", planBowlers, planBowlers.length, true, { group: "squadPlan", pool: true, copySource: true })}
+    ${draggableList("squadBowlPlanPool", planBowlers, planBowlers.length, true, { group: "squadPlan", pool: true, copySource: true, showMeta: true })}
   `;
   $("xiPreset").innerHTML = `
-    <div class="notice">Build two match presets here. Drag players between each XI and its bench pool; Save Match Presets also saves the default keeper and impact sub choices.</div>
+    <div class="notice">Build two match presets here. Each XI is grouped by where players naturally bat — top order, middle order, death overs, tail — so you can see at a glance whether the order makes sense. Drag players between each XI and its bench pool; Save Match Presets also saves the default keeper and impact sub choices.</div>
     <div class="grid">
-      <div><h2>Batting First XI</h2>${draggableList("batFirstXIList", batFirst, 11, true, { group: "squadBat" })}<h2 class="gap-top">Batting Bench Pool</h2>${draggableList("batBenchPool", batBench, batBench.length, true, { group: "squadBat", pool: true })}</div>
-      <div><h2>Bowling First XI</h2>${draggableList("bowlFirstXIList", bowlFirst, 11, true, { group: "squadBowl" })}<h2 class="gap-top">Bowling Bench Pool</h2>${draggableList("bowlBenchPool", bowlBench, bowlBench.length, true, { group: "squadBowl", pool: true })}</div>
+      <div><h2>Batting First XI</h2><p class="notice compact">Sets the total. Slot order here is the actual batting order.</p>${draggableList("batFirstXIList", batFirst, 11, true, { group: "squadBat", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Batting Bench Pool</h2>${draggableList("batBenchPool", batBench, batBench.length, true, { group: "squadBat", pool: true, showNaturalSlot: true })}</div>
+      <div><h2>Bowling First XI</h2><p class="notice compact">Defends a total. Slot order here is the actual batting order if this side bats second.</p>${draggableList("bowlFirstXIList", bowlFirst, 11, true, { group: "squadBowl", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Bowling Bench Pool</h2>${draggableList("bowlBenchPool", bowlBench, bowlBench.length, true, { group: "squadBowl", pool: true, showNaturalSlot: true })}</div>
     </div>
     <h2 class="gap-top">Impact Sub Presets</h2>
-    <div class="notice">These are manual presets. The XIs can be identical, or differ by one player for the Impact Player swap.</div>
-    <div class="toolbar">
-      <label>Bat → Bowl out <select id="batToBowlOut">${rosterOptions}</select></label>
-      <label>in <select id="batToBowlIn">${rosterOptions}</select></label>
-      <label>Bowl → Bat out <select id="bowlToBatOut">${rosterOptions}</select></label>
-      <label>in <select id="bowlToBatIn">${rosterOptions}</select></label>
+    <div class="notice">The Impact Player rule lets you swap one player at the innings break. The usual IPL pattern: defending a total, bring on an extra specialist bowler; chasing, bring on an extra hitter (often a finisher batting #5-8). Pick your "out"/"in" pair for each direction below — the dropdowns show role and natural slot to help you choose.</div>
+    <div class="toolbar impact-preset-toolbar">
+      <label>Defending: bowler comes in for <select id="batToBowlOut">${impactOptions(t.roster)}</select></label>
+      <label>bring in <select id="batToBowlIn">${impactOptions(t.roster)}</select></label>
+      <label>Chasing: hitter comes in for <select id="bowlToBatOut">${impactOptions(t.roster)}</select></label>
+      <label>bring in <select id="bowlToBatIn">${impactOptions(t.roster)}</select></label>
     </div>`;
   if ($("squadKeeper")) $("squadKeeper").value = t.saved_wicketkeeper || t.roster.find(p => p.role === "Wicketkeeper")?.name || "";
   const batOnly = batFirst.find(name => !bowlFirst.includes(name)) || "";
@@ -1297,7 +1467,6 @@ function renderHistory() {
 }
 
 $("newLeagueBtn").onclick = newLeague;
-$("loadLeagueBtn").onclick = loadLeague;
 $("saveBtn").onclick = saveLeague;
 $("homeBtn").onclick = () => { state.phase = "title"; render(); };
 $("draftSearch").oninput = renderDraft;

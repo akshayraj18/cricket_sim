@@ -1,7 +1,98 @@
 # models.py
+"""Domain model for the IPL franchise sim: individual players and teams.
+
+`Player` tracks a cricketer's static attributes (role, ratings, batting/
+bowling profile) plus dynamic state (form, current-match intent, season
+stats), and exposes `current_*` properties that blend base rating with form.
+`Team` tracks a franchise's roster, leadership, season results, and the
+saved lineup/order preferences the UI carries over between matches.
+"""
 import random
 
+# Mean real-world IPL batting position (2021-2025 ball-by-ball data) for each
+# (role, batting_archetype) combination — e.g. a Wicketkeeper "Aggressor" like
+# Buttler or de Kock overwhelmingly opens (~1.7), while a Batsman "Finisher"
+# like David Miller walks in around #5-6. Used to give freshly-created players
+# a realistic natural batting slot instead of relying on archetype labels alone,
+# which (e.g. "Spin Specialist" keepers who are actually finishers) don't map
+# cleanly to where a player actually bats.
+ARCHETYPE_BATTING_POSITION = {
+    ("Wicketkeeper", "Aggressive Opener"): 1.7,
+    ("Wicketkeeper", "Aggressor"): 1.8,
+    ("Wicketkeeper", "Anchor"): 2.6,
+    ("Wicketkeeper", "Middle-over Rotator"): 3.6,
+    ("Wicketkeeper", "Spin Specialist"): 4.1,
+    ("Wicketkeeper", "Strike Rotator"): 4.0,
+    ("Wicketkeeper", "Finisher"): 6.0,
+    ("Wicketkeeper", "Lower-order Hitter"): 6.5,
+    ("Wicketkeeper", "Defensive Tailender"): 7.5,
+    ("Batsman", "Aggressive Opener"): 1.4,
+    ("Batsman", "Aggressor"): 2.0,
+    ("Batsman", "Anchor"): 2.2,
+    ("Batsman", "Spin Specialist"): 3.6,
+    ("Batsman", "Strike Rotator"): 3.8,
+    ("Batsman", "Middle-over Rotator"): 5.2,
+    ("Batsman", "Finisher"): 5.7,
+    ("Batsman", "Lower-order Hitter"): 6.5,
+    ("Batsman", "Defensive Tailender"): 8.0,
+    ("All-Rounder", "Aggressive Opener"): 2.3,
+    ("All-Rounder", "Aggressor"): 2.4,
+    ("All-Rounder", "Anchor"): 3.2,
+    ("All-Rounder", "Strike Rotator"): 4.1,
+    ("All-Rounder", "Spin Specialist"): 4.6,
+    ("All-Rounder", "Middle-over Rotator"): 4.9,
+    ("All-Rounder", "Finisher"): 5.3,
+    ("All-Rounder", "Lower-order Hitter"): 6.8,
+    ("All-Rounder", "Defensive Tailender"): 8.0,
+    ("Bowler (Spin)", "Aggressor"): 4.3,
+    ("Bowler (Spin)", "Strike Rotator"): 5.0,
+    ("Bowler (Spin)", "Finisher"): 6.5,
+    ("Bowler (Spin)", "Lower-order Hitter"): 7.5,
+    ("Bowler (Spin)", "Defensive Tailender"): 8.5,
+    ("Bowler (Fast)", "Aggressor"): 4.5,
+    ("Bowler (Fast)", "Strike Rotator"): 5.5,
+    ("Bowler (Fast)", "Finisher"): 6.5,
+    ("Bowler (Fast)", "Lower-order Hitter"): 8.0,
+    ("Bowler (Fast)", "Defensive Tailender"): 9.4,
+}
+DEFAULT_BATTING_POSITION_BY_ROLE = {
+    "Batsman": 4.0, "Wicketkeeper": 4.0, "All-Rounder": 5.0,
+    "Bowler (Fast)": 8.5, "Bowler (Spin)": 8.0,
+}
+
+
+def derive_preferred_position(role, batting_archetype, batting_ovr=None, bowling_ovr=None):
+    """Estimate where a player naturally bats (1-11), from real-world IPL position tendencies for their role/archetype.
+
+    Looks up the (role, archetype) pair in `ARCHETYPE_BATTING_POSITION` (built
+    from 2021-2025 ball-by-ball IPL data) and rounds its mean position to the
+    nearest slot, falling back to a per-role default for unrecognised
+    combinations. All-rounders get a small nudge toward the top order when
+    their batting clearly outweighs their bowling (and vice versa), so a
+    batting-first all-rounder slots higher than a bowling-first one with the
+    same archetype label.
+    """
+    base = ARCHETYPE_BATTING_POSITION.get((role, batting_archetype))
+    if base is None:
+        base = DEFAULT_BATTING_POSITION_BY_ROLE.get(role, 6.0)
+    if role == "All-Rounder" and batting_ovr is not None and bowling_ovr is not None:
+        if batting_ovr - bowling_ovr >= 15:
+            base -= 1.0
+        elif bowling_ovr - batting_ovr >= 15:
+            base += 1.0
+    return max(1, min(11, round(base)))
+
+
 class Player:
+    """A single cricketer: ratings, profile, in-match state, and season stats.
+
+    `base_ovr`/`batting_ovr`/`bowling_ovr` are the player's stable ratings;
+    `current_batting`/`current_bowling`/`current_ovr` blend them with the
+    player's `form` to produce the rating actually used in simulation.
+    `batting_archetype`, `bowling_phase`, `bowling_type`, `strengths`, and
+    `weaknesses` describe tendencies the match engine uses to bias outcomes.
+    """
+
     def __init__(self, name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age, batting_hand="Right", bowling_hand="Right", batting_archetype="Strike Rotator", bowling_phase="Flexible", bowling_type="None", strengths="", weaknesses=""):
         self.name = name
         self.role = role
@@ -17,12 +108,14 @@ class Player:
         self.bowling_type = bowling_type
         self.strengths = strengths
         self.weaknesses = weaknesses
+        self.preferred_position = derive_preferred_position(role, batting_archetype, batting_ovr, bowling_ovr)
         self.form = 5
         self.intent = "Normal"
         self.team_name = "Unassigned"
         self.reset_stats()
 
     def reset_stats(self):
+        """Zero out this player's season statistics (used at the start of each new season)."""
         self.stats = {
             "runs": 0, "balls_faced": 0, "outs": 0, "highest_score": 0,
             "fours": 0, "sixes": 0, "fifties": 0, "hundreds": 0,
@@ -34,34 +127,51 @@ class Player:
 
     @property
     def form_impact(self):
-        # Keep form as a confidence modifier, not a player rewrite. A 1-10 form
-        # band now moves OVR by roughly -4 to +5, which keeps match results
-        # believable across a season.
+        """Confidence modifier derived from form (range -4 to +5).
+
+        Form lives on a 1-10 scale with 5 as neutral; this keeps it acting
+        as a small swing on top of the player's base ratings rather than a
+        wholesale rewrite, so match results stay believable across a season.
+        """
         return self.form - 5
 
     @property
     def current_batting(self):
+        """Effective batting rating (1-100): base rating shifted by form."""
         return max(1, min(100, int(self.batting_ovr + self.form_impact)))
 
     @property
     def current_bowling(self):
+        """Effective bowling rating (1-100): base rating shifted by form."""
         return max(1, min(100, int(self.bowling_ovr + self.form_impact)))
 
     @property
     def current_ovr(self):
+        """Effective overall rating (1-100): best of base/batting/bowling, shifted by form."""
         return max(1, min(100, int(max(self.base_ovr, self.batting_ovr, self.bowling_ovr) + self.form_impact)))
 
     @property
     def batting_strike_rate(self):
+        """Season strike rate (runs per 100 balls faced), or 0.0 if yet to bat."""
         if self.stats["balls_faced"] == 0: return 0.0
         return (self.stats["runs"] / self.stats["balls_faced"]) * 100
 
     @property
     def bowling_economy(self):
+        """Season bowling economy (runs conceded per over), or 0.0 if yet to bowl."""
         if self.stats["balls_bowled"] == 0: return 0.0
         return (self.stats["runs_conceded"] / (self.stats["balls_bowled"] / 6))
 
     def apply_game_performance_on_form(self, specialized_impact):
+        """Nudge form up or down after a match, scaled by age.
+
+        `specialized_impact` is a small signed value (e.g. +1 for a strong
+        knock, -1 for a poor one) from `MatchEngine.eval_match_performances_for_form`.
+        Younger players (<=23) swing more in both directions (development/
+        inconsistency), older players (>=35) swing less on the upside and
+        recover more slowly on the downside, modelling experience and decline.
+        Form is clamped to the 1-10 scale.
+        """
         if specialized_impact > 0:
             if self.age <= 23:
                 adjusted = specialized_impact + 0.35
@@ -81,6 +191,15 @@ class Player:
         self.form = max(1, min(10, self.form + adjusted))
 
     def apply_offseason_progression(self):
+        """Age the player up by a year and randomly grow or decline their ratings.
+
+        Growth is sampled from an age-banded weighted distribution: young
+        players (<=21) skew toward solid gains, players in their late 20s to
+        early 30s mostly plateau or dip slightly, and players over 34 tend to
+        decline. The same delta is applied to both batting and bowling
+        ratings, `base_ovr` is recomputed as their max, and form resets to
+        neutral for the new season.
+        """
         if self.age <= 21:
             growth = random.choices([1, 2, 3, 4, 5], weights=[1, 3, 4, 3, 1])[0]
         elif self.age <= 25:
@@ -99,6 +218,13 @@ class Player:
 
 
 class Team:
+    """An IPL franchise: roster, leadership, season results, and saved UI preferences.
+
+    The `saved_*` fields cache the user's last lineup, batting/bowling order,
+    keeper choice, and impact-sub plan so the web UI can offer to carry them
+    over into the next match without the user re-entering them.
+    """
+
     def __init__(self, name):
         self.name = name
         self.roster = []
@@ -122,215 +248,23 @@ class Team:
 
     @property
     def games_played(self):
+        """Total matches completed this season (wins plus losses)."""
         return self.wins + self.losses
 
     @property
     def net_run_rate(self):
+        """Standard cricket NRR: (runs scored per over faced) minus (runs conceded per over bowled).
+
+        Falls back to 1.0 overs for either side of the ratio when the team
+        hasn't batted/bowled yet, avoiding a division by zero before a season starts.
+        """
         overs_faced = self.balls_faced / 6 if self.balls_faced > 0 else 1.0
         overs_bowled = self.balls_bowled / 6 if self.balls_bowled > 0 else 1.0
         return (self.runs_scored / overs_faced) - (self.runs_conceded / overs_bowled)
 
-    def cpu_auto_select_xi(self):
-        sorted_roster = sorted(self.roster, key=lambda p: p.current_ovr, reverse=True)
-        playing_xi = []
-        overseas_count = 0
-        
-        if self.captain:
-            playing_xi.append(self.captain)
-            if self.captain.is_overseas: overseas_count += 1
-        if self.vice_captain and self.vice_captain not in playing_xi:
-            if not (self.vice_captain.is_overseas and overseas_count >= 4):
-                playing_xi.append(self.vice_captain)
-                if self.vice_captain.is_overseas: overseas_count += 1
-
-        wk = next((p for p in sorted_roster if p.role == "Wicketkeeper"), None)
-        if wk and wk not in playing_xi:
-            if not (wk.is_overseas and overseas_count >= 4):
-                playing_xi.append(wk)
-                if wk.is_overseas: overseas_count += 1
-                
-        for p in sorted_roster:
-            if p in playing_xi: continue
-            if len(playing_xi) == 11: break
-            if p.is_overseas and overseas_count >= 4: continue
-            playing_xi.append(p)
-            if p.is_overseas: overseas_count += 1
-            
-        return playing_xi[:11]
-
-    def user_select_xi_interactively(self, bowling_first=False):
-        if self.saved_playing_xi_names:
-            available_saved = [p for p in self.roster if p.name in self.saved_playing_xi_names]
-            if len(available_saved) == 11:
-                carry_over = input(f"\n[Memory] Load your Playing XI from the previous match? (y/n): ").strip().lower()
-                if carry_over == 'y':
-                    return available_saved
-
-        print(f"\n" + "="*60 + f"\n    SELECT PLAYING XI SQUAD : {self.name.upper()}     \n" + "="*60)
-        
-        if bowling_first:
-            sorted_roster = sorted(self.roster, key=lambda p: (
-                0 if "Bowler" in p.role else (1 if p.role == "All-Rounder" else 2),
-                -p.current_bowling
-            ))
-        else:
-            sorted_roster = sorted(self.roster, key=lambda p: (
-                0 if (p.role == "Batsman" or p.role == "Wicketkeeper") else (1 if p.role == "All-Rounder" else 2),
-                -p.current_batting
-            ))
-
-        for idx, p in enumerate(sorted_roster):
-            leader = " [C]" if p == self.captain else (" [VC]" if p == self.vice_captain else "")
-            print(f" [{idx:>2}] {p.name:<22} | {p.role:<13} | BAT OVR: {p.current_batting:<2} | BOWL OVR: {p.current_bowling:<2} | {p.batting_hand[0]}B-{p.bowling_hand[0]}W{leader}")
-            
-        selected_xi = []
-        if self.captain: selected_xi.append(self.captain)
-        if self.vice_captain and self.vice_captain not in selected_xi: selected_xi.append(self.vice_captain)
-        
-        while len(selected_xi) < 11:
-            print(f"\n Lineup Pool ({len(selected_xi)}/11): {[p.name for p in selected_xi]}")
-            try:
-                choice = int(input(" Enter selection index row number: "))
-                if choice < 0 or choice >= len(sorted_roster): continue
-                player = sorted_roster[choice]
-                if player in selected_xi: continue
-                
-                os_count = sum(1 for p in selected_xi if p.is_overseas)
-                if player.is_overseas and os_count >= 4:
-                    print(" Limit Intercept! Maximum 4 overseas slots permitted.")
-                    continue
-                selected_xi.append(player)
-            except ValueError:
-                pass
-                
-        self.saved_playing_xi_names = [p.name for p in selected_xi]
-        return selected_xi
-
-    def assign_leadership_roles_interactively(self):
-        print(f"\n=== APPOINT LEADERSHIP FOR {self.name.upper()} ===")
-        for idx, p in enumerate(self.roster):
-            print(f" [{idx:>2}] {p.name:<22} | OVR: {p.current_ovr:<2} | {p.role}")
-        while True:
-            try:
-                c_idx = int(input("\nSelect Captain Index ID: "))
-                vc_idx = int(input("Select Vice-Captain Index ID: "))
-                if c_idx != vc_idx and 0 <= c_idx < len(self.roster) and 0 <= vc_idx < len(self.roster):
-                    self.captain = self.roster[c_idx]
-                    self.vice_captain = self.roster[vc_idx]
-                    break
-            except ValueError:
-                pass
-            print("Selection invalid.")
-
     def auto_assign_cpu_leadership(self):
+        """Hand the captaincy and vice-captaincy to the two highest-rated squad members."""
         sorted_r = sorted(self.roster, key=lambda p: p.current_ovr, reverse=True)
         self.captain = sorted_r[0]
         self.vice_captain = sorted_r[1]
 
-
-class DraftEngine:
-    def __init__(self, teams, player_pool):
-        self.teams = teams
-        self.player_pool = player_pool
-        self.draft_history = []
-
-    def run_snake_draft(self, user_team_name):
-        order = list(self.teams)
-        random.shuffle(order)
-        round_num = 1
-        global_pick_count = 1
-        
-        while any(len(t.roster) < 18 for t in self.teams):
-            current_order = list(order) if round_num % 2 != 0 else list(reversed(order))
-            for team in current_order:
-                if len(team.roster) >= 18: continue
-                if team.name == user_team_name: picked_player = self.user_pick(team)
-                else: picked_player = self.cpu_pick(team)
-                
-                picked_player.team_name = team.name
-                self.draft_history.append({
-                    "round": round_num, "pick_num": global_pick_count, "team": team.name, "player": f"{picked_player.name} ({picked_player.current_ovr})"
-                })
-                global_pick_count += 1
-            round_num += 1
-
-    def cpu_pick(self, team):
-        self.player_pool.sort(key=lambda p: p.current_ovr, reverse=True)
-        chosen = self.player_pool.pop(0)
-        team.roster.append(chosen)
-        return chosen
-
-    def user_pick(self, team):
-        while True:
-            print(f"\n>>>> YOUR TURN: {team.name.upper()} ({len(team.roster)}/18) <<<<")
-            self.player_pool.sort(key=lambda p: p.current_ovr, reverse=True)
-            
-            print("\n" + "-"*85 + "\n--- TOP 20 AVAILABLE PLAYERS ---" + "\n" + "-"*85)
-            for idx, p in enumerate(self.player_pool[:20]):
-                print(f" [{idx+1:>2}] {p.name:<22} | OVR: {p.current_ovr:<2} | Age: {p.age:<2} | {p.role:<13} | {p.batting_hand[0]}H/{p.bowling_hand[0]}H")
-            
-            print("\n--- MENU CONSOLE OPTIONS ---")
-            print(" [1-20] Type any row number directly to draft that player")
-            print(" [S]    Search / Pick ANY player in the database by name")
-            print(" [R]    View your current squad roster allocation")
-            print(" [B]    Open live, updated Draft Board Matrix")
-            
-            action = input("\nEnter selection option: ").strip().upper()
-            
-            if action.isdigit():
-                idx = int(action) - 1
-                if 0 <= idx < 20 and idx < len(self.player_pool):
-                    picked = self.player_pool.pop(idx)
-                    team.roster.append(picked)
-                    print(f"\n[Confirmed] You drafted: {picked.name}!")
-                    return picked
-                else:
-                    print("Index choice out of bounds.")
-            
-            elif action == "S":
-                query = input("Enter player name to look up: ").strip().lower()
-                matches = [p for p in self.player_pool if query in p.name.lower()]
-                if not matches:
-                    print("\nNo available player matches that name lookup.")
-                    continue
-                print("\n--- REGISTRY MATCHES FOUND ---")
-                for m_idx, p in enumerate(matches):
-                    print(f" [{m_idx+1}] {p.name:<22} | OVR: {p.current_ovr:<2} | Age: {p.age:<2} | {p.role:<13}")
-                
-                sub = input("\nEnter index number to draft (or press Enter to back out): ").strip()
-                if sub.isdigit() and 0 <= int(sub)-1 < len(matches):
-                    picked = matches[int(sub)-1]
-                    self.player_pool.remove(picked)
-                    team.roster.append(picked)
-                    print(f"\n[Confirmed] You drafted: {picked.name}!")
-                    return picked
-                    
-            elif action == "R":
-                print(f"\n=== SQUAD ROSTER DEPTH MAP: {team.name.upper()} ===")
-                for r_idx, p in enumerate(team.roster, 1):
-                    print(f" {r_idx:>2}. {p.name:<22} | OVR: {p.current_ovr:<2} | Age: {p.age:<2} | {p.role:<13}")
-                input("\nPress Enter to close roster panel...")
-                
-            elif action == "B":
-                self.print_draft_board_matrix()
-                input("Press Enter to close live draft matrix panel...")
-            else:
-                print("Command not recognized.")
-
-    def print_draft_board_matrix(self):
-        print("\n" + "="*80)
-        print("                        LIVE DRAFT BOARD MATRIX                         ")
-        print("="*80)
-        if not self.draft_history:
-            print("  No selections have been logged yet.")
-        else:
-            rounds_data = {}
-            for pick in self.draft_history:
-                r = pick["round"]
-                if r not in rounds_data: rounds_data[r] = []
-                rounds_data[r].append(f"Pick {pick['pick_num']:<3} | {pick['team'][:15]:<15} -> {pick['player']}")
-            for r_num, picks in sorted(rounds_data.items()):
-                print(f"\n[ROUND {r_num}]")
-                for p_info in picks:
-                    print(f"  • {p_info}")
-        print("\n" + "="*80 + "\n")
