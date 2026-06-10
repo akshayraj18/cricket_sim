@@ -5,6 +5,8 @@ import pytest
 
 from sim.league_state import LeagueState
 
+pytestmark = pytest.mark.regression
+
 
 def _simulate_to_league_complete(league):
     while league.phase == "season":

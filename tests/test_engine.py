@@ -13,6 +13,8 @@ import pytest
 from engine import MatchEngine
 from models import Player
 
+pytestmark = pytest.mark.unit
+
 
 def make_player(name="P", role="Batsman", batting_ovr=70, bowling_ovr=20, **kwargs):
     defaults = dict(

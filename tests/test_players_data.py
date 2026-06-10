@@ -16,6 +16,8 @@ from players_data import (
     get_initial_player_pool,
 )
 
+pytestmark = pytest.mark.unit
+
 
 # --- get_initial_player_pool --------------------------------------------------------
 

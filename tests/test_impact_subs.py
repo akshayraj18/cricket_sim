@@ -6,6 +6,8 @@ bowling first). `default_impact_subs` should suggest pairings that follow
 that pattern, and `LiveMatch.apply_impact_sub` should correctly action
 whichever pairing the user has saved, in both directions.
 """
+import pytest
+
 from sim.helpers import is_batting_role, is_bowling_role
 
 from .conftest import (
@@ -15,6 +17,8 @@ from .conftest import (
     play_through_innings,
     submit_user_xi_for_innings_role,
 )
+
+pytestmark = pytest.mark.integration
 
 
 def _build_ready_match(seed):

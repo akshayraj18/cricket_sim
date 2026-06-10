@@ -17,3 +17,8 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "unit: fast, isolated tests of pure functions/classes (no LeagueState/match scaffolding)",
+    "integration: tests that exercise LeagueState/LiveMatch/ui_server flows together",
+    "regression: slower end-to-end tests that guard whole-career/season behaviour",
+]

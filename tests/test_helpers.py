@@ -26,6 +26,8 @@ from sim.helpers import (
     phase_fit_label,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def make_player(role="Batsman", batting_ovr=70, bowling_ovr=20, **kwargs):
     defaults = dict(

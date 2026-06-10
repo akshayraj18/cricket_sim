@@ -19,6 +19,8 @@ from sim.league_state import LeagueState
 
 from .conftest import USER_TEAM, drafted_league, fresh_league
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def server():

@@ -8,6 +8,8 @@ import pytest
 
 from sim.league_state import LeagueState
 
+pytestmark = pytest.mark.integration
+
 
 # --- alternate league setup paths --------------------------------------------------
 

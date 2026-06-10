@@ -4,6 +4,8 @@ import pytest
 from sim.helpers import is_batting_role, is_bowling_role, is_wicketkeeper_option
 from sim.league_state import LeagueState
 
+pytestmark = pytest.mark.integration
+
 
 def test_new_league_sets_up_blank_draft(league):
     assert league.phase == "draft"

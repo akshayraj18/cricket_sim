@@ -9,6 +9,8 @@ from .conftest import (
     submit_user_xi_for_innings_role,
 )
 
+pytestmark = pytest.mark.integration
+
 
 def _ready(seed):
     league = drafted_league(seed=seed)

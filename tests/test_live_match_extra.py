@@ -19,6 +19,8 @@ from .conftest import (
     submit_user_xi_for_innings_role,
 )
 
+pytestmark = pytest.mark.integration
+
 
 def _ready(seed):
     """Build a ready-to-play match, retrying with nearby seeds if a particular

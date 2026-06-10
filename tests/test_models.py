@@ -11,6 +11,8 @@ import pytest
 
 from models import Player, Team, derive_preferred_position, ARCHETYPE_BATTING_POSITION, DEFAULT_BATTING_POSITION_BY_ROLE
 
+pytestmark = pytest.mark.unit
+
 
 def make_player(**overrides):
     defaults = dict(

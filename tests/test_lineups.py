@@ -4,10 +4,14 @@ These guard the central "Klaasen should bat at #4/#5, not get shoved to the
 bottom because of his archetype label" requirement, and the realism of the
 auto-generated XIs/orders that feed match simulation.
 """
+import pytest
+
 from models import derive_preferred_position
 from sim.helpers import counts_as_batter, counts_as_bowler
 
 from .conftest import resolve
+
+pytestmark = pytest.mark.integration
 
 
 def test_spin_specialist_keeper_slots_in_middle_order():
