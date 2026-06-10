@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from sim.league_state import LeagueState
+from cricket_sim_engine.sim.league_state import LeagueState
 
 USER_TEAM = "Mumbai Indians"
 

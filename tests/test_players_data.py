@@ -7,8 +7,8 @@ correctly.
 """
 import pytest
 
-from models import Player
-from players_data import (
+from cricket_sim_engine.models import Player
+from cricket_sim_engine.players_data import (
     IPL_2026_ROSTERS,
     IPL_TEAMS_LIST,
     get_2026_rosters_and_pool,

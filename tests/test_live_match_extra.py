@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from sim.helpers import is_bowling_role
+from cricket_sim_engine.sim.helpers import is_bowling_role
 
 from .conftest import (
     apply_smart_presets,
@@ -15,7 +15,6 @@ from .conftest import (
     force_toss,
     names,
     play_through_innings,
-    resolve,
     submit_user_xi_for_innings_role,
 )
 

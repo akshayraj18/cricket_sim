@@ -1,11 +1,14 @@
 """Local HTTP server for the IPL franchise sim's web UI.
 
 A small stdlib `http.server` that does two jobs: serves the static frontend
-(`static/index.html`, `app.js`, `styles.css`) and exposes a JSON action API
+(`webapp/index.html`, `app.js`, `styles.css`) and exposes a JSON action API
 under `/api/...`. Each POST to `/api/<action>` mutates the single shared
 `LeagueState` (and its `live_match`, when one is active) and responds with
 the full state payload so the frontend can re-render. `/api/state` (GET)
 returns that same payload without mutating anything, e.g. on page load.
+
+Kept as a fallback/reference during the migration to the FastAPI backend
+under `backend/`.
 """
 import json
 import mimetypes
@@ -13,11 +16,11 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-from sim import LeagueState
+from cricket_sim_engine.sim import LeagueState
 
 
 PORT = 8765
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "webapp")
 STATE = LeagueState()
 
 

@@ -8,7 +8,7 @@ whichever pairing the user has saved, in both directions.
 """
 import pytest
 
-from sim.helpers import is_batting_role, is_bowling_role
+from cricket_sim_engine.sim.helpers import is_batting_role, is_bowling_role
 
 from .conftest import (
     apply_smart_presets,

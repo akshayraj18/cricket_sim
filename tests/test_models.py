@@ -9,7 +9,7 @@ import random
 
 import pytest
 
-from models import Player, Team, derive_preferred_position, ARCHETYPE_BATTING_POSITION, DEFAULT_BATTING_POSITION_BY_ROLE
+from cricket_sim_engine.models import Player, Team, derive_preferred_position, ARCHETYPE_BATTING_POSITION, DEFAULT_BATTING_POSITION_BY_ROLE
 
 pytestmark = pytest.mark.unit
 

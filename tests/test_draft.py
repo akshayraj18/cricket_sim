@@ -1,8 +1,8 @@
 """Draft flow: starting a league, drafting a squad, and validating roster composition."""
 import pytest
 
-from sim.helpers import is_batting_role, is_bowling_role, is_wicketkeeper_option
-from sim.league_state import LeagueState
+from cricket_sim_engine.sim.helpers import is_batting_role, is_bowling_role, is_wicketkeeper_option
+from cricket_sim_engine.sim.league_state import LeagueState
 
 pytestmark = pytest.mark.integration
 

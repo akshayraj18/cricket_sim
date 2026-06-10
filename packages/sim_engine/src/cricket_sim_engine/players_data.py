@@ -8,7 +8,9 @@ the pool is topped up with randomly generated domestic prospects.
 import csv
 import os
 import random
-from models import Player
+from cricket_sim_engine.models import Player
+
+DATA_DIR = os.path.dirname(__file__)
 
 IPL_TEAMS_LIST = [
     "Chennai Super Kings", "Mumbai Indians", "Royal Challengers Bengaluru",
@@ -106,7 +108,7 @@ def get_initial_player_pool():
     Raises `FileNotFoundError` if `players.csv` is missing.
     """
     pool = []
-    csv_path = "players.csv"
+    csv_path = os.path.join(DATA_DIR, "players.csv")
 
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Missing custom file map sheet logic at target location: '{csv_path}'")
@@ -210,7 +212,7 @@ def get_alltime_player_pool():
     Falls back to `get_initial_player_pool()` if the all-time CSV is missing.
     The pool is large enough that no synthetic padding is added.
     """
-    csv_path = "players_alltime.csv"
+    csv_path = os.path.join(DATA_DIR, "players_alltime.csv")
     if not os.path.exists(csv_path):
         return get_initial_player_pool()
 
