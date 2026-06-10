@@ -52,3 +52,28 @@ def test_overseas_limit_not_exceeded_in_any_squad(drafted):
     for team in drafted.teams:
         overseas = sum(1 for p in team.roster if p.is_overseas)
         assert overseas <= 8, f"{team.name} drafted an unrealistic {overseas} overseas players"
+
+
+def test_new_league_with_rosters_skips_draft_and_assigns_real_squads():
+    state = LeagueState()
+    state.new_league_with_rosters("Mumbai Indians", "medium")
+    assert state.phase == "season"
+    assert state.draft_pool_type == "rosters2026"
+    user = state.user_team()
+    assert "Jasprit Bumrah" in [p.name for p in user.roster]
+    assert all(len(t.roster) >= 21 for t in state.teams)
+    assert all(t.captain and t.vice_captain for t in state.teams)
+
+
+def test_new_league_with_rosters_has_no_duplicate_or_missing_players():
+    state = LeagueState()
+    state.new_league_with_rosters("Mumbai Indians", "medium")
+    all_names = [p.name for t in state.teams for p in t.roster] + [p.name for p in state.player_pool]
+    assert len(all_names) == len(set(all_names)), "every player should appear at most once across rosters and the pool"
+    assert len(all_names) == len(state.player_pool) + sum(len(t.roster) for t in state.teams)
+
+
+def test_new_league_with_rosters_rejects_unknown_franchise():
+    state = LeagueState()
+    with pytest.raises(ValueError):
+        state.new_league_with_rosters("Made Up Franchise XI", "medium")

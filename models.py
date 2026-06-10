@@ -17,43 +17,49 @@ import random
 # which (e.g. "Spin Specialist" keepers who are actually finishers) don't map
 # cleanly to where a player actually bats.
 ARCHETYPE_BATTING_POSITION = {
-    ("Wicketkeeper", "Aggressive Opener"): 1.7,
-    ("Wicketkeeper", "Aggressor"): 1.8,
-    ("Wicketkeeper", "Anchor"): 2.6,
-    ("Wicketkeeper", "Middle-over Rotator"): 3.6,
-    ("Wicketkeeper", "Spin Specialist"): 4.1,
-    ("Wicketkeeper", "Strike Rotator"): 4.0,
-    ("Wicketkeeper", "Finisher"): 6.0,
-    ("Wicketkeeper", "Lower-order Hitter"): 6.5,
-    ("Wicketkeeper", "Defensive Tailender"): 7.5,
-    ("Batsman", "Aggressive Opener"): 1.4,
-    ("Batsman", "Aggressor"): 2.0,
-    ("Batsman", "Anchor"): 2.2,
-    ("Batsman", "Spin Specialist"): 3.6,
-    ("Batsman", "Strike Rotator"): 3.8,
+    # #1 — pure openers
+    ("Batsman", "Aggressive Opener"): 1.3,
+    ("All-Rounder", "Aggressive Opener"): 1.8,
+    # #2 — WK openers and attacking #2s
+    ("Wicketkeeper", "Aggressive Opener"): 2.0,
+    # #3 — classic attacking #3 (not a defensive anchor, not a finisher)
+    ("Batsman", "Aggressor"): 3.0,
+    ("Wicketkeeper", "Aggressor"): 3.2,
+    ("All-Rounder", "Aggressor"): 3.4,
+    # #3 — classical anchor
+    ("Batsman", "Anchor"): 3.0,
+    ("Wicketkeeper", "Anchor"): 3.4,
+    # #4 — all-rounder anchors and batting-first all-rounders
+    ("All-Rounder", "Anchor"): 4.0,
+    # #5 — middle-over utility: rotate, accumulate, bowl a few overs
     ("Batsman", "Middle-over Rotator"): 5.2,
-    ("Batsman", "Finisher"): 5.7,
-    ("Batsman", "Lower-order Hitter"): 6.5,
-    ("Batsman", "Defensive Tailender"): 8.0,
-    ("All-Rounder", "Aggressive Opener"): 2.3,
-    ("All-Rounder", "Aggressor"): 2.4,
-    ("All-Rounder", "Anchor"): 3.2,
-    ("All-Rounder", "Strike Rotator"): 4.1,
-    ("All-Rounder", "Spin Specialist"): 4.6,
-    ("All-Rounder", "Middle-over Rotator"): 4.9,
-    ("All-Rounder", "Finisher"): 5.3,
-    ("All-Rounder", "Lower-order Hitter"): 6.8,
-    ("All-Rounder", "Defensive Tailender"): 8.0,
-    ("Bowler (Spin)", "Aggressor"): 4.3,
-    ("Bowler (Spin)", "Strike Rotator"): 5.0,
-    ("Bowler (Spin)", "Finisher"): 6.5,
-    ("Bowler (Spin)", "Lower-order Hitter"): 7.5,
-    ("Bowler (Spin)", "Defensive Tailender"): 8.5,
-    ("Bowler (Fast)", "Aggressor"): 4.5,
-    ("Bowler (Fast)", "Strike Rotator"): 5.5,
-    ("Bowler (Fast)", "Finisher"): 6.5,
-    ("Bowler (Fast)", "Lower-order Hitter"): 8.0,
-    ("Bowler (Fast)", "Defensive Tailender"): 9.4,
+    ("Wicketkeeper", "Middle-over Rotator"): 5.0,
+    ("All-Rounder", "Middle-over Rotator"): 5.5,
+    ("Bowler (Spin)", "Aggressor"): 5.2,
+    ("Bowler (Fast)", "Aggressor"): 5.4,
+    # #6 — bowling all-rounder floaters and spin specialist batters
+    ("Bowler (Spin)", "Middle-over Rotator"): 6.0,
+    ("Bowler (Fast)", "Middle-over Rotator"): 6.2,
+    # #7 — finishers: come in to accelerate and hit sixes
+    ("Batsman", "Finisher"): 6.6,
+    ("All-Rounder", "Finisher"): 6.8,
+    ("Wicketkeeper", "Finisher"): 7.0,
+    # #8 — lower-order hitters and tail-end bowlers who can bat
+    ("Wicketkeeper", "Lower-order Hitter"): 7.6,
+    ("Batsman", "Lower-order Hitter"): 7.8,
+    ("All-Rounder", "Lower-order Hitter"): 8.0,
+    ("Bowler (Spin)", "Finisher"): 8.2,
+    ("Bowler (Fast)", "Finisher"): 8.4,
+    # #9 — bowling pinch hitters
+    ("Bowler (Spin)", "Lower-order Hitter"): 8.6,
+    ("Batsman", "Defensive Tailender"): 9.2,
+    # #10 — bowling specialists who scratch a run
+    ("Wicketkeeper", "Defensive Tailender"): 9.6,
+    ("All-Rounder", "Defensive Tailender"): 9.7,
+    ("Bowler (Fast)", "Lower-order Hitter"): 9.8,
+    ("Bowler (Spin)", "Defensive Tailender"): 10.1,
+    # #11 — last man in
+    ("Bowler (Fast)", "Defensive Tailender"): 10.7,
 }
 DEFAULT_BATTING_POSITION_BY_ROLE = {
     "Batsman": 4.0, "Wicketkeeper": 4.0, "All-Rounder": 5.0,

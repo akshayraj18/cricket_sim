@@ -1,4 +1,4 @@
-.PHONY: install run test lint clean
+.PHONY: install run kill test lint clean
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
@@ -7,6 +7,10 @@ install:
 # Start the local web UI at http://localhost:8765
 run:
 	uv run python3 ui_server.py
+
+# Kill any running ui_server.py processes.
+kill:
+	pkill -f ui_server.py || true
 
 # Run the test suite (use `make test ARGS="-k impact_sub"` to filter).
 test:

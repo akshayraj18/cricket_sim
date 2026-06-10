@@ -16,6 +16,84 @@ IPL_TEAMS_LIST = [
     "Delhi Capitals", "Gujarat Titans", "Lucknow Super Giants", "Punjab Kings"
 ]
 
+# Real-world IPL 2026 squads (post-auction), keyed by franchise name and
+# listing each squad's retained players plus 2026-auction signings, by the
+# exact `name` used in players.csv. Any player in players.csv NOT listed on
+# one of these rosters is considered off an IPL roster for 2026 and is
+# carried over into the free-agent pool for the next draft.
+IPL_2026_ROSTERS = {
+    "Royal Challengers Bengaluru": [
+        "Virat Kohli", "Josh Hazlewood", "Phil Salt", "Rajat Patidar", "Jitesh Sharma",
+        "Bhuvneshwar Kumar", "Rasikh Salam", "Krunal Pandya", "Yash Dayal", "Tim David",
+        "Suyash Sharma", "Jacob Bethell", "Devdutt Padikkal", "Nuwan Thushara", "Romario Shepherd",
+        "Swapnil Singh", "Abhinandan Singh", "Jacob Duffy", "Jordan Cox",
+        "Satvik Deswal", "Vicky Ostwal", "Mangesh Yadav", "Vihaan Malhotra", "Kanishk Chouhan",
+    ],
+    "Mumbai Indians": [
+        "Jasprit Bumrah", "Suryakumar Yadav", "Hardik Pandya", "Rohit Sharma", "Trent Boult",
+        "Deepak Chahar", "Tilak Varma", "Naman Dhir", "Will Jacks", "AM Ghazanfar",
+        "Sherfane Rutherford", "Shardul Thakur", "Mitchell Santner", "Ryan Rickelton", "Corbin Bosch",
+        "Robin Minz", "Mayank Markande", "Ashwani Kumar", "Raj Bawa", "Raghu Sharma",
+        "Quinton de Kock", "Danish Malewar", "Mayank Rawat", "Atharva Ankolekar", "Mohd Izhar",
+    ],
+    "Sunrisers Hyderabad": [
+        "Heinrich Klaasen", "Pat Cummins", "Abhishek Sharma", "Travis Head", "Ishan Kishan",
+        "Harshal Patel", "Nitish Kumar Reddy", "Eshan Malinga", "Jaydev Unadkat", "Brydon Carse",
+        "Kamindu Mendis", "Zeeshan Ansari", "Aniket Verma", "Harsh Dubey", "Ravichandran Smaran",
+        "Liam Livingstone", "Shivam Mavi", "Salil Arora", "Sakib Hussain", "Onkar Tarmale",
+        "Praful Hinge", "Krains Fuletra", "Jack Edwards", "Amit Kumar",
+    ],
+    "Chennai Super Kings": [
+        "Sanju Samson", "Ruturaj Gaikwad", "Shivam Dube", "Noor Ahmad", "Khaleel Ahmed",
+        "MS Dhoni", "Anshul Kamboj", "Dewald Brevis", "Gurjapneet Singh", "Nathan Ellis",
+        "Jamie Overton", "Urvil Patel", "Ayush Mhatre", "Mukesh Choudhary", "Shreyas Gopal",
+        "Ramakrishna Ghosh", "Akeal Hosein", "Rahul Chahar", "Matt Henry", "Sarfaraz Khan",
+        "Zak Foulkes", "Matthew Short", "Aman Khan", "Kartik Sharma", "Prashant Veer",
+    ],
+    "Delhi Capitals": [
+        "Axar Patel", "KL Rahul", "Kuldeep Yadav", "Mitchell Starc", "T Natarajan",
+        "Tristan Stubbs", "Mukesh Kumar", "Nitish Rana", "Abishek Porel", "Ashutosh Sharma",
+        "Sameer Rizvi", "Dushmantha Chameera", "Vipraj Nigam", "Karun Nair", "Madhav Tiwari",
+        "Tripurana Vijay", "Ajay Mandal", "Ben Duckett", "Prithvi Shaw", "Auqib Nabi",
+        "Pathum Nissanka", "Kyle Jamieson", "Lungi Ngidi", "David Miller", "Sahil Parakh",
+    ],
+    "Kolkata Knight Riders": [
+        "Rinku Singh", "Sunil Narine", "Varun Chakravarthy", "Harshit Rana", "Ramandeep Singh",
+        "Angkrish Raghuvanshi", "Vaibhav Arora", "Ajinkya Rahane", "Rovman Powell", "Manish Pandey",
+        "Umran Malik", "Anukul Roy", "Finn Allen", "Matheesha Pathirana", "Rachin Ravindra",
+        "Cameron Green", "Mustafizur Rahman", "Akash Deep", "Tim Seifert", "Tejasvi Dahiya",
+        "Rahul Tripathi", "Kartik Tyagi", "Prashant Solanki", "Sarthak Ranjan", "Daksh Kamra",
+    ],
+    "Rajasthan Royals": [
+        "Yashasvi Jaiswal", "Ravindra Jadeja", "Riyan Parag", "Dhruv Jurel", "Jofra Archer",
+        "Shimron Hetmyer", "Tushar Deshpande", "Sandeep Sharma", "Nandre Burger", "Sam Curran",
+        "Kwena Maphaka", "Vaibhav Sooryavanshi", "Donovan Ferreira", "Shubham Dubey", "Yudhvir Singh",
+        "Lhuan-dre Pretorius", "Adam Milne", "Sushant Mishra", "Kuldeep Sen", "Aman Rao",
+        "Ravi Singh", "Yash Raj Punja", "Vignesh Puthur", "Brijesh Sharma",
+    ],
+    "Gujarat Titans": [
+        "Rashid Khan", "Shubman Gill", "Mohammed Siraj", "Jos Buttler", "Kagiso Rabada",
+        "Prasidh Krishna", "Sai Sudharsan", "Rahul Tewatia", "M Shahrukh Khan", "Washington Sundar",
+        "Glenn Phillips", "Sai Kishore", "Arshad Khan", "Gurnoor Brar", "Ishant Sharma",
+        "Jayant Yadav", "Kumar Kushagra", "Anuj Rawat", "Nishant Sindhu", "Manav Suthar",
+        "Jason Holder", "Tom Banton", "Luke Wood", "Ashok Sharma", "Prithvi Raj",
+    ],
+    "Lucknow Super Giants": [
+        "Rishabh Pant", "Nicholas Pooran", "Mayank Yadav", "Mohammed Shami", "Avesh Khan",
+        "Abdul Samad", "Ayush Badoni", "Mohsin Khan", "Mitchell Marsh", "Shahbaz Ahmed",
+        "Aiden Markram", "Matthew Breetzke", "Manimaran Siddharth", "Akash Singh", "Arjun Tendulkar",
+        "Arshin Kulkarni", "Prince Yadav", "Digvesh Rathi", "Himmat Singh", "Wanindu Hasaranga",
+        "Anrich Nortje", "Josh Inglis", "Mukul Choudhary", "Naman Tiwari", "Akshat Raghuwanshi",
+    ],
+    "Punjab Kings": [
+        "Shreyas Iyer", "Arshdeep Singh", "Yuzvendra Chahal", "Marcus Stoinis", "Marco Jansen",
+        "Shashank Singh", "Nehal Wadhera", "Prabhsimran Singh", "Priyansh Arya", "Mitchell Owen",
+        "Azmatullah Omarzai", "Lockie Ferguson", "Vijaykumar Vyshak", "Yash Thakur", "Harpreet Brar",
+        "Vishnu Vinod", "Xavier Bartlett", "Pyla Avinash", "Harnoor Singh", "Suryansh Shedge",
+        "Musheer Khan", "Cooper Connolly", "Ben Dwarshuis", "Vishal Nishad", "Praveen Dubey",
+    ],
+}
+
 def get_initial_player_pool():
     """Build the starting pool of draftable players for a brand-new league.
 
@@ -52,8 +130,13 @@ def get_initial_player_pool():
             bowling_type = row.get('bowling_type', 'None').strip()
             strengths = row.get('strengths', '').strip()
             weaknesses = row.get('weaknesses', '').strip()
-            
-            pool.append(Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age, batting_hand, bowling_hand, batting_archetype, bowling_phase, bowling_type, strengths, weaknesses))
+            natural_slot_raw = row.get('natural_slot', '').strip()
+            natural_slot = int(natural_slot_raw) if natural_slot_raw.isdigit() else None
+
+            p = Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age, batting_hand, bowling_hand, batting_archetype, bowling_phase, bowling_type, strengths, weaknesses)
+            if natural_slot is not None:
+                p.preferred_position = natural_slot
+            pool.append(p)
             
     total_required = 180
     current_count = len(pool)
@@ -96,6 +179,31 @@ def get_initial_player_pool():
     return pool
 
 
+def get_2026_rosters_and_pool():
+    """Build real-world IPL 2026 squads plus a leftover free-agent pool from `players.csv`.
+
+    Returns `(rosters, leftover_pool)` where `rosters` maps each franchise
+    name to its list of `Player`s per `IPL_2026_ROSTERS`, and `leftover_pool`
+    is every other player from `players.csv` (i.e. not on a real 2026 IPL
+    roster) — carried over as the free-agent pool for the following season's
+    draft.
+    """
+    by_name = {p.name: p for p in get_initial_player_pool()}
+    rosters = {}
+    assigned = set()
+    for team_name, player_names in IPL_2026_ROSTERS.items():
+        squad = []
+        for name in player_names:
+            player = by_name.get(name)
+            if player is None:
+                continue
+            squad.append(player)
+            assigned.add(name)
+        rosters[team_name] = squad
+    leftover_pool = [p for p in by_name.values() if p.name not in assigned]
+    return rosters, leftover_pool
+
+
 def get_alltime_player_pool():
     """Build the draft pool from `players_alltime.csv` (500+ all-time IPL greats).
 
@@ -124,7 +232,12 @@ def get_alltime_player_pool():
             bowling_type = row.get('bowling_type', 'None').strip()
             strengths = row.get('strengths', '').strip()
             weaknesses = row.get('weaknesses', '').strip()
-            pool.append(Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age,
-                               batting_hand, bowling_hand, batting_archetype, bowling_phase,
-                               bowling_type, strengths, weaknesses))
+            natural_slot_raw = row.get('natural_slot', '').strip()
+            natural_slot = int(natural_slot_raw) if natural_slot_raw.isdigit() else None
+            p = Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age,
+                       batting_hand, bowling_hand, batting_archetype, bowling_phase,
+                       bowling_type, strengths, weaknesses)
+            if natural_slot is not None:
+                p.preferred_position = natural_slot
+            pool.append(p)
     return pool

@@ -252,34 +252,36 @@ function renderGuide() {
 
 function draftStartingXi(roster) {
   const selected = [];
-  const add = p => { if (p && !selected.includes(p.name) && selected.length < 11) selected.push(p.name); };
+  let overseasCount = 0;
+  const add = p => {
+    if (!p || selected.includes(p.name) || selected.length >= 11) return;
+    if (p.overseas && overseasCount >= 4) return;
+    selected.push(p.name);
+    if (p.overseas) overseasCount++;
+  };
   const isBatter = p => p.role === "Batsman" || p.role === "Wicketkeeper" || p.role === "All-Rounder";
   const isBowler = p => p.role.includes("Bowler") || p.role === "All-Rounder";
   [...roster].filter(p => p.role === "Wicketkeeper").sort((a,b)=>b.bat-a.bat).slice(0,1).forEach(add);
   [...roster].filter(p => isBatter(p)).sort((a,b)=>b.bat-a.bat).forEach(p => { if (selected.filter(n => isBatter(playerByName(n))).length < 6) add(p); });
   [...roster].filter(p => isBowler(p)).sort((a,b)=>b.bowl-a.bowl).forEach(p => { if (selected.filter(n => isBowler(playerByName(n))).length < 5) add(p); });
   [...roster].sort((a,b)=>b.ovr-a.ovr).forEach(add);
-  // Arrange the selected XI into a batting order by natural slot — mirrors the
-  // server's `smart_batting_order` best-fit pass, so a #4/#5 type like Klaasen
-  // previews in the right spot even before the user sets a real lineup.
+  // Arrange the XI by filling slots #1→#11 in order: for each slot, pick the
+  // unplaced player whose natural position is closest to that slot number (ties
+  // broken by batting rating), mirroring the server's smart_batting_order logic.
   const xi = selected.map(playerByName).filter(Boolean);
   const slots = Array.from({length: 11}, () => null);
-  const ranked = [...xi].sort((a, b) => Math.abs((a.preferred_position||6) - 6) - Math.abs((b.preferred_position||6) - 6) || b.bat - a.bat);
-  const remaining = [...ranked];
-  ranked.forEach(p => {
-    let bestIdx = -1, bestDist = Infinity;
-    for (let i = 0; i < 11; i++) {
-      if (slots[i]) continue;
-      const dist = Math.abs((i + 1) - (p.preferred_position || 6));
-      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
-    }
-    if (bestIdx >= 0) {
-      slots[bestIdx] = p.name;
-      const idx = remaining.indexOf(p);
-      if (idx >= 0) remaining.splice(idx, 1);
-    }
-  });
-  return slots.map((name, i) => name || (remaining.shift()?.name || ""));
+  const unplaced = [...xi];
+  for (let slot = 1; slot <= 11; slot++) {
+    if (!unplaced.length) break;
+    const best = unplaced.reduce((a, b) => {
+      const da = Math.abs((a.preferred_position || 6) - slot);
+      const db = Math.abs((b.preferred_position || 6) - slot);
+      return da < db || (da === db && a.bat > b.bat) ? a : b;
+    });
+    slots[slot - 1] = best.name;
+    unplaced.splice(unplaced.indexOf(best), 1);
+  }
+  return slots.map((name, i) => name || (unplaced.shift()?.name || ""));
 }
 
 function draggableList(id, names, length = names.length, editable = true, options = {}) {
@@ -308,10 +310,10 @@ function playerBadges(name) {
 }
 
 const ORDER_ZONES = [
-  { key: "top", label: "Top Order", range: [1, 3], className: "zone-top" },
-  { key: "middle", label: "Middle Order", range: [4, 6], className: "zone-middle" },
-  { key: "death", label: "Death Overs", range: [7, 8], className: "zone-death" },
-  { key: "tail", label: "Tail", range: [9, 11], className: "zone-tail" },
+  { key: "top", label: "Openers", range: [1, 2], className: "zone-top" },
+  { key: "middle", label: "Middle Order", range: [3, 5], className: "zone-middle" },
+  { key: "death", label: "Death Overs", range: [6, 7], className: "zone-death" },
+  { key: "tail", label: "Tail", range: [8, 11], className: "zone-tail" },
 ];
 
 const OVER_PHASE_ZONES = [
@@ -324,12 +326,21 @@ function zoneForSlot(slotNumber, zones = ORDER_ZONES) {
   return zones.find(z => slotNumber >= z.range[0] && slotNumber <= z.range[1]) || zones[Math.floor(zones.length / 2)];
 }
 
+function slotZoneChip(slotNumber) {
+  const zone = zoneForSlot(slotNumber || 6);
+  return `<span class="slot-chip ${zone.className}">${zone.label}</span>`;
+}
+
+function slotZoneLabel(slotNumber) {
+  return zoneForSlot(slotNumber || 6).label;
+}
+
 function naturalSlotChip(name) {
   const player = playerByName(name);
   if (!player) return "";
   const pos = player.preferred_position || 6;
   const zone = zoneForSlot(pos);
-  return ` <small class="slot-chip ${zone.className}" title="Naturally bats around #${pos} (${zone.label})">#${pos} · ${zone.label}</small>`;
+  return ` <small class="slot-chip ${zone.className}" title="Naturally bats in the ${zone.label.toLowerCase()}">${zone.label}</small>`;
 }
 
 function playerLineupMeta(name) {
@@ -514,7 +525,7 @@ function bowlingOptions(names) {
 }
 
 function impactOptions(roster) {
-  return roster.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("");
+  return roster.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · ${slotZoneLabel(p.preferred_position)} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("");
 }
 
 function refreshBowlingPlanPools() {
@@ -633,7 +644,7 @@ async function newLeague() {
   state = await api("/api/new", { team: $("teamSelect").value, difficulty: $("difficultySelect")?.value || "hard", draft_pool: $("draftPoolSelect")?.value || "current" });
   selectedFixtureWeek = null;
   viewedScorecard = null;
-  activeView = "draft";
+  activeView = defaultView();
   render();
 }
 
@@ -733,7 +744,7 @@ function render() {
   }
   const displayYear = state?.season || 2026;
   document.title = `IPL ${displayYear} Cricket Sim`;
-  if ($("titleHeading")) $("titleHeading").textContent = `IPL ${displayYear} Franchise Universe`;
+  if ($("titleHeading")) $("titleHeading").textContent = "IPL Franchise Universe";
   if (!state || state.phase === "title") return;
   applyTeamTheme();
 
@@ -828,19 +839,21 @@ function renderDraft() {
   const nation = $("draftNation")?.value || "All";
   const batType = $("draftBatType")?.value || "All";
   const bowlType = $("draftBowlType")?.value || "All";
+  const slot = $("draftSlot")?.value || "All Slots";
   const players = sortedPlayers(state.draft.available.filter(p =>
     (!q || `${p.name} ${p.team} ${p.role} ${p.batting_archetype} ${p.bowling_phase} ${p.bowling_type}`.toLowerCase().includes(q)) &&
     (role === "All Roles" || p.role === role) &&
     (nation === "All" || (nation === "Overseas" ? p.overseas : !p.overseas)) &&
     (batType === "All" || p.batting_archetype === batType) &&
-    (bowlType === "All" || p.bowling_phase === bowlType || p.bowling_type === bowlType)
+    (bowlType === "All" || p.bowling_phase === bowlType || p.bowling_type === bowlType) &&
+    (slot === "All Slots" || slotZoneLabel(p.preferred_position) === slot)
   ), draftSort);
   $("draftTable").innerHTML = table(
     [["Player","name"], ["Role","role"], ["Age","age"], ["OVR","ovr"], ["Bat","bat"], ["Bowl","bowl"], ["Bat Type","batting_archetype"], ["Bowl Type","bowling_type"], ["Natural Slot","preferred_position"], ["Origin","overseas"], ""],
     players.slice(0, 160).map(p => [
       `${playerLink(p.name)}<br><small>${esc(p.batting_hand)} bat · ${esc(p.bowling_hand)} bowl</small>`,
       `${p.role}${p.allrounder_style ? `<br><small>${esc(p.allrounder_style)}</small>` : ""}`, p.age, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), esc(p.bowling_type),
-      `<span class="slot-chip ${zoneForSlot(p.preferred_position || 6).className}">#${p.preferred_position || 6}</span>`,
+      slotZoneChip(p.preferred_position),
       p.overseas ? "OS" : "IND",
       state.phase === "draft" && draftStarted && state.draft.current_team === state.user_team ? `<button class="good" onclick='draftPlayer(${JSON.stringify(p.name)})'>Pick</button>` : "",
     ]), "draft:"
@@ -857,7 +870,7 @@ function renderDraft() {
   $("draftHistory").innerHTML = table(["Pick", "Rnd", "Type", "Team", "Player", "OVR"], state.draft.history.slice().reverse().map(h => [h.pick, h.round, h.type, h.team, h.player, h.ovr]));
   const draftXi = draftStartingXi(user.roster);
   $("draftExtra")?.remove();
-  $("draftNeeds").insertAdjacentHTML("afterend", `<div id="draftExtra"><h2 class="gap-top">Drafted XI Preview</h2><div class="notice">A planning preview only — players are slotted by where they naturally bat (e.g. a #4/#5 type lands in the middle order automatically), grouped into top/middle/death/tail zones. Reorder it to visualize combinations; final match XIs are set on My Squad.</div>${draggableList("draftXiPreview", draftXi, 11, true, { showZones: true, showNaturalSlot: true })}<h2 class="gap-top">My Drafted Squad</h2><div class="table-wrap short"><table>${table(["Player","Role","OVR","Bat","Bowl","Type","Natural Slot","Origin"], user.roster.map(p => [playerLink(p.name), p.role, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), `<span class="slot-chip ${zoneForSlot(p.preferred_position || 6).className}">#${p.preferred_position || 6}</span>`, p.overseas ? "OS" : "IND"]))}</table></div></div>`);
+  $("draftNeeds").insertAdjacentHTML("afterend", `<div id="draftExtra"><h2 class="gap-top">Drafted XI Preview</h2><div class="notice">A planning preview only — players are slotted by where they naturally bat (e.g. a #4/#5 type lands in the middle order automatically), grouped into openers/middle/death/tail zones. Reorder it to visualize combinations; final match XIs are set on My Squad.</div>${draggableList("draftXiPreview", draftXi, 11, true, { showZones: true, showNaturalSlot: true })}<h2 class="gap-top">My Drafted Squad</h2><div class="table-wrap short"><table>${table(["Player","Role","OVR","Bat","Bowl","Type","Natural Slot","Origin"], user.roster.map(p => [playerLink(p.name), p.role, p.ovr, p.bat, p.bowl, esc(p.batting_archetype), slotZoneChip(p.preferred_position), p.overseas ? "OS" : "IND"]))}</table></div></div>`);
   enableDragLists();
 }
 
@@ -889,6 +902,7 @@ function ordinalText(number) {
 async function submitRetention() {
   const players = [...document.querySelectorAll(".retainPick:checked")].map(x => x.value);
   state = await api("/api/retention", { players });
+  viewedScorecard = null;
   activeView = "draft";
   render();
 }
@@ -913,14 +927,21 @@ async function beginMatch() {
 async function simulateRound() {
   state = await api("/api/simulate-round", {});
   selectedFixtureWeek = null;
-  viewedScorecard = [...(state.match_log || [])].reverse().find(c => state.user_team && (c.team1 === state.user_team || c.team2 === state.user_team)) || state.match_log?.at(-1) || null;
-  activeView = viewedScorecard ? "match" : defaultView();
+  if (state.phase === "playoffs" || state.phase === "season_end") {
+    // Playoff quick-sim doesn't update match_log — don't show a stale league scorecard.
+    viewedScorecard = null;
+    activeView = defaultView();
+  } else {
+    viewedScorecard = [...(state.match_log || [])].reverse().find(c => state.user_team && (c.team1 === state.user_team || c.team2 === state.user_team)) || state.match_log?.at(-1) || null;
+    activeView = viewedScorecard ? "match" : defaultView();
+  }
   render();
 }
 
 async function startPlayoffs() {
   state = await api("/api/start-playoffs", {});
   selectedFixtureWeek = null;
+  viewedScorecard = null;
   activeView = "season";
   render();
 }
@@ -1004,6 +1025,7 @@ function fixtureCard(week, a, b) {
 
 async function openRetention() {
   state = await api("/api/open-retention", {});
+  viewedScorecard = null;
   activeView = "retention";
   render();
 }
@@ -1077,6 +1099,7 @@ async function impactSub() {
 
 async function completeLiveMatch() {
   state = await api("/api/complete-live-match", {});
+  viewedScorecard = null;
   activeView = defaultView();
   render();
 }
@@ -1126,7 +1149,7 @@ function renderLineupHub(match) {
   $("matchHub").innerHTML = `
     <div class="panel">
       <div class="section-head"><h2>${context}</h2><button class="primary" onclick="submitLineup()">Confirm XI</button></div>
-      <div class="notice">${esc(match.message)} The list below is grouped by where each player naturally bats — top order, middle order, death overs, tail. Drag within the XI to reorder, or drag a player to the bench pool to free a slot, then drag a bench player in.</div>
+      <div class="notice">${esc(match.message)} The list below is grouped by where each player naturally bats — openers, middle order, death overs, tail. Drag within the XI to reorder, or drag a player to the bench pool to free a slot, then drag a bench player in.</div>
       ${draggableList(isBowling ? "matchBowlXI" : "matchBatXI", preset, 11, true, { group: isBowling ? "matchBowl" : "matchBat", showZones: true, showNaturalSlot: true })}
       <h2 class="gap-top">Bench</h2>
       ${draggableList(isBowling ? "matchBowlBenchPool" : "matchBatBenchPool", bench, bench.length, true, { group: isBowling ? "matchBowl" : "matchBat", pool: true, showNaturalSlot: true })}
@@ -1157,8 +1180,8 @@ function renderImpactHub(match) {
         <h2>Substitution Desk</h2>
         <div class="notice">Pick one player from the current XI to remove and one bench player to bring in for the second innings. The usual IPL approach: defending, bring on an extra specialist bowler for your weakest batting option in the XI; chasing, bring on an extra hitter (often a finisher around #5-8) for your most expendable bowler. Your saved impact preset is preselected when available.</div>
         <div class="toolbar">
-          <label>Out <select id="subOut">${impact.xi.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
-          <label>In <select id="subIn">${impact.bench.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · #${p.preferred_position || 6} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
+          <label>Out <select id="subOut">${impact.xi.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · ${slotZoneLabel(p.preferred_position)} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
+          <label>In <select id="subIn">${impact.bench.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · ${slotZoneLabel(p.preferred_position)} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
           <button class="primary" onclick="impactSub()">Use Impact Sub</button>
           <button onclick="api('/api/impact-sub',{}).then(s=>{state=s;render();})">Skip</button>
         </div>
@@ -1301,6 +1324,7 @@ function sortedRows(items, sort) {
     let result = 0;
     if (typeof av === "string" || typeof bv === "string") result = String(av ?? "").localeCompare(String(bv ?? ""), undefined, { numeric: true, sensitivity: "base" });
     else result = (Number(av) || 0) - (Number(bv) || 0);
+    if (result === 0 && sort.key === "points") result = (Number(b.nrr) || 0) - (Number(a.nrr) || 0);
     if (result === 0 && sort.key !== "name") result = String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
     return result * sort.dir;
   });
@@ -1414,7 +1438,7 @@ function renderSquad() {
   const t = myTeam();
   $("captainSelect").innerHTML = t.roster.map(p => `<option value="${esc(p.name)}" ${p.name === t.captain ? "selected" : ""}>Captain: ${esc(p.name)}</option>`).join("");
   $("viceSelect").innerHTML = t.roster.map(p => `<option value="${esc(p.name)}" ${p.name === t.vice_captain ? "selected" : ""}>Vice: ${esc(p.name)}</option>`).join("");
-  const batFirst = uniqueXi(t.batting_first_xi?.length ? t.batting_first_xi : t.roster.slice(0, 11).map(p => p.name), t.roster);
+  const batFirst = uniqueXi(t.suggested_batting_order?.length ? t.suggested_batting_order : (t.batting_first_xi?.length ? t.batting_first_xi : t.roster.slice(0, 11).map(p => p.name)), t.roster);
   const bowlFirst = uniqueXi(t.bowling_first_xi?.length ? t.bowling_first_xi : batFirst, t.roster);
   const bowlDefault = t.saved_bowling_order?.length ? t.saved_bowling_order : [];
   const keeperOptions = t.roster.filter(p => p.role === "Wicketkeeper").map(p => `<option value="${esc(p.name)}">Keeper: ${esc(p.name)}</option>`).join("") || `<option value="">Draft a wicketkeeper first</option>`;
@@ -1431,7 +1455,7 @@ function renderSquad() {
     ${draggableList("squadBowlPlanPool", planBowlers, planBowlers.length, true, { group: "squadPlan", pool: true, copySource: true, showMeta: true })}
   `;
   $("xiPreset").innerHTML = `
-    <div class="notice">Build two match presets here. Each XI is grouped by where players naturally bat — top order, middle order, death overs, tail — so you can see at a glance whether the order makes sense. Drag players between each XI and its bench pool; Save Match Presets also saves the default keeper and impact sub choices.</div>
+    <div class="notice">Build two match presets here. Each XI is grouped by where players naturally bat — openers, middle order, death overs, tail — so you can see at a glance whether the order makes sense. Drag players between each XI and its bench pool; Save Match Presets also saves the default keeper and impact sub choices.</div>
     <div class="grid">
       <div><h2>Batting First XI</h2><p class="notice compact">Sets the total. Slot order here is the actual batting order.</p>${draggableList("batFirstXIList", batFirst, 11, true, { group: "squadBat", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Batting Bench Pool</h2>${draggableList("batBenchPool", batBench, batBench.length, true, { group: "squadBat", pool: true, showNaturalSlot: true })}</div>
       <div><h2>Bowling First XI</h2><p class="notice compact">Defends a total. Slot order here is the actual batting order if this side bats second.</p>${draggableList("bowlFirstXIList", bowlFirst, 11, true, { group: "squadBowl", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Bowling Bench Pool</h2>${draggableList("bowlBenchPool", bowlBench, bowlBench.length, true, { group: "squadBowl", pool: true, showNaturalSlot: true })}</div>
@@ -1474,6 +1498,7 @@ $("draftRole").onchange = renderDraft;
 $("draftNation").onchange = renderDraft;
 $("draftBatType").onchange = renderDraft;
 $("draftBowlType").onchange = renderDraft;
+$("draftSlot").onchange = renderDraft;
 $("submitRetentionBtn").onclick = submitRetention;
 $("beginMatchBtn").onclick = beginMatch;
 $("simulateRoundBtn").onclick = simulateRound;

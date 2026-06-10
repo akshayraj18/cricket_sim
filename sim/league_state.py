@@ -10,7 +10,7 @@ import pickle
 import random
 
 from models import Player, Team
-from players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool
+from players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool, get_2026_rosters_and_pool
 from sim.constants import (
     SAVE_FILE,
     SAVES_DIR,
@@ -277,6 +277,35 @@ class LeagueState:
         self.live_match = None
         user_pick = self.draft_order.index(self.user_team()) + 1
         self.status_message = f"{user_team_name} enter a blank-franchise mega draft on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
+
+    def new_league_with_rosters(self, user_team_name, difficulty="hard"):
+        """Reset to a brand-new career using real-world IPL 2026 squads, skipping the mega draft entirely.
+
+        Every franchise starts with its actual 2026 roster (`IPL_2026_ROSTERS`);
+        players from `players.csv` not on any 2026 roster become the
+        free-agent pool carried into next season's post-retention draft. The
+        season starts immediately. Raises `ValueError` if `user_team_name`
+        isn't a real IPL franchise.
+        """
+        if user_team_name not in IPL_TEAMS_LIST:
+            raise ValueError("Choose a valid IPL franchise.")
+        self.__init__()
+        self.season_year = 2026
+        self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
+        self.draft_pool_type = "rosters2026"
+        self.user_team_name = user_team_name
+        rosters, leftover_pool = get_2026_rosters_and_pool()
+        self.player_pool = leftover_pool
+        self.teams = [Team(name) for name in IPL_TEAMS_LIST]
+        for team in self.teams:
+            team.roster = list(rosters.get(team.name, []))
+            for player in team.roster:
+                player.team_name = team.name
+        self.draft_type = "mega"
+        self.draft_order = list(self.teams)
+        self.draft_started = True
+        self.start_regular_season()
+        self.status_message = f"{user_team_name} take charge of their real IPL 2026 squad. League stage is ready."
 
     def build_schedule(self):
         """Build a 14-round league-stage schedule by randomly shuffling and pairing all ten teams each round.
@@ -612,6 +641,24 @@ class LeagueState:
             bowler = best_for_phase(phase, used, plan[-1] if plan else "")
             plan.append(bowler.name)
             used[bowler.name] = used.get(bowler.name, 0) + 1
+        # With exactly 5 bowlers x 4 overs, the greedy pass can paint itself
+        # into a corner where the only bowler with quota left just bowled.
+        # Repair any consecutive-over violations by swapping with another
+        # over assigned to a different bowler, picking a swap that doesn't
+        # create a new violation.
+        for i in range(1, len(plan)):
+            if plan[i] != plan[i - 1]:
+                continue
+            for j in range(len(plan)):
+                if plan[j] == plan[i]:
+                    continue
+                prev_ok = j == 0 or plan[j - 1] != plan[i]
+                next_ok = j == len(plan) - 1 or plan[j + 1] != plan[i]
+                swap_prev_ok = i == 0 or plan[i - 1] != plan[j]
+                swap_next_ok = i == len(plan) - 1 or plan[i + 1] != plan[j]
+                if prev_ok and next_ok and swap_prev_ok and swap_next_ok:
+                    plan[i], plan[j] = plan[j], plan[i]
+                    break
         return plan
 
     def default_batting_order(self, team):
@@ -660,16 +707,23 @@ class LeagueState:
         return score
 
     def smart_batting_order(self, players):
-        """Arrange `players` (an XI) into a 1-11 batting order driven by each player's natural slot.
+        """Arrange `players` (an XI) into a 1-11 batting order, picking the best player for each slot.
 
         Every player carries a `preferred_position` (derived from real-world
         IPL batting-position tendencies for their role/archetype — see
         `models.derive_preferred_position`), e.g. an "Aggressor" wicketkeeper
         like Buttler naturally opens, while a "Finisher" walks in around #5-6.
-        This assigns slots via a stable best-fit pass: each player is matched
-        to the open slot closest to their natural position, with ties broken
-        by phase fit and batting rating — so collisions (two natural openers)
-        resolve sensibly instead of clumping at the top.
+        Tail-end bowlers (Defensive Tailenders who can't otherwise bat) are
+        seated from #11 upward first, worst batting average deepest. The
+        remaining slots are filled by picking whichever player scores best
+        for that slot's phase (`batting_phase_score`, which factors in
+        current batting rating and archetype fit) minus a penalty for
+        straying from their natural position, then refined with pairwise
+        swaps that improve the total score. This is rating-driven rather
+        than a strict natural-position assignment, so a standout batter can
+        be pushed into an adjacent zone over a lower-rated specialist (e.g.
+        a top-order batter sliding into the lower-middle order, or a
+        finisher batting up at #4) when it produces a stronger order.
         """
         remaining = list(dict.fromkeys(players))
         slots = {i: None for i in range(1, 12)}
@@ -683,33 +737,80 @@ class LeagueState:
         def is_tail(player):
             return archetype(player) == "Defensive Tailender" and not counts_as_batter(player)
 
-        ranked = sorted(remaining, key=lambda p: (is_tail(p), abs(natural(p) - 6), -p.current_batting))
-        for player in ranked:
-            open_slots = [s for s, occupant in slots.items() if occupant is None]
-            if not open_slots:
+        def slot_phase(slot):
+            if slot <= 2:
+                return "Powerplay"
+            if slot <= 5:
+                return "Middle Overs"
+            return "Death Overs"
+
+        tails = [p for p in remaining if is_tail(p)]
+        others = [p for p in remaining if not is_tail(p)]
+
+        # Tail slots fill from #11 upward, worst-batting tailenders deepest.
+        # Normally that's just 9-11, but if there are more tailenders than
+        # `others` can leave room for (e.g. 5 tail-end bowlers in an XI),
+        # the tail block extends upward (8, 7, ...) so excess tailenders stay
+        # grouped at the bottom of the order by batting ability rather than
+        # scattered into the middle order ahead of recognised batters.
+        tail_slot_count = max(3, 11 - len(others))
+        tails_sorted = sorted(tails, key=lambda p: p.current_batting)
+        for i, slot in enumerate(range(11, 11 - tail_slot_count, -1)):
+            if i >= len(tails_sorted):
                 break
-            target = min(open_slots, key=lambda s: (abs(s - natural(player)), -self.batting_phase_score(player, innings_phase(s - 1))))
-            slots[target] = player
-            remaining.remove(player)
+            slots[slot] = tails_sorted[i]
+        placed_tails = set(tails_sorted[:tail_slot_count])
+        others = [p for p in tails if p not in placed_tails] + others
+        open_top_slots = [s for s in range(1, 12) if slots[s] is None]
+
+        def slot_score(player, slot):
+            return self.batting_phase_score(player, slot_phase(slot)) - 0.5 * abs(natural(player) - slot) ** 2
+
+        # Greedy fill for the remaining (non-tail) slots, then improve with
+        # pairwise swaps: if swapping two players' slots raises the combined
+        # score, do it. This lets a strong batter "leapfrog" into a
+        # better-fitting slot even if a worse-fitting player got there first
+        # during the initial pass.
+        open_slots = open_top_slots
+        for slot in open_slots:
+            if not others:
+                break
+            best = max(others, key=lambda p: slot_score(p, slot))
+            slots[slot] = best
+            others.remove(best)
+
+        filled_slots = [s for s in open_slots if slots[s] is not None]
+        improved = True
+        while improved:
+            improved = False
+            for i in range(len(filled_slots)):
+                for j in range(i + 1, len(filled_slots)):
+                    s1, s2 = filled_slots[i], filled_slots[j]
+                    p1, p2 = slots[s1], slots[s2]
+                    current = slot_score(p1, s1) + slot_score(p2, s2)
+                    swapped = slot_score(p2, s1) + slot_score(p1, s2)
+                    if swapped > current:
+                        slots[s1], slots[s2] = p2, p1
+                        improved = True
 
         order = [slots[i] for i in range(1, 12) if slots[i] is not None]
         order += [p for p in remaining if p not in order]
         return order[:11]
 
     def _ensure_natural_top_order_cover(self, selected, roster):
-        """Swap in a bench batter if `selected` lacks anyone who naturally opens or anchors the top order (preferred_position 1-3).
+        """Swap in a bench batter if `selected` lacks anyone who naturally opens (preferred_position 1-2).
 
         A pure-rating XI pick can accidentally collect six middle-order/finisher
         types and nobody suited to actually face the new ball — this nudges in
-        the best available natural top-order batter at the expense of the
-        weakest-fit specialist batter already picked, keeping the XI realistic.
+        the best available natural opener at the expense of the weakest-fit
+        specialist batter already picked, keeping the XI realistic.
         """
         def natural(p):
             return getattr(p, "preferred_position", 6)
-        if any(counts_as_batter(p) and natural(p) <= 3 for p in selected):
+        if any(counts_as_batter(p) and natural(p) <= 2 for p in selected):
             return
         bench_top_order = sorted(
-            [p for p in roster if p not in selected and counts_as_batter(p) and natural(p) <= 3],
+            [p for p in roster if p not in selected and counts_as_batter(p) and natural(p) <= 2],
             key=lambda p: p.current_batting, reverse=True,
         )
         if not bench_top_order:
@@ -795,6 +896,9 @@ class LeagueState:
         few candidate slots until at least one name differs (so the two XIs
         aren't forced to be byte-identical when better bowling options exist)
         — all while respecting the overseas cap and bowler-count minimum.
+        The result is arranged into a batting order via `smart_batting_order`
+        (this XI bats second if it wins the toss and bowls first), so the
+        squad page shows it grouped by zone like the batting-first XI.
         Returns a list of player names.
         """
         roster = list(team.roster)
@@ -822,16 +926,26 @@ class LeagueState:
                         break
                 if len(set(p.name for p in balanced) & set(bat_names)) == 10:
                     break
-        return [p.name for p in balanced]
+        return [p.name for p in self.smart_batting_order(balanced)]
 
     def enforce_xi_limits(self, selected, roster):
-        """Trim `selected` to 11 and swap out the lowest-rated overseas players for the best available domestic ones until the squad respects the 4-overseas-player limit."""
+        """Trim `selected` to 11 and swap out the lowest-rated overseas players for the best available domestic ones until the squad respects the 4-overseas-player limit.
+
+        Prefers a domestic replacement that matches the removed player's
+        batting/bowling role-counting (`counts_as_batter`/`counts_as_bowler`),
+        so this swap doesn't undo a role balance already established by
+        `enforce_role_balance` — falling back to the best-OVR domestic option
+        if no same-role replacement is available.
+        """
         selected = selected[:11]
         while sum(1 for p in selected if p.is_overseas) > 4:
             overseas = [p for p in selected if p.is_overseas]
             remove = sorted(overseas, key=lambda p: p.current_ovr)[0]
             selected.remove(remove)
-            domestic = next((p for p in sorted(roster, key=lambda p: p.current_ovr, reverse=True) if not p.is_overseas and p not in selected), None)
+            domestic_pool = sorted([p for p in roster if not p.is_overseas and p not in selected], key=lambda p: p.current_ovr, reverse=True)
+            domestic = next((p for p in domestic_pool if counts_as_batter(p) == counts_as_batter(remove) and counts_as_bowler(p) == counts_as_bowler(remove)), None)
+            if domestic is None:
+                domestic = domestic_pool[0] if domestic_pool else None
             if domestic:
                 selected.append(domestic)
             else:
