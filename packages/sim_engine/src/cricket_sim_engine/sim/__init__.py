@@ -16,7 +16,7 @@ model in `models`/`engine`/`players_data`. Two classes do almost all the work:
 by both classes, and [constants](constants.py) holds shared seed data and
 sizing/persistence constants.
 """
-from sim.league_state import LeagueState
-from sim.live_match import LiveMatch
+from cricket_sim_engine.sim.league_state import LeagueState
+from cricket_sim_engine.sim.live_match import LiveMatch
 
 __all__ = ["LeagueState", "LiveMatch"]

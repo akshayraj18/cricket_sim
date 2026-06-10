@@ -6,8 +6,8 @@ without any league/match scaffolding.
 """
 import pytest
 
-from models import Player
-from sim.helpers import (
+from cricket_sim_engine.models import Player
+from cricket_sim_engine.sim.helpers import (
     allrounder_counts_as_bat,
     allrounder_counts_as_bowl,
     batting_slot_player,

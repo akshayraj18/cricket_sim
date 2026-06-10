@@ -7,9 +7,9 @@ super overs, impact substitutions, and the final scorecard payload.
 """
 import random
 
-from engine import MatchEngine
-from sim.constants import TEAM_META
-from sim.helpers import (
+from cricket_sim_engine.engine import MatchEngine
+from cricket_sim_engine.sim.constants import TEAM_META
+from cricket_sim_engine.sim.helpers import (
     ensure_stat_fields,
     innings_phase,
     is_batting_role,
@@ -508,7 +508,7 @@ class LiveMatch:
             self.score["striker_idx"], self.score["non_striker_idx"] = self.score["non_striker_idx"], self.score["striker_idx"]
         if self.score["balls"] % 6 == 0:
             self.score["striker_idx"], self.score["non_striker_idx"] = self.score["non_striker_idx"], self.score["striker_idx"]
-        return {"kind": "runs", "runs": runs, "label": outcome}
+        return {"kind": "runs", "runs": runs, "label": outcome, "batter": striker.name, "bowler": bowler.name}
 
     def resolve_dismissal(self, striker, bowler):
         """Decide how a wicket falls — stumped, run out, or caught — and who gets credit.
@@ -603,6 +603,7 @@ class LiveMatch:
             "bowl_stats": self.score["bowl_stats"],
             "batting_order": [p.name for p in self.score["batting_order"]],
             "dismissals": dict(self.score.get("dismissals", {})),
+            "over_log": list(self.score.get("over_log", [])),
         })
         if self.current_innings == 1:
             self.current_innings = 2

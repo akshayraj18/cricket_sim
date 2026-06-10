@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from sim.league_state import LeagueState
+from cricket_sim_engine.sim.league_state import LeagueState
 
 pytestmark = pytest.mark.integration
 
@@ -221,7 +221,7 @@ def test_save_with_blank_name_raises_if_no_fallback():
 
 def test_save_uses_user_team_as_fallback_name(drafted, tmp_path, monkeypatch):
     saves_dir = tmp_path / "saves"
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(saves_dir))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(saves_dir))
     drafted.save_name = ""
     drafted.save()
     assert drafted.save_name == drafted.user_team_name
@@ -229,20 +229,20 @@ def test_save_uses_user_team_as_fallback_name(drafted, tmp_path, monkeypatch):
 
 
 def test_load_with_unknown_name_raises(tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
-    monkeypatch.setattr("sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
     with pytest.raises(ValueError):
         LeagueState.load("Nonexistent Save")
 
 
 def test_delete_save_with_unknown_name_raises(tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
     with pytest.raises(ValueError):
         LeagueState.delete_save("Nonexistent Save")
 
 
 def test_list_saves_empty_when_no_saves_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "does-not-exist"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "does-not-exist"))
     assert LeagueState.list_saves() == []
 
 

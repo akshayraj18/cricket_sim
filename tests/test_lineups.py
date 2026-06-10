@@ -6,8 +6,8 @@ auto-generated XIs/orders that feed match simulation.
 """
 import pytest
 
-from models import derive_preferred_position
-from sim.helpers import counts_as_batter, counts_as_bowler
+from cricket_sim_engine.models import derive_preferred_position
+from cricket_sim_engine.sim.helpers import counts_as_batter, counts_as_bowler
 
 from .conftest import resolve
 

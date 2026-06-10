@@ -14,8 +14,7 @@ from http.server import ThreadingHTTPServer
 
 import pytest
 
-import ui_server
-from sim.league_state import LeagueState
+from legacy import ui_server
 
 from .conftest import USER_TEAM, drafted_league, fresh_league
 
@@ -71,7 +70,7 @@ def test_get_api_state_does_not_mutate_state(server):
 
 
 def test_get_api_saves_returns_list(server, tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
     status, data = get(server, "/api/saves")
     assert status == 200
     assert data["saves"] == []
@@ -187,8 +186,8 @@ def test_post_draft_user_pick(server):
 # --- save / load / delete --------------------------------------------------------------
 
 def test_save_load_delete_round_trip(server, tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
-    monkeypatch.setattr("sim.league_state.SAVE_FILE", str(tmp_path / "legacy.pkl"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVE_FILE", str(tmp_path / "legacy.pkl"))
     ui_server.replace_state(fresh_league())
 
     status, data = post(server, "/api/save", {"name": "Integration Test Save"})
@@ -211,8 +210,8 @@ def test_save_load_delete_round_trip(server, tmp_path, monkeypatch):
 
 
 def test_load_nonexistent_save_returns_400(server, tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
-    monkeypatch.setattr("sim.league_state.SAVE_FILE", str(tmp_path / "legacy.pkl"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVE_FILE", str(tmp_path / "legacy.pkl"))
     status, data = post(server, "/api/load", {"name": "No Such Save"})
     assert status == 400
     assert "error" in data

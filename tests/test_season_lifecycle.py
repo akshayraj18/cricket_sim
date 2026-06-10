@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from sim.league_state import LeagueState
+from cricket_sim_engine.sim.league_state import LeagueState
 
 pytestmark = pytest.mark.regression
 
@@ -101,8 +101,8 @@ def test_retention_rejects_wrong_player_count(drafted):
 
 def test_save_and_load_round_trips_state(drafted, tmp_path, monkeypatch):
     saves_dir = tmp_path / "saves"
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(saves_dir))
-    monkeypatch.setattr("sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(saves_dir))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
 
     league = drafted
     league.set_leadership(league.user_team().captain.name, league.user_team().vice_captain.name)
@@ -123,7 +123,7 @@ def test_save_and_load_round_trips_state(drafted, tmp_path, monkeypatch):
 
 
 def test_load_without_a_save_file_raises(tmp_path, monkeypatch):
-    monkeypatch.setattr("sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
-    monkeypatch.setattr("sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVES_DIR", str(tmp_path / "saves"))
+    monkeypatch.setattr("cricket_sim_engine.sim.league_state.SAVE_FILE", str(tmp_path / "missing.pkl"))
     with pytest.raises(ValueError):
         LeagueState.load()

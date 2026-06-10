@@ -196,6 +196,45 @@ class Player:
                 adjusted = specialized_impact
         self.form = max(1, min(10, self.form + adjusted))
 
+    def to_dict(self):
+        """Serialise this player's full state (profile, ratings, form, season stats, and team assignment) to a JSON-safe dict for DB persistence."""
+        data = {
+            "name": self.name, "role": self.role, "base_ovr": self.base_ovr,
+            "batting_ovr": self.batting_ovr, "bowling_ovr": self.bowling_ovr,
+            "is_overseas": self.is_overseas, "age": self.age,
+            "batting_hand": self.batting_hand, "bowling_hand": self.bowling_hand,
+            "batting_archetype": self.batting_archetype, "bowling_phase": self.bowling_phase,
+            "bowling_type": self.bowling_type, "strengths": self.strengths, "weaknesses": self.weaknesses,
+            "preferred_position": self.preferred_position, "form": self.form, "intent": self.intent,
+            "team_name": self.team_name, "stats": dict(self.stats),
+        }
+        for attr in ("season_start_ovr", "season_start_bat", "season_start_bowl"):
+            if hasattr(self, attr):
+                data[attr] = getattr(self, attr)
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Reconstruct a `Player` from a dict produced by `to_dict()`."""
+        player = cls(
+            name=data["name"], role=data["role"], base_ovr=data["base_ovr"],
+            batting_ovr=data["batting_ovr"], bowling_ovr=data["bowling_ovr"],
+            is_overseas=data["is_overseas"], age=data["age"],
+            batting_hand=data.get("batting_hand", "Right"), bowling_hand=data.get("bowling_hand", "Right"),
+            batting_archetype=data.get("batting_archetype", "Strike Rotator"),
+            bowling_phase=data.get("bowling_phase", "Flexible"), bowling_type=data.get("bowling_type", "None"),
+            strengths=data.get("strengths", ""), weaknesses=data.get("weaknesses", ""),
+        )
+        player.preferred_position = data.get("preferred_position", player.preferred_position)
+        player.form = data.get("form", 5)
+        player.intent = data.get("intent", "Normal")
+        player.team_name = data.get("team_name", "Unassigned")
+        player.stats = dict(data.get("stats", player.stats))
+        for attr in ("season_start_ovr", "season_start_bat", "season_start_bowl"):
+            if attr in data:
+                setattr(player, attr, data[attr])
+        return player
+
     def apply_offseason_progression(self):
         """Age the player up by a year and randomly grow or decline their ratings.
 
@@ -267,6 +306,51 @@ class Team:
         overs_faced = self.balls_faced / 6 if self.balls_faced > 0 else 1.0
         overs_bowled = self.balls_bowled / 6 if self.balls_bowled > 0 else 1.0
         return (self.runs_scored / overs_faced) - (self.runs_conceded / overs_bowled)
+
+    def to_dict(self):
+        """Serialise this franchise's roster, season record, leadership, and saved UI presets to a JSON-safe dict for DB persistence."""
+        return {
+            "name": self.name,
+            "roster": [p.to_dict() for p in self.roster],
+            "points": self.points, "wins": self.wins, "losses": self.losses,
+            "runs_scored": self.runs_scored, "balls_faced": self.balls_faced,
+            "runs_conceded": self.runs_conceded, "balls_bowled": self.balls_bowled,
+            "captain_name": self.captain.name if self.captain else None,
+            "vice_captain_name": self.vice_captain.name if self.vice_captain else None,
+            "saved_playing_xi_names": list(self.saved_playing_xi_names),
+            "saved_batting_first_xi_names": list(self.saved_batting_first_xi_names),
+            "saved_bowling_first_xi_names": list(self.saved_bowling_first_xi_names),
+            "saved_bat_to_bowl_sub": dict(self.saved_bat_to_bowl_sub),
+            "saved_bowl_to_bat_sub": dict(self.saved_bowl_to_bat_sub),
+            "saved_wicketkeeper_name": self.saved_wicketkeeper_name,
+            "saved_batting_order_names": list(self.saved_batting_order_names),
+            "saved_bowling_over_names": list(self.saved_bowling_over_names),
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Reconstruct a `Team` (including its roster) from a dict produced by `to_dict()`. Captain/vice-captain are resolved by name against the rebuilt roster."""
+        team = cls(data["name"])
+        team.roster = [Player.from_dict(p) for p in data.get("roster", [])]
+        team.points = data.get("points", 0)
+        team.wins = data.get("wins", 0)
+        team.losses = data.get("losses", 0)
+        team.runs_scored = data.get("runs_scored", 0)
+        team.balls_faced = data.get("balls_faced", 0)
+        team.runs_conceded = data.get("runs_conceded", 0)
+        team.balls_bowled = data.get("balls_bowled", 0)
+        roster_by_name = {p.name: p for p in team.roster}
+        team.captain = roster_by_name.get(data.get("captain_name"))
+        team.vice_captain = roster_by_name.get(data.get("vice_captain_name"))
+        team.saved_playing_xi_names = list(data.get("saved_playing_xi_names", []))
+        team.saved_batting_first_xi_names = list(data.get("saved_batting_first_xi_names", []))
+        team.saved_bowling_first_xi_names = list(data.get("saved_bowling_first_xi_names", []))
+        team.saved_bat_to_bowl_sub = dict(data.get("saved_bat_to_bowl_sub", {"out": "", "in": ""}))
+        team.saved_bowl_to_bat_sub = dict(data.get("saved_bowl_to_bat_sub", {"out": "", "in": ""}))
+        team.saved_wicketkeeper_name = data.get("saved_wicketkeeper_name", "")
+        team.saved_batting_order_names = list(data.get("saved_batting_order_names", []))
+        team.saved_bowling_over_names = list(data.get("saved_bowling_over_names", []))
+        return team
 
     def auto_assign_cpu_leadership(self):
         """Hand the captaincy and vice-captaincy to the two highest-rated squad members."""

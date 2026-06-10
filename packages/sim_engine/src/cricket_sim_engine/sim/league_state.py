@@ -9,9 +9,9 @@ import os
 import pickle
 import random
 
-from models import Player, Team
-from players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool, get_2026_rosters_and_pool
-from sim.constants import (
+from cricket_sim_engine.models import Player, Team
+from cricket_sim_engine.players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool, get_2026_rosters_and_pool
+from cricket_sim_engine.sim.constants import (
     SAVE_FILE,
     SAVES_DIR,
     SQUAD_SIZE,
@@ -23,7 +23,7 @@ from sim.constants import (
     OVERSEAS_LAST_NAMES,
     TEAM_META,
 )
-from sim.helpers import (
+from cricket_sim_engine.sim.helpers import (
     batting_slot_player,
     bowling_slot_player,
     bowling_kind,
@@ -39,7 +39,7 @@ from sim.helpers import (
     ordinal,
     phase_fit_label,
 )
-from sim.live_match import LiveMatch
+from cricket_sim_engine.sim.live_match import LiveMatch
 
 
 class LeagueState:
@@ -175,6 +175,87 @@ class LeagueState:
         if not os.path.exists(path):
             raise ValueError(f'No save named "{name}" exists.')
         os.remove(path)
+
+    def to_dict(self):
+        """Serialise this career to a JSON-safe dict for DB persistence (`careers.state_blob`).
+
+        Excludes `live_match`: an in-progress match is not persisted here
+        (see the live-match/Redis layer) and always loads back as `None`.
+        Object references to `Team`/`Player` instances (the draft order,
+        last standings, player pool, and team rosters) are serialised by
+        name/dict and resolved back against `self.teams` on `from_dict`.
+        """
+        return {
+            "phase": self.phase,
+            "season_year": self.season_year,
+            "completed_seasons": self.completed_seasons,
+            "difficulty": self.difficulty,
+            "user_team_name": self.user_team_name,
+            "player_pool": [p.to_dict() for p in self.player_pool],
+            "teams": [t.to_dict() for t in self.teams],
+            "draft_type": self.draft_type,
+            "draft_order_names": [t.name for t in self.draft_order],
+            "draft_round": self.draft_round,
+            "draft_index": self.draft_index,
+            "draft_started": self.draft_started,
+            "pick_num": self.pick_num,
+            "draft_history": self.draft_history,
+            "round_num": self.round_num,
+            "schedule": [[list(pair) for pair in round_] for round_ in self.schedule],
+            "match_log": self.match_log,
+            "fixture_results": self.fixture_results,
+            "playoff_matches": self.playoff_matches,
+            "playoff_index": self.playoff_index,
+            "playoff_results": self.playoff_results,
+            "pending_playoff_top_four": self.pending_playoff_top_four,
+            "season_history": self.season_history,
+            "status_message": self.status_message,
+            "retention_limit": self.retention_limit,
+            "last_standings_names": [t.name for t in self.last_standings],
+            "save_name": self.save_name,
+            "draft_pool_type": self.draft_pool_type,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Reconstruct a `LeagueState` from a dict produced by `to_dict()`.
+
+        `live_match` always loads as `None` (see `to_dict`). Team-reference
+        lists (`draft_order`, `last_standings`) are resolved by name against
+        the rebuilt `self.teams`.
+        """
+        state = cls()
+        state.phase = data["phase"]
+        state.season_year = data["season_year"]
+        state.completed_seasons = data["completed_seasons"]
+        state.difficulty = data["difficulty"]
+        state.user_team_name = data["user_team_name"]
+        state.player_pool = [Player.from_dict(p) for p in data.get("player_pool", [])]
+        state.teams = [Team.from_dict(t) for t in data.get("teams", [])]
+        teams_by_name = {t.name: t for t in state.teams}
+        state.draft_type = data.get("draft_type", "mega")
+        state.draft_order = [teams_by_name[name] for name in data.get("draft_order_names", []) if name in teams_by_name]
+        state.draft_round = data.get("draft_round", 1)
+        state.draft_index = data.get("draft_index", 0)
+        state.draft_started = data.get("draft_started", False)
+        state.pick_num = data.get("pick_num", 1)
+        state.draft_history = data.get("draft_history", [])
+        state.round_num = data.get("round_num", 1)
+        state.schedule = [[tuple(pair) for pair in round_] for round_ in data.get("schedule", [])]
+        state.match_log = data.get("match_log", [])
+        state.fixture_results = data.get("fixture_results", [])
+        state.playoff_matches = data.get("playoff_matches", [])
+        state.playoff_index = data.get("playoff_index", 0)
+        state.playoff_results = data.get("playoff_results", [])
+        state.pending_playoff_top_four = data.get("pending_playoff_top_four", [])
+        state.season_history = data.get("season_history", [])
+        state.status_message = data.get("status_message", "")
+        state.retention_limit = data.get("retention_limit", RETAIN_NORMAL)
+        state.last_standings = [teams_by_name[name] for name in data.get("last_standings_names", []) if name in teams_by_name]
+        state.save_name = data.get("save_name", "")
+        state.draft_pool_type = data.get("draft_pool_type", "current")
+        state.live_match = None
+        return state
 
     def migrate(self):
         """Backfill attributes that may be missing from an older save file.
@@ -1410,6 +1491,7 @@ class LeagueState:
             "full_batting": full_batting,
             "full_bowling": full_bowling,
             "impact_sub": innings.get("impact_sub", ""),
+            "over_log": innings.get("over_log", []),
         }
 
     def archive_season(self, champion, runner_up):

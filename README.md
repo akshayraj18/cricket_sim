@@ -51,7 +51,7 @@ Leaderboards: Orange Cap, Purple Cap, sixes, fours, boundaries, highest score, s
 # Install dependencies
 make install
 
-# Start the server
+# Start the legacy web server
 make run
 ```
 
@@ -63,26 +63,55 @@ Then open [http://localhost:8765](http://localhost:8765) in your browser.
 make test          # run the test suite
 make test ARGS="-k impact_sub"   # filter tests by name
 make lint          # pyflakes static check
-make kill          # stop any running ui_server.py process
+make kill          # stop any running legacy/ui_server.py process
 make clean         # remove __pycache__ / .pyc files
 ```
 
 ## Data files
 
-`players.csv` and `players_alltime.csv` are provided with the repo and contain the current-era and all-time player pools respectively, including each player's `natural_slot` (1-11) used to seed the smart batting order. Both are required to run the app.
+`players.csv` and `players_alltime.csv` live in the `cricket_sim_engine` package and contain the current-era and all-time player pools respectively, including each player's `natural_slot` (1-11) used to seed the smart batting order. Both are required to run the app.
 
 ## Project structure
 
+This repo is a `uv` workspace with three parts:
+
 ```
-ui_server.py        — HTTP server, routes /api/* actions to LeagueState
-sim/
-  league_state.py   — top-level state machine: draft, schedule, playoffs, retention, save/load
-  live_match.py     — single-match driver: toss, lineups, over-by-over play, super over
-  helpers.py        — role/phase classification utilities
-  constants.py      — seed data, squad sizes, team branding
-engine.py           — per-ball outcome sampler (batting/bowling matchup model)
-models.py           — Player and Team data classes, progression logic
-players_data.py     — loads players.csv / players_alltime.csv into Player objects, IPL 2026 rosters
-static/             — frontend (index.html, app.js, styles.css)
-tests/              — pytest suite covering the engine, league state, live match, models, and UI server
+packages/sim_engine/         — cricket_sim_engine: the core simulation engine (installable package)
+  src/cricket_sim_engine/
+    sim/
+      league_state.py        — top-level state machine: draft, schedule, playoffs, retention, save/load
+      live_match.py           — single-match driver: toss, lineups, over-by-over play, super over
+      helpers.py              — role/phase classification utilities
+      constants.py            — seed data, squad sizes, team branding
+    engine.py                 — per-ball outcome sampler (batting/bowling matchup model)
+    models.py                 — Player and Team data classes, progression logic
+    players_data.py           — loads players.csv / players_alltime.csv into Player objects, IPL 2026 rosters
+    players.csv, players_alltime.csv
+
+backend/                      — FastAPI service (Postgres + Redis) — see backend section below
+  app/
+    main.py                   — FastAPI app entrypoint
+    db/                        — SQLAlchemy models, session
+    auth/, careers/, live_match/, subscriptions/  — route modules (in progress)
+  alembic/                    — DB migrations
+  docker-compose.yml          — local Postgres + Redis
+
+webapp/                       — existing static frontend (index.html, app.js, styles.css)
+
+legacy/                        — original stdlib HTTP server (ui_server.py), kept as a fallback
+                                  until the FastAPI backend reaches feature parity
+
+tests/                         — pytest suite for cricket_sim_engine (engine, league state, live match, models)
+legacy/tests/                  — tests for the legacy ui_server.py
 ```
+
+## Backend (FastAPI + Postgres + Redis)
+
+```bash
+make backend-up        # start Postgres + Redis (Docker)
+make backend-migrate   # apply Alembic migrations
+make backend-run       # start the FastAPI dev server at http://localhost:8000
+make backend-down      # stop Postgres + Redis
+```
+
+Copy `backend/.env.example` to `backend/.env` to override defaults (DB URL, Redis URL, JWT secret).

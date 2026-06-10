@@ -10,8 +10,8 @@ from collections import Counter
 
 import pytest
 
-from engine import MatchEngine
-from models import Player
+from cricket_sim_engine.engine import MatchEngine
+from cricket_sim_engine.models import Player
 
 pytestmark = pytest.mark.unit
 

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cricket_sim
+          POSTGRES_PASSWORD: cricket_sim
+          POSTGRES_DB: cricket_sim
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cricket_sim"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint
+        run: make lint
+
+      - name: Run root test suite
+        run: make test
+
+      - name: Apply backend migrations
+        run: make backend-migrate
+
+      - name: Run backend test suite
+        run: make backend-test
