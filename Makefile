@@ -1,5 +1,6 @@
 .PHONY: install run kill test unit integration regression lint clean \
-	backend-up backend-down backend-run backend-migrate backend-test
+	backend-up backend-down backend-run backend-migrate backend-test \
+	mobile mobile-install
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
@@ -59,3 +60,18 @@ backend-run:
 # Run backend tests against the local Postgres container (requires backend-up).
 backend-test:
 	cd backend && uv run pytest tests/ $(ARGS)
+
+# --- Expo mobile app (mobile/) -------------------------------------------------
+
+# Newest installed nvm Node >= 20 (Expo/Metro requires >=20.19.4; the default
+# shell may still resolve to an older Node). Picks the highest v20/v21/v22+ dir.
+MOBILE_NODE_BIN := $(shell ls -d $(HOME)/.nvm/versions/node/v2[0-9]* 2>/dev/null | sort -V | tail -1)/bin
+
+# Start the Expo dev client + Metro bundler at http://localhost:8081
+# (use `make mobile ARGS="--clear"` to reset the bundler cache).
+mobile:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo start --dev-client --port 8081 $(ARGS)
+
+# Install the mobile app's npm dependencies with the pinned Node.
+mobile-install:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npm install

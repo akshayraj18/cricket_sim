@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 1 Mobile Mockups</title>
+<style>
+  :root {
+    --team-primary: #045093;
+    --team-accent: #d1ab3e;
+    --team-accent-text: var(--team-accent);
+    --bg: #0b0f17;
+    --bg-elevated: #141a26;
+    --bg-card: #1a2233;
+    --border: #2a3346;
+    --text: #eef1f6;
+    --text-dim: #8e9bb3;
+    --text-faint: #5d6b85;
+    --green: #3ddc84;
+    --red: #ff5d5d;
+    --radius: 14px;
+    --bottomnav-bg: rgba(11,15,23,0.94);
+    --bezel: #1c2230;
+    --phone-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    --badge-bg: rgba(255,255,255,0.08);
+    --badge-bg-strong: rgba(255,255,255,0.14);
+  }
+
+  /* ---------- Light theme override ---------- */
+  .phone.light {
+    --bg: #f4f5f8;
+    --bg-elevated: #ffffff;
+    --bg-card: #ffffff;
+    --border: #e3e6ed;
+    --text: #1a2233;
+    --text-dim: #6b7589;
+    --text-faint: #a4abbb;
+    --green: #1f9d55;
+    --red: #e0483e;
+    --bottomnav-bg: rgba(255,255,255,0.92);
+    --bezel: #e3e6ed;
+    --phone-shadow: 0 20px 60px rgba(20,30,60,0.18);
+    /* darken team accent for legible text/icons on light surfaces */
+    --team-accent-text: color-mix(in srgb, var(--team-accent) 65%, #1a2233 35%);
+    --badge-bg: rgba(20,30,60,0.06);
+    --badge-bg-strong: rgba(20,30,60,0.1);
+  }
+  .phone.light .card {
+    box-shadow: 0 1px 3px rgba(20,30,60,0.06);
+    border: 1px solid var(--border);
+  }
+  .phone.light .ball-dot { box-shadow: 0 0 6px var(--red); }
+  /* surfaces that share --bg-elevated with the page bg need their own contrast in light mode */
+  .phone.light .btn.secondary {
+    background: #fff; color: var(--text); border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(20,30,60,0.05);
+  }
+  .phone.light .btn.ghost { background: var(--bg); border: 1px solid var(--border); }
+  .phone.light .chip-toggle { background: #fff; border: 1px solid var(--border); color: var(--text-dim); }
+  .phone.light .icon-btn { background: #fff; border: 1px solid var(--border); }
+  .phone.light .pos-badge,
+  .phone.light .crest,
+  .phone.light .crest-lg,
+  .phone.light .new-career-tile .plus,
+  .phone.light .ball-chip,
+  .phone.light .c-ball-tag {
+    background: #fff; border: 1px solid var(--border);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #05070c;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    padding: 24px;
+  }
+  h1.page-title { color: #fff; font-size: 22px; margin: 0 0 4px; }
+  p.page-sub { color: var(--text-dim); margin: 0 0 24px; font-size: 14px; }
+
+  .frames {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
+    align-items: start;
+  }
+
+  .frame-label {
+    color: var(--team-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .phone {
+    width: 360px;
+    max-width: 100%;
+    height: 740px;
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 36px;
+    border: 8px solid var(--bezel);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--phone-shadow);
+    position: relative;
+  }
+
+  /* ---------- Status bar ---------- */
+  .statusbar {
+    height: 28px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  /* ---------- Top app bar ---------- */
+  .appbar {
+    flex: 0 0 auto;
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .appbar .crest {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--bg-elevated);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 10px; color: var(--team-accent-text);
+    border: 1px solid var(--border);
+  }
+  .appbar .title-block { flex: 1; padding: 0 10px; }
+  .appbar .title-block .eyebrow { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+  .appbar .title-block h2 { margin: 1px 0 0; font-size: 17px; color: var(--text); font-weight: 700; }
+  .appbar .icon-btn, .icon-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: transparent; border: none; color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .appbar .icon-btn svg, .icon-btn svg { width: 19px; height: 19px; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px; color: var(--text-dim);
+  }
+
+  /* ---------- Scroll content ---------- */
+  .content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px 16px 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: var(--bottomnav-bg);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: 12px;
+  }
+  .navitem {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; font-size: 10px; color: var(--text-faint); font-weight: 600;
+  }
+  .navitem .ic { width: 21px; height: 21px; display: flex; align-items: center; justify-content: center; }
+  .navitem .ic svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .navitem.active { color: var(--text); }
+  .navitem.active .ic svg { stroke: var(--team-accent-text); fill: color-mix(in srgb, var(--team-accent) 18%, transparent); }
+  .navitem .ic .avatar-ic { width: 21px; height: 21px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border); }
+  .navitem.active .ic .avatar-ic { border-color: var(--team-accent); border-width: 1.5px; }
+
+  /* ---------- Cards & shared ---------- */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .card h3 { margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-dim); }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-elevated); border: none;
+    border-radius: 999px; padding: 4px 10px; font-size: 11px; color: var(--text-dim);
+    font-weight: 600;
+  }
+  .pill.accent { background: color-mix(in srgb, var(--team-accent) 16%, transparent); color: var(--team-accent-text); }
+  .btn {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; border: none; padding: 13px 16px;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .btn.primary { background: var(--team-accent); color: #1a1404; }
+  .btn.secondary { background: var(--bg-elevated); color: var(--text); }
+  .btn.ghost { background: transparent; color: var(--team-accent-text); }
+  .btn.block { width: 100%; }
+  .btn.sm { padding: 9px 12px; font-size: 12px; border-radius: 9px; }
+
+  .scroll-x { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .scroll-x::-webkit-scrollbar { display: none; }
+  .chip-toggle {
+    flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    background: var(--bg-elevated); border: none; color: var(--text-dim); white-space: nowrap;
+  }
+  .chip-toggle.active { background: var(--team-accent); color: #1a1404; }
+
+  /* =====================================================
+     SCREEN 1: TITLE / HOME
+     ===================================================== */
+  .home-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .home-header .wordmark { display: flex; align-items: center; gap: 8px; }
+  .home-header .wordmark .mark { font-size: 20px; }
+  .home-header .wordmark span { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+  .section-label {
+    font-size: 11px; font-weight: 700; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 2px;
+  }
+
+  .career-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px;
+  }
+  .career-card .crest-lg {
+    width: 42px; height: 42px; border-radius: 10px; flex: 0 0 auto;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 12px; color: var(--team-accent-text);
+  }
+  .career-card .meta { flex: 1; min-width: 0; }
+  .career-card .meta .name { font-weight: 700; font-size: 14px; }
+  .career-card .meta .sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .career-card .ic.chev { width: 16px; height: 16px; color: var(--text-faint); flex: 0 0 auto; }
+  .career-card .ic.chev svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .new-career-tile {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+    color: var(--text-dim);
+  }
+  .new-career-tile .plus {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--bg-elevated);
+    display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--team-accent-text);
+    flex: 0 0 auto;
+  }
+  .new-career-tile .label { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .new-career-tile .sub { font-size: 11.5px; margin-top: 2px; }
+
+  /* =====================================================
+     SCREEN 2: SQUAD HUB
+     ===================================================== */
+  .seg-tabs {
+    display: flex; background: var(--bg-elevated); border-radius: 12px; padding: 4px; gap: 4px;
+  }
+  .seg-tabs .seg {
+    flex: 1; text-align: center; padding: 8px 6px; border-radius: 9px;
+    font-size: 11.5px; font-weight: 700; color: var(--text-dim);
+  }
+  .seg-tabs .seg.active { background: var(--team-primary); color: #fff; }
+
+  .player-row {
+    display: flex; align-items: center; gap: 12px; padding: 13px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .player-row:last-child { border-bottom: none; }
+  .player-row .pos-badge {
+    width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+    background: var(--bg-elevated); display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; color: var(--team-accent-text); border: 1px solid var(--border);
+  }
+  .player-row .info { flex: 1; min-width: 0; }
+  .player-row .info .nm { font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+  .player-row .info .role { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .player-row .ovr { font-size: 16px; font-weight: 800; color: var(--team-accent-text); width: 34px; text-align: right; }
+  .badge-mini {
+    font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 5px;
+    background: var(--badge-bg, rgba(255,255,255,0.08)); color: var(--text-dim);
+  }
+  .badge-mini.cap { background: var(--team-accent); color: #1a1404; }
+  .badge-mini.vc { background: var(--badge-bg-strong, rgba(255,255,255,0.14)); color: var(--text); }
+
+  .drag-handle { color: var(--text-faint); font-size: 16px; padding: 0 2px; }
+
+  .lineup-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .lineup-slot {
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 12px;
+  }
+  .lineup-slot .num { color: var(--team-accent-text); font-weight: 800; font-size: 11px; width: 16px; }
+  .lineup-slot.empty { color: var(--text-faint); border-style: dashed; }
+
+  /* =====================================================
+     SCREEN 3: SEASON / MATCH CENTRE
+     ===================================================== */
+  .standings-strip {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .standings-row {
+    display: grid; grid-template-columns: 22px 1fr repeat(4, 32px); align-items: center;
+    gap: 6px; padding: 7px 4px; font-size: 12px; border-radius: 8px;
+  }
+  .standings-row.me { background: color-mix(in srgb, var(--team-accent) 14%, transparent); }
+  .standings-row .pos { color: var(--text-faint); font-weight: 800; font-size: 11px; }
+  .standings-row .tname { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .standings-row .num { text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .standings-head { font-size: 10px; color: var(--text-faint); text-transform: uppercase; font-weight: 700; }
+
+  .fixture-card {
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+  }
+  .fixture-card .vs-block { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .fixture-team { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; }
+  .fixture-team .crest-sm {
+    width: 22px; height: 22px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 800; color: #0b0f17; margin-right: 8px;
+  }
+  .fixture-vs-label { font-size: 10px; color: var(--text-faint); text-align: center; }
+  .fixture-meta { font-size: 11px; color: var(--text-dim); }
+
+  .result-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .res-teams { flex: 1; font-size: 12.5px; font-weight: 700; }
+  .result-row .res-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-weight: 400; }
+  .result-row .res-chev { color: var(--text-faint); }
+
+  /* =====================================================
+     SCREEN 4: LIVE MATCH
+     ===================================================== */
+  .scoreboard {
+    border-radius: 18px;
+    padding: 16px;
+    background: linear-gradient(160deg, var(--team-primary), #07101e 80%);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .scoreboard .innings-label { font-size: 11px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
+  .scoreboard .score-line { font-size: 34px; font-weight: 800; color: #fff; margin: 4px 0 2px; }
+  .scoreboard .score-line .overs { font-size: 16px; color: rgba(255,255,255,0.65); font-weight: 600; }
+  .scoreboard .target-line { font-size: 12px; color: var(--team-accent); font-weight: 700; }
+  .scoreboard .rr-row { display: flex; justify-content: center; gap: 18px; margin-top: 10px; font-size: 11px; color: rgba(255,255,255,0.7); }
+  .scoreboard .rr-row b { color: #fff; font-size: 13px; display: block; }
+
+  .field-strip {
+    border-radius: 14px; border: 1px solid var(--border); background: var(--bg-card);
+    padding: 10px; display: flex; align-items: center; gap: 12px;
+  }
+  .field-pitch {
+    width: 90px; height: 56px; border-radius: 50% / 40%;
+    background: radial-gradient(ellipse at center, #2c5e2e 0%, #1d3f1f 70%, #16321a 100%);
+    position: relative; flex: 0 0 auto; border: 1px solid #0e1f10;
+  }
+  .field-pitch .pitch-strip {
+    position: absolute; left: 50%; top: 18%; width: 8px; height: 64%; transform: translateX(-50%);
+    background: #cdb98a; border-radius: 2px;
+  }
+  .field-pitch .ball-dot {
+    position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--red);
+    top: 30%; left: 64%; box-shadow: 0 0 6px var(--red);
+  }
+  .field-info { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-dim); }
+  .field-info .this-over { display: flex; gap: 5px; }
+  .ball-chip {
+    width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; background: var(--bg-elevated); border: 1px solid var(--border);
+  }
+  .ball-chip.four { background: color-mix(in srgb, var(--green) 25%, transparent); color: var(--green); border-color: transparent; }
+  .ball-chip.six { background: color-mix(in srgb, var(--team-accent) 30%, transparent); color: var(--team-accent-text); border-color: transparent; }
+  .ball-chip.wicket { background: color-mix(in srgb, var(--red) 25%, transparent); color: var(--red); border-color: transparent; }
+
+  .batter-line {
+    display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; padding: 7px 0;
+  }
+  .batter-line.on-strike { font-weight: 800; }
+  .batter-line .bname { display: flex; align-items: center; gap: 6px; }
+  .batter-line .bfig { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .strike-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--team-accent); }
+
+  .commentary-feed { display: flex; flex-direction: column; gap: 8px; max-height: 160px; overflow-y: auto; }
+  .commentary-item { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; }
+  .commentary-item .c-ball-tag {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 11px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .commentary-item .c-ball-tag.boundary { background: color-mix(in srgb, var(--green) 25%, transparent); color: var(--green); border-color: transparent;}
+  .commentary-item .c-ball-tag.six { background: color-mix(in srgb, var(--team-accent) 30%, transparent); color: var(--team-accent-text); border-color: transparent;}
+  .commentary-item .c-ball-tag.wkt { background: color-mix(in srgb, var(--red) 25%, transparent); color: var(--red); border-color: transparent;}
+  .commentary-item .c-text { color: var(--text-dim); line-height: 1.4; }
+  .commentary-item .c-text b { color: var(--text); }
+  .commentary-item .c-over { color: var(--text-faint); font-size: 10px; flex: 0 0 32px; text-align: right; }
+
+  .action-row { display: flex; gap: 8px; }
+  .action-row .btn { flex: 1; }
+
+  /* light mode preview swatch */
+  .swatch-row { display: flex; gap: 8px; margin-top: 8px; }
+  .swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <h1 class="page-title">Phase 1 — Mobile Frontend Mockups</h1>
+  <p class="page-sub">Dark, team-themed (Mumbai Indians shown — primary #045093 / accent #d1ab3e). Sleek/minimal pass: line icons, flat surfaces, profile-based account access. Static mockup, non-functional.</p>
+
+  <!-- shared icon defs -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></symbol>
+      <symbol id="ic-squad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3.1-5 7-5s7 1.7 7 5"/><circle cx="17" cy="7" r="2.4"/><path d="M16 13.2c2.9.4 5 1.9 5 4.3"/></symbol>
+      <symbol id="ic-season" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
+      <symbol id="ic-stats" viewBox="0 0 24 24"><path d="M4 20V10M11 20V4M18 20v-7"/></symbol>
+      <symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4v1a4 4 0 0 0 4 4M17 5h3v1a4 4 0 0 1-4 4"/><path d="M12 13v3M9 20h6M10 20v-1.5h4V20"/></symbol>
+      <symbol id="ic-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
+      <symbol id="ic-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 14h8v6H8z"/></symbol>
+      <symbol id="ic-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+      <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+      <symbol id="ic-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="frames">
+
+    <!-- ================= SCREEN 1: TITLE / HOME ================= -->
+    <div>
+      <div class="frame-label">1 · Home — Career Select</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <div class="home-header" style="flex:1;">
+            <div class="wordmark"><span class="mark">🏏</span><span>Franchise Sim</span></div>
+            <div class="avatar">AR</div>
+          </div>
+        </div>
+        <div class="content" style="padding-top: 4px;">
+
+          <div>
+            <p class="section-label">Your Careers</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="card career-card">
+                <div class="crest-lg">MI</div>
+                <div class="meta">
+                  <div class="name">Mumbai Dynasty</div>
+                  <div class="sub">2026 Season · Round 7 of 14 · 1st in table</div>
+                </div>
+                <div class="ic chev"><svg><use href="#ic-chev"/></svg></div>
+              </div>
+
+              <div class="card career-card">
+                <div class="crest-lg" style="color:#da1818;">RCB</div>
+                <div class="meta">
+                  <div class="name">Bengaluru Rebuild</div>
+                  <div class="sub">2028 Season · Pre-Draft · 3 titles</div>
+                </div>
+                <div class="ic chev"><svg><use href="#ic-chev"/></svg></div>
+              </div>
+
+              <div class="new-career-tile">
+                <div class="plus">＋</div>
+                <div>
+                  <div class="label">Start New Career</div>
+                  <div class="sub">Choose a franchise, difficulty &amp; draft mode</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navitem active"><div class="ic"><svg><use href="#ic-home"/></svg></div>Home</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-squad"/></svg></div>Squad</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-season"/></svg></div>Season</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-stats"/></svg></div>Stats</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-trophy"/></svg></div>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 2: SQUAD HUB ================= -->
+    <div>
+      <div class="frame-label">2 · Squad Hub — Roster &amp; Lineup</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <div class="title-block" style="padding-left:0;">
+            <div class="eyebrow">Mumbai Dynasty</div>
+            <h2>Squad</h2>
+          </div>
+          <div class="avatar">AR</div>
+        </div>
+        <div class="content">
+          <div class="seg-tabs">
+            <div class="seg active">Roster</div>
+            <div class="seg">Batting XI</div>
+            <div class="seg">Bowling Plan</div>
+          </div>
+
+          <div>
+            <div class="row" style="margin-bottom:10px;">
+              <p class="section-label" style="margin:0;">21-Man Roster</p>
+              <span class="pill accent">Sorted: OVR</span>
+            </div>
+            <div class="card" style="padding-bottom:4px;">
+
+            <div class="player-row">
+              <div class="pos-badge">WK</div>
+              <div class="info">
+                <div class="nm">Ishan Kishan <span class="badge-mini cap">C</span></div>
+                <div class="role">Wicketkeeper · Aggressive Opener</div>
+              </div>
+              <div class="ovr">88</div>
+            </div>
+            <div class="player-row">
+              <div class="pos-badge">BAT</div>
+              <div class="info">
+                <div class="nm">Rohit Sharma <span class="badge-mini vc">VC</span></div>
+                <div class="role">Batsman · Anchor</div>
+              </div>
+              <div class="ovr">86</div>
+            </div>
+            <div class="player-row">
+              <div class="pos-badge">AR</div>
+              <div class="info">
+                <div class="nm">Hardik Pandya</div>
+                <div class="role">All-Rounder · Finisher</div>
+              </div>
+              <div class="ovr">85</div>
+            </div>
+            <div class="player-row">
+              <div class="pos-badge">BWL</div>
+              <div class="info">
+                <div class="nm">Jasprit Bumrah</div>
+                <div class="role">Bowler · Death-over Specialist</div>
+              </div>
+              <div class="ovr">91</div>
+            </div>
+            <div class="player-row">
+              <div class="pos-badge">BWL</div>
+              <div class="info">
+                <div class="nm">Trent Boult</div>
+                <div class="role">Bowler · New-ball Bowler</div>
+              </div>
+              <div class="ovr">84</div>
+            </div>
+            </div>
+            <button class="btn ghost block sm" style="margin-top:10px;">View Full Roster (21)</button>
+          </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navitem"><div class="ic"><svg><use href="#ic-home"/></svg></div>Home</div>
+          <div class="navitem active"><div class="ic"><svg><use href="#ic-squad"/></svg></div>Squad</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-season"/></svg></div>Season</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-stats"/></svg></div>Stats</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-trophy"/></svg></div>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 3: SEASON / MATCH CENTRE ================= -->
+    <div>
+      <div class="frame-label">3 · Season — Match Centre &amp; Standings</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <div class="title-block" style="padding-left:0;">
+            <div class="eyebrow">2026 Season</div>
+            <h2>Match Centre</h2>
+          </div>
+          <div class="avatar">AR</div>
+        </div>
+        <div class="content">
+
+          <div class="card">
+            <div class="row" style="margin-bottom:6px;">
+              <h3 style="margin:0;">Round 7 Fixture</h3>
+              <span class="pill accent">Up Next</span>
+            </div>
+            <div class="fixture-card" style="padding:6px 0;">
+              <div class="vs-block">
+                <div class="fixture-team"><span><span class="crest-sm" style="background:linear-gradient(135deg,#045093,#d1ab3e)">MI</span>Mumbai Indians</span></div>
+                <div class="fixture-vs-label">vs</div>
+                <div class="fixture-team"><span><span class="crest-sm" style="background:linear-gradient(135deg,#3a225d,#c6a76f)">KKR</span>Kolkata Knight Riders</span></div>
+              </div>
+            </div>
+            <div class="fixture-meta" style="margin-bottom:10px;">Wankhede Stadium · Home</div>
+            <div class="action-row">
+              <button class="btn primary">Enter Match Hub</button>
+              <button class="btn secondary">Quick Sim</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="margin-bottom:10px;">
+              <h3 style="margin:0;">Points Table</h3>
+              <span class="pill">Top 4 → Playoffs</span>
+            </div>
+            <div class="standings-strip">
+              <div class="standings-row standings-head">
+                <span></span><span>Team</span><span class="num">P</span><span class="num">W</span><span class="num">L</span><span class="num">Pts</span>
+              </div>
+              <div class="standings-row me">
+                <span class="pos">1</span><span class="tname"><span class="crest-sm" style="width:18px;height:18px;font-size:8px;background:linear-gradient(135deg,#045093,#d1ab3e)">MI</span>Mumbai</span>
+                <span class="num">6</span><span class="num">5</span><span class="num">1</span><span class="num">10</span>
+              </div>
+              <div class="standings-row">
+                <span class="pos">2</span><span class="tname"><span class="crest-sm" style="width:18px;height:18px;font-size:8px;background:linear-gradient(135deg,#17479e,#ef1b23)">DC</span>Delhi</span>
+                <span class="num">6</span><span class="num">4</span><span class="num">2</span><span class="num">8</span>
+              </div>
+              <div class="standings-row">
+                <span class="pos">3</span><span class="tname"><span class="crest-sm" style="width:18px;height:18px;font-size:8px;background:linear-gradient(135deg,#f7c948,#22409a)">CSK</span>Chennai</span>
+                <span class="num">6</span><span class="num">4</span><span class="num">2</span><span class="num">8</span>
+              </div>
+              <div class="standings-row">
+                <span class="pos">4</span><span class="tname"><span class="crest-sm" style="width:18px;height:18px;font-size:8px;background:linear-gradient(135deg,#3a225d,#c6a76f)">KKR</span>Kolkata</span>
+                <span class="num">6</span><span class="num">3</span><span class="num">3</span><span class="num">6</span>
+              </div>
+            </div>
+            <button class="btn ghost block" style="margin-top:10px;">View Full Table &amp; Playoff Ladder</button>
+          </div>
+
+          <div class="card">
+            <h3>Recent Results</h3>
+            <div class="result-row">
+              <div class="res-teams">MI beat SRH<div class="res-sub">by 6 wickets · MOTM: J Bumrah</div></div>
+              <div class="res-chev">›</div>
+            </div>
+            <div class="result-row">
+              <div class="res-teams">RR beat MI<div class="res-sub">by 14 runs · MOTM: Y Chahal</div></div>
+              <div class="res-chev">›</div>
+            </div>
+            <div class="result-row">
+              <div class="res-teams">MI beat PBKS<div class="res-sub">by 38 runs · MOTM: R Sharma</div></div>
+              <div class="res-chev">›</div>
+            </div>
+          </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navitem"><div class="ic"><svg><use href="#ic-home"/></svg></div>Home</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-squad"/></svg></div>Squad</div>
+          <div class="navitem active"><div class="ic"><svg><use href="#ic-season"/></svg></div>Season</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-stats"/></svg></div>Stats</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-trophy"/></svg></div>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 4: LIVE MATCH ================= -->
+    <div>
+      <div class="frame-label">4 · Live Match — Hybrid Scorecard + Field</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <button class="icon-btn"><svg><use href="#ic-back"/></svg></button>
+          <div class="title-block" style="text-align:center; padding:0;">
+            <div class="eyebrow">2nd Innings · Over 14.3</div>
+            <h2 style="font-size:15px;">MI vs KKR</h2>
+          </div>
+          <button class="icon-btn"><svg><use href="#ic-pause"/></svg></button>
+        </div>
+        <div class="content">
+
+          <div class="scoreboard">
+            <div class="innings-label">Mumbai Indians chasing</div>
+            <div class="score-line">156/4 <span class="overs">(14.3 ov)</span></div>
+            <div class="target-line">Need 47 from 33 balls</div>
+            <div class="rr-row">
+              <div>CRR<b>10.8</b></div>
+              <div>RRR<b>8.5</b></div>
+              <div>Target<b>203</b></div>
+            </div>
+          </div>
+
+          <div class="field-strip">
+            <div class="field-pitch">
+              <div class="pitch-strip"></div>
+              <div class="ball-dot"></div>
+            </div>
+            <div class="field-info">
+              <div>This over (Narine) · last ball: six</div>
+              <div class="this-over">
+                <span class="ball-chip">1</span>
+                <span class="ball-chip four">4</span>
+                <span class="ball-chip">0</span>
+                <span class="ball-chip wicket">W</span>
+                <span class="ball-chip six">6</span>
+                <span class="ball-chip">·</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:10px 14px;">
+            <div class="batter-line on-strike">
+              <span class="bname"><span class="strike-dot"></span>Tilak Varma*</span>
+              <span class="bfig">42 (28)</span>
+            </div>
+            <div class="batter-line">
+              <span class="bname">Hardik Pandya</span>
+              <span class="bfig">18 (11)</span>
+            </div>
+            <div style="border-top:1px solid var(--border); margin:8px 0;"></div>
+            <div class="batter-line">
+              <span class="bname">Bowling: S Narine</span>
+              <span class="bfig">3.3-0-28-1</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="margin-bottom:8px;">
+              <h3 style="margin:0;">Commentary</h3>
+            </div>
+            <div class="commentary-feed">
+              <div class="commentary-item">
+                <div class="c-over">14.3</div>
+                <div class="c-ball-tag six">6</div>
+                <div class="c-text"><b>Varma</b> launches Narine over deep midwicket for SIX!</div>
+              </div>
+              <div class="commentary-item">
+                <div class="c-over">14.2</div>
+                <div class="c-ball-tag wkt">W</div>
+                <div class="c-text"><b>Suryakumar c Russell b Narine</b> — holes out to long-on, 134/4.</div>
+              </div>
+              <div class="commentary-item">
+                <div class="c-over">14.1</div>
+                <div class="c-ball-tag">1</div>
+                <div class="c-text">Pandya works it to mid-wicket for a single.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn secondary">Play Ball</button>
+            <button class="btn primary">Play Over</button>
+            <button class="btn ghost">Skip to End</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 5: LIGHT MODE — HOME ================= -->
+    <div>
+      <div class="frame-label">5 · Light Mode — Home</div>
+      <div class="phone light">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <div class="home-header" style="flex:1;">
+            <div class="wordmark"><span class="mark">🏏</span><span>Franchise Sim</span></div>
+            <div class="avatar">AR</div>
+          </div>
+        </div>
+        <div class="content" style="padding-top: 4px;">
+
+          <div>
+            <p class="section-label">Your Careers</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="card career-card">
+                <div class="crest-lg">MI</div>
+                <div class="meta">
+                  <div class="name">Mumbai Dynasty</div>
+                  <div class="sub">2026 Season · Round 7 of 14 · 1st in table</div>
+                </div>
+                <div class="ic chev"><svg><use href="#ic-chev"/></svg></div>
+              </div>
+
+              <div class="card career-card">
+                <div class="crest-lg" style="color:#da1818;">RCB</div>
+                <div class="meta">
+                  <div class="name">Bengaluru Rebuild</div>
+                  <div class="sub">2028 Season · Pre-Draft · 3 titles</div>
+                </div>
+                <div class="ic chev"><svg><use href="#ic-chev"/></svg></div>
+              </div>
+
+              <div class="new-career-tile">
+                <div class="plus">＋</div>
+                <div>
+                  <div class="label">Start New Career</div>
+                  <div class="sub">Choose a franchise, difficulty &amp; draft mode</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navitem active"><div class="ic"><svg><use href="#ic-home"/></svg></div>Home</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-squad"/></svg></div>Squad</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-season"/></svg></div>Season</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-stats"/></svg></div>Stats</div>
+          <div class="navitem"><div class="ic"><svg><use href="#ic-trophy"/></svg></div>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 6: LIGHT MODE — LIVE MATCH ================= -->
+    <div>
+      <div class="frame-label">6 · Light Mode — Live Match</div>
+      <div class="phone light">
+        <div class="statusbar"><span>9:41</span><span>●●●●  📶  🔋</span></div>
+        <div class="appbar">
+          <button class="icon-btn"><svg><use href="#ic-back"/></svg></button>
+          <div class="title-block" style="text-align:center; padding:0;">
+            <div class="eyebrow">2nd Innings · Over 14.3</div>
+            <h2 style="font-size:15px;">MI vs KKR</h2>
+          </div>
+          <button class="icon-btn"><svg><use href="#ic-pause"/></svg></button>
+        </div>
+        <div class="content">
+
+          <div class="scoreboard">
+            <div class="innings-label">Mumbai Indians chasing</div>
+            <div class="score-line">156/4 <span class="overs">(14.3 ov)</span></div>
+            <div class="target-line">Need 47 from 33 balls</div>
+            <div class="rr-row">
+              <div>CRR<b>10.8</b></div>
+              <div>RRR<b>8.5</b></div>
+              <div>Target<b>203</b></div>
+            </div>
+          </div>
+
+          <div class="field-strip">
+            <div class="field-pitch">
+              <div class="pitch-strip"></div>
+              <div class="ball-dot"></div>
+            </div>
+            <div class="field-info">
+              <div>This over (Narine) · last ball: six</div>
+              <div class="this-over">
+                <span class="ball-chip">1</span>
+                <span class="ball-chip four">4</span>
+                <span class="ball-chip">0</span>
+                <span class="ball-chip wicket">W</span>
+                <span class="ball-chip six">6</span>
+                <span class="ball-chip">·</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:10px 14px;">
+            <div class="batter-line on-strike">
+              <span class="bname"><span class="strike-dot"></span>Tilak Varma*</span>
+              <span class="bfig">42 (28)</span>
+            </div>
+            <div class="batter-line">
+              <span class="bname">Hardik Pandya</span>
+              <span class="bfig">18 (11)</span>
+            </div>
+            <div style="border-top:1px solid var(--border); margin:8px 0;"></div>
+            <div class="batter-line">
+              <span class="bname">Bowling: S Narine</span>
+              <span class="bfig">3.3-0-28-1</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="margin-bottom:8px;">
+              <h3 style="margin:0;">Commentary</h3>
+            </div>
+            <div class="commentary-feed">
+              <div class="commentary-item">
+                <div class="c-over">14.3</div>
+                <div class="c-ball-tag six">6</div>
+                <div class="c-text"><b>Varma</b> launches Narine over deep midwicket for SIX!</div>
+              </div>
+              <div class="commentary-item">
+                <div class="c-over">14.2</div>
+                <div class="c-ball-tag wkt">W</div>
+                <div class="c-text"><b>Suryakumar c Russell b Narine</b> — holes out to long-on, 134/4.</div>
+              </div>
+              <div class="commentary-item">
+                <div class="c-over">14.1</div>
+                <div class="c-ball-tag">1</div>
+                <div class="c-text">Pandya works it to mid-wicket for a single.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn secondary">Play Ball</button>
+            <button class="btn primary">Play Over</button>
+            <button class="btn ghost">Skip to End</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

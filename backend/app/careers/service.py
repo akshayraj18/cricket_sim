@@ -98,12 +98,10 @@ async def _sync_teams_and_players(db: AsyncSession, career_id: uuid.UUID, league
             runs_conceded=team.runs_conceded,
             balls_bowled=team.balls_bowled,
             saved_presets={
-                "saved_batting_first_xi_names": team.saved_batting_first_xi_names,
-                "saved_bowling_first_xi_names": team.saved_bowling_first_xi_names,
+                "saved_starting_xi_names": team.saved_starting_xi_names,
+                "saved_impact_sub_name": team.saved_impact_sub_name,
                 "saved_batting_order_names": team.saved_batting_order_names,
                 "saved_bowling_over_names": team.saved_bowling_over_names,
-                "saved_bat_to_bowl_sub": team.saved_bat_to_bowl_sub,
-                "saved_bowl_to_bat_sub": team.saved_bowl_to_bat_sub,
                 "saved_wicketkeeper_name": team.saved_wicketkeeper_name,
             },
         )

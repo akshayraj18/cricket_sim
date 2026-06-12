@@ -283,10 +283,8 @@ class Team:
         self.captain = None
         self.vice_captain = None
         self.saved_playing_xi_names = []
-        self.saved_batting_first_xi_names = []
-        self.saved_bowling_first_xi_names = []
-        self.saved_bat_to_bowl_sub = {"out": "", "in": ""}
-        self.saved_bowl_to_bat_sub = {"out": "", "in": ""}
+        self.saved_starting_xi_names = []
+        self.saved_impact_sub_name = ""
         self.saved_wicketkeeper_name = ""
         self.saved_batting_order_names = []
         self.saved_bowling_over_names = []
@@ -318,10 +316,8 @@ class Team:
             "captain_name": self.captain.name if self.captain else None,
             "vice_captain_name": self.vice_captain.name if self.vice_captain else None,
             "saved_playing_xi_names": list(self.saved_playing_xi_names),
-            "saved_batting_first_xi_names": list(self.saved_batting_first_xi_names),
-            "saved_bowling_first_xi_names": list(self.saved_bowling_first_xi_names),
-            "saved_bat_to_bowl_sub": dict(self.saved_bat_to_bowl_sub),
-            "saved_bowl_to_bat_sub": dict(self.saved_bowl_to_bat_sub),
+            "saved_starting_xi_names": list(self.saved_starting_xi_names),
+            "saved_impact_sub_name": self.saved_impact_sub_name,
             "saved_wicketkeeper_name": self.saved_wicketkeeper_name,
             "saved_batting_order_names": list(self.saved_batting_order_names),
             "saved_bowling_over_names": list(self.saved_bowling_over_names),
@@ -343,10 +339,8 @@ class Team:
         team.captain = roster_by_name.get(data.get("captain_name"))
         team.vice_captain = roster_by_name.get(data.get("vice_captain_name"))
         team.saved_playing_xi_names = list(data.get("saved_playing_xi_names", []))
-        team.saved_batting_first_xi_names = list(data.get("saved_batting_first_xi_names", []))
-        team.saved_bowling_first_xi_names = list(data.get("saved_bowling_first_xi_names", []))
-        team.saved_bat_to_bowl_sub = dict(data.get("saved_bat_to_bowl_sub", {"out": "", "in": ""}))
-        team.saved_bowl_to_bat_sub = dict(data.get("saved_bowl_to_bat_sub", {"out": "", "in": ""}))
+        team.saved_starting_xi_names = list(data.get("saved_starting_xi_names", []))
+        team.saved_impact_sub_name = data.get("saved_impact_sub_name", "")
         team.saved_wicketkeeper_name = data.get("saved_wicketkeeper_name", "")
         team.saved_batting_order_names = list(data.get("saved_batting_order_names", []))
         team.saved_bowling_over_names = list(data.get("saved_bowling_over_names", []))

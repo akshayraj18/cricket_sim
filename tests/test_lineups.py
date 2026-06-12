@@ -47,7 +47,7 @@ def test_smart_batting_order_respects_preferred_positions(drafted):
     """The Klaasen/Pooran scenario, end to end: a middle-order specialist keeper should land near their natural slot in the suggested order, not get pushed to the tail."""
     league = drafted
     team = league.user_team()
-    xi_names = league.smart_batting_first_xi(team)
+    xi_names = league.smart_starting_xi(team)
     xi = resolve(team, xi_names)
     order = league.smart_batting_order(xi)
     assert len(order) == 11
@@ -63,7 +63,7 @@ def test_smart_batting_order_respects_preferred_positions(drafted):
 def test_smart_batting_order_places_natural_top_order_batter_up_front(drafted):
     league = drafted
     team = league.user_team()
-    xi_names = league.smart_batting_first_xi(team)
+    xi_names = league.smart_starting_xi(team)
     xi = resolve(team, xi_names)
     order = league.smart_batting_order(xi)
     top_three = order[:3]
@@ -73,10 +73,10 @@ def test_smart_batting_order_places_natural_top_order_batter_up_front(drafted):
     )
 
 
-def test_smart_batting_first_xi_is_valid_xi(drafted):
+def test_smart_starting_xi_is_valid_xi(drafted):
     league = drafted
     team = league.user_team()
-    xi_names = league.smart_batting_first_xi(team)
+    xi_names = league.smart_starting_xi(team)
     xi = resolve(team, xi_names)
     assert len(xi) == 11
     assert len(set(xi_names)) == 11
@@ -84,25 +84,48 @@ def test_smart_batting_first_xi_is_valid_xi(drafted):
     assert len([p for p in xi if counts_as_batter(p)]) >= 6
 
 
-def test_smart_bowling_first_xi_is_valid_xi(drafted):
+def test_smart_impact_sub_is_a_bowling_option_not_in_starting_xi(drafted):
     league = drafted
     team = league.user_team()
-    xi_names = league.smart_bowling_first_xi(team)
-    xi = resolve(team, xi_names)
-    assert len(xi) == 11
-    assert len(set(xi_names)) == 11
-    assert sum(1 for p in xi if p.is_overseas) <= 4
-    assert len([p for p in xi if counts_as_bowler(p)]) >= 5
+    starting_xi_names = league.smart_starting_xi(team)
+    impact_sub_name = league.smart_impact_sub(team, starting_xi_names)
+    assert impact_sub_name
+    assert impact_sub_name not in starting_xi_names
+    impact_sub = next(p for p in team.roster if p.name == impact_sub_name)
+    assert counts_as_bowler(impact_sub)
 
 
-def test_batting_and_bowling_first_xis_differ_by_at_most_one_player(drafted):
-    """The Impact Player rule only allows a single swap, so the two preset XIs the UI suggests must be at most one player apart in each direction."""
+def test_resolve_match_xi_batting_first_keeps_starting_xi_unchanged(drafted):
     league = drafted
     team = league.user_team()
-    bat_set = set(league.smart_batting_first_xi(team))
-    bowl_set = set(league.smart_bowling_first_xi(team))
-    assert len(bat_set - bowl_set) <= 1
-    assert len(bowl_set - bat_set) <= 1
+    starting_xi_names = league.smart_starting_xi(team)
+    impact_sub_name = league.smart_impact_sub(team, starting_xi_names)
+    league.set_user_presets([], [], starting_xi=starting_xi_names, impact_sub_name=impact_sub_name)
+
+    innings1_xi, swap_out, swap_in = league.resolve_match_xi(team, batting_first=True)
+
+    assert innings1_xi == starting_xi_names
+    assert swap_out in starting_xi_names
+    assert swap_in == impact_sub_name
+
+
+def test_resolve_match_xi_bowling_first_starts_impact_sub_in_place_of_swap_out(drafted):
+    league = drafted
+    team = league.user_team()
+    starting_xi_names = league.smart_starting_xi(team)
+    impact_sub_name = league.smart_impact_sub(team, starting_xi_names)
+    league.set_user_presets([], [], starting_xi=starting_xi_names, impact_sub_name=impact_sub_name)
+
+    innings1_xi, swap_out, swap_in = league.resolve_match_xi(team, batting_first=False)
+
+    assert len(innings1_xi) == 11
+    assert len(set(innings1_xi)) == 11
+    assert impact_sub_name in innings1_xi
+    assert swap_out == impact_sub_name
+    assert swap_in in starting_xi_names
+    assert swap_in not in innings1_xi
+    # innings1_xi is starting_xi with swap_in replaced by the impact sub
+    assert set(innings1_xi) == (set(starting_xi_names) - {swap_in}) | {impact_sub_name}
 
 
 def test_default_bowling_plan_respects_over_caps(drafted):

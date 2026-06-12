@@ -59,3 +59,34 @@ jobs:
 
       - name: Run backend test suite
         run: make backend-test
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Expo normally generates expo-env.d.ts (which pulls in the ambient
+      # CSS-module declarations from expo/types) on its first run; it's
+      # gitignored, so regenerate it before the raw `tsc` typecheck in CI.
+      - name: Generate Expo type stubs
+        run: printf '/// <reference types="expo/types" />\n' > expo-env.d.ts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint

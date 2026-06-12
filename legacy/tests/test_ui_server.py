@@ -226,18 +226,15 @@ def test_post_leadership_and_presets(server):
     status, data = post(server, "/api/leadership", {"captain": team.captain.name, "vice": team.vice_captain.name})
     assert status == 200
 
-    bat_xi = league.smart_batting_first_xi(team)
-    bowl_xi = league.smart_bowling_first_xi(team)
-    bat_order_names = [p.name for p in league.smart_batting_order([next(p for p in team.roster if p.name == n) for n in bat_xi])]
+    starting_xi = league.smart_starting_xi(team)
+    impact_sub_name = league.smart_impact_sub(team, starting_xi)
+    bat_order_names = [p.name for p in league.smart_batting_order([next(p for p in team.roster if p.name == n) for n in starting_xi])]
     bowl_plan = league.default_bowling_plan(team)
-    impact_defaults = league.default_impact_subs(team)
     status, data = post(server, "/api/presets", {
         "batting_order": bat_order_names,
         "bowling_order": bowl_plan,
-        "batting_first_xi": bat_xi,
-        "bowling_first_xi": bowl_xi,
-        "bat_to_bowl": impact_defaults["bat_to_bowl"],
-        "bowl_to_bat": impact_defaults["bowl_to_bat"],
+        "starting_xi": starting_xi,
+        "impact_sub_name": impact_sub_name,
     })
     assert status == 200
 
@@ -275,25 +272,22 @@ def test_post_aggression_updates_live_score(server):
     team = league.user_team()
     league.set_leadership(team.captain.name, team.vice_captain.name)
     presets_team = league.user_team()
-    bat_xi_names = league.smart_batting_first_xi(presets_team)
-    bowl_xi_names = league.smart_bowling_first_xi(presets_team)
-    bat_order = league.smart_batting_order([next(p for p in presets_team.roster if p.name == n) for n in bat_xi_names])
+    starting_xi_names = league.smart_starting_xi(presets_team)
+    impact_sub_name = league.smart_impact_sub(presets_team, starting_xi_names)
+    bat_order = league.smart_batting_order([next(p for p in presets_team.roster if p.name == n) for n in starting_xi_names])
     bowl_plan = league.default_bowling_plan(presets_team)
-    impact_defaults = league.default_impact_subs(presets_team)
     league.set_user_presets(
         batting_order=[p.name for p in bat_order],
         bowling_order=bowl_plan,
-        batting_first_xi=bat_xi_names,
-        bowling_first_xi=bowl_xi_names,
-        bat_to_bowl=impact_defaults["bat_to_bowl"],
-        bowl_to_bat=impact_defaults["bowl_to_bat"],
+        starting_xi=starting_xi_names,
+        impact_sub_name=impact_sub_name,
     )
     league.begin_match_day(interactive=True)
     match = league.live_match
     match.toss_winner = team
     match.status = "toss"
     match.choose_toss("bat")
-    xi = league.smart_batting_first_xi(team)
+    xi = league.smart_starting_xi(team)
     order = league.smart_batting_order([next(p for p in team.roster if p.name == n) for n in xi])
     match.set_user_xi(xi, batting_order=[p.name for p in order], bowling_order=bowl_plan, context="batting", wicketkeeper_name=team.saved_wicketkeeper_name)
     assert match.status == "over"

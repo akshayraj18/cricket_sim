@@ -212,7 +212,8 @@ def test_team_init_defaults():
     assert team.points == 0
     assert team.games_played == 0
     assert team.captain is None
-    assert team.saved_bat_to_bowl_sub == {"out": "", "in": ""}
+    assert team.saved_starting_xi_names == []
+    assert team.saved_impact_sub_name == ""
 
 
 def test_team_games_played_is_wins_plus_losses():

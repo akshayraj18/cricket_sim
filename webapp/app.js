@@ -142,16 +142,16 @@ function xiValidationError(names, label) {
   if (clean.length !== 11) return `${label} must contain 11 players.`;
   if (new Set(clean).size !== 11) return `${label} has duplicate players: ${duplicates.join(", ")}.`;
   const players = clean.map(playerByName).filter(Boolean);
-  if (label === "Batting First XI" && players.filter(p => ["Batsman", "Wicketkeeper", "All-Rounder"].includes(p.role)).length < 6) return "Batting First XI needs at least 6 batting options.";
-  if (label === "Bowling First XI" && players.filter(p => p.role.includes("Bowler") || p.role === "All-Rounder").length < 5) return "Bowling First XI needs at least 5 bowling options.";
+  if (players.filter(p => ["Batsman", "Wicketkeeper", "All-Rounder"].includes(p.role)).length < 6) return `${label} needs at least 6 batting options.`;
   if (players.filter(p => p.overseas).length > 4) return `${label} cannot include more than 4 overseas players.`;
   return "";
 }
 
-function xiOverlapError(a, b) {
-  if (a.length !== 11 || b.length !== 11) return "";
-  const batOnly = a.filter(name => !b.includes(name)).length;
-  return batOnly <= 1 ? "" : "Batting First XI and Bowling First XI can be identical or differ by only one impact-sub player.";
+function impactSubError(impactSubName, startingXi, roster) {
+  if (!impactSubName) return "Choose an Impact Sub from your squad.";
+  if (!roster.some(p => p.name === impactSubName)) return "Choose an Impact Sub from your squad.";
+  if (startingXi.includes(impactSubName)) return "Impact Sub must not already be in the Starting XI.";
+  return "";
 }
 
 function bowlingPlanError(names, label = "Bowling plan") {
@@ -265,23 +265,12 @@ function draftStartingXi(roster) {
   [...roster].filter(p => isBatter(p)).sort((a,b)=>b.bat-a.bat).forEach(p => { if (selected.filter(n => isBatter(playerByName(n))).length < 6) add(p); });
   [...roster].filter(p => isBowler(p)).sort((a,b)=>b.bowl-a.bowl).forEach(p => { if (selected.filter(n => isBowler(playerByName(n))).length < 5) add(p); });
   [...roster].sort((a,b)=>b.ovr-a.ovr).forEach(add);
-  // Arrange the XI by filling slots #1→#11 in order: for each slot, pick the
-  // unplaced player whose natural position is closest to that slot number (ties
-  // broken by batting rating), mirroring the server's smart_batting_order logic.
+  // Arrange the XI by natural slot (CSV natural_slot: 1-2 openers, 3-5 middle,
+  // 6-7 death, 8-11 tail), breaking ties within a slot by batting rating — a
+  // strict natural-position assignment mirroring the server's smart_batting_order.
   const xi = selected.map(playerByName).filter(Boolean);
-  const slots = Array.from({length: 11}, () => null);
-  const unplaced = [...xi];
-  for (let slot = 1; slot <= 11; slot++) {
-    if (!unplaced.length) break;
-    const best = unplaced.reduce((a, b) => {
-      const da = Math.abs((a.preferred_position || 6) - slot);
-      const db = Math.abs((b.preferred_position || 6) - slot);
-      return da < db || (da === db && a.bat > b.bat) ? a : b;
-    });
-    slots[slot - 1] = best.name;
-    unplaced.splice(unplaced.indexOf(best), 1);
-  }
-  return slots.map((name, i) => name || (unplaced.shift()?.name || ""));
+  xi.sort((a, b) => (a.preferred_position || 6) - (b.preferred_position || 6) || b.bat - a.bat);
+  return xi.map(p => p.name);
 }
 
 function draggableList(id, names, length = names.length, editable = true, options = {}) {
@@ -530,12 +519,12 @@ function impactOptions(roster) {
 
 function refreshBowlingPlanPools() {
   [
-    { xi: "bowlFirstXIList", pool: "squadBowlPlanPool", plan: "squadBowlPlan" },
+    { xi: "startingXIList", pool: "squadBowlPlanPool", plan: "squadBowlPlan", extra: () => $("impactSubSelect")?.value || "" },
     { xi: "matchBowlXI", pool: "matchBowlPlanPool", plan: "matchBowlPlan" },
-  ].forEach(({ xi, pool, plan }) => {
+  ].forEach(({ xi, pool, plan, extra }) => {
     const poolList = $(pool);
     if (!poolList || !$(xi)) return;
-    const names = bowlingOptions(dragListNames(xi));
+    const names = bowlingOptions([...dragListNames(xi), ...(extra ? [extra()] : [])].filter(Boolean));
     poolList.innerHTML = "";
     names.forEach(name => {
       const node = createDragItem(name);
@@ -574,34 +563,23 @@ function refillBenchPool(poolId, xiNames, group) {
   renumberList(pool);
 }
 
-function autofillBattingXi() {
-  const t = myTeam();
-  const names = uniqueXi(t.suggested_batting_order?.length ? t.suggested_batting_order : t.batting_first_xi, t.roster);
-  setDragListNames("batFirstXIList", names, 11);
-  refillBenchPool("batBenchPool", names, "squadBat");
+async function autofillStartingXi() {
+  await api("/api/presets", { starting_xi: null, impact_sub_name: null });
+  state = await api("/api/state");
+  render();
 }
 
-function autofillBowlingXi() {
-  const t = myTeam();
-  const names = uniqueXi(t.bowling_first_xi, t.roster);
-  setDragListNames("bowlFirstXIList", names, 11);
-  refillBenchPool("bowlBenchPool", names, "squadBowl");
-  refreshBowlingPlanPools();
-}
-
-function clearBattingXi() {
-  setDragListNames("batFirstXIList", [], 11);
-  refillBenchPool("batBenchPool", [], "squadBat");
-}
-
-function clearBowlingXi() {
-  setDragListNames("bowlFirstXIList", [], 11);
-  refillBenchPool("bowlBenchPool", [], "squadBowl");
+function clearStartingXi() {
+  setDragListNames("startingXIList", [], 11);
+  refillBenchPool("startingXIBenchPool", [], "squadStarting");
+  if ($("impactSubSelect")) $("impactSubSelect").value = "";
   refreshBowlingPlanPools();
 }
 
 function autofillBowlingPlan() {
-  const eligible = bowlingOptions(dragListNames("bowlFirstXIList")).map(playerByName).filter(Boolean);
+  const startingXi = dragListNames("startingXIList");
+  const impactSub = $("impactSubSelect")?.value || "";
+  const eligible = bowlingOptions([...startingXi, impactSub].filter(Boolean)).map(playerByName).filter(Boolean);
   const used = {};
   const plan = [];
   for (let over = 0; over < 20; over += 1) {
@@ -1113,7 +1091,7 @@ function renderMatch() {
   }
   applyMatchTheme(match);
   if (match.status === "toss") {
-    $("matchHub").innerHTML = `<div class="match-stage"><div class="scoreboard"><small>${esc(match.team1)} vs ${esc(match.team2)}</small><div class="scoreline">Toss</div><p>${esc(match.message)}</p></div><div class="panel"><h2>Choose Decision</h2><div class="notice">Bat first uses your saved Batting First XI. Bowl first uses your saved Bowling First XI and any saved 20-over bowling plan.</div><div class="toolbar"><button class="primary" onclick="chooseToss('bat')">Bat First</button><button class="primary" onclick="chooseToss('bowl')">Bowl First</button></div></div></div>`;
+    $("matchHub").innerHTML = `<div class="match-stage"><div class="scoreboard"><small>${esc(match.team1)} vs ${esc(match.team2)}</small><div class="scoreline">Toss</div><p>${esc(match.message)}</p></div><div class="panel"><h2>Choose Decision</h2><div class="notice">Your Starting XI plays innings 1. If you bowl first, your Impact Sub starts in place of a batter (and that batter returns at the break) — your saved 20-over bowling plan applies too.</div><div class="toolbar"><button class="primary" onclick="chooseToss('bat')">Bat First</button><button class="primary" onclick="chooseToss('bowl')">Bowl First</button></div></div></div>`;
     return;
   }
   if (match.status === "lineup" || match.status === "batting_order") {
@@ -1141,15 +1119,17 @@ function renderMatch() {
 
 function renderLineupHub(match) {
   const isBowling = match.lineup_context === "bowling";
-  const context = isBowling ? "Bowling First XI" : "Batting First XI";
-  const preset = uniqueXi(isBowling ? match.bowling_first_xi : match.batting_first_xi, match.suggested);
+  const context = "Starting XI";
+  const preset = uniqueXi(match.lineup_xi, match.suggested);
   const bench = benchNames(match.suggested, preset);
   const savedBowl = isBowling ? (match.saved_bowling_order || []) : [];
   const bowlPool = bowlingOptions(preset);
+  const swapNotice = match.swap_notice ? `<div class="notice">${esc(match.swap_notice)}</div>` : "";
   $("matchHub").innerHTML = `
     <div class="panel">
       <div class="section-head"><h2>${context}</h2><button class="primary" onclick="submitLineup()">Confirm XI</button></div>
       <div class="notice">${esc(match.message)} The list below is grouped by where each player naturally bats — openers, middle order, death overs, tail. Drag within the XI to reorder, or drag a player to the bench pool to free a slot, then drag a bench player in.</div>
+      ${swapNotice}
       ${draggableList(isBowling ? "matchBowlXI" : "matchBatXI", preset, 11, true, { group: isBowling ? "matchBowl" : "matchBat", showZones: true, showNaturalSlot: true })}
       <h2 class="gap-top">Bench</h2>
       ${draggableList(isBowling ? "matchBowlBenchPool" : "matchBatBenchPool", bench, bench.length, true, { group: isBowling ? "matchBowl" : "matchBat", pool: true, showNaturalSlot: true })}
@@ -1160,8 +1140,6 @@ function renderLineupHub(match) {
 
 function renderImpactHub(match) {
   const impact = match.impact;
-  const t = myTeam();
-  const preset = match.impact_context === "bowl_to_bat" ? t.bowl_to_bat_sub : t.bat_to_bowl_sub;
   const first = match.innings?.[0];
   const inningsSummary = first ? `
     <div class="panel">
@@ -1187,8 +1165,8 @@ function renderImpactHub(match) {
         </div>
       </div>
     </div>`;
-  if ($("subOut") && preset?.out) $("subOut").value = preset.out;
-  if ($("subIn") && preset?.in) $("subIn").value = preset.in;
+  if ($("subOut") && impact.default_out) $("subOut").value = impact.default_out;
+  if ($("subIn") && impact.default_in) $("subIn").value = impact.default_in;
 }
 
 function renderSuperOverHub(match) {
@@ -1414,20 +1392,19 @@ async function saveLeadership() {
 
 async function savePresets() {
   const bowlingOrder = dragListNames("squadBowlPlan");
-  const battingFirstXi = dragListNames("batFirstXIList");
-  const bowlingFirstXi = dragListNames("bowlFirstXIList");
-  const xiError = xiValidationError(battingFirstXi, "Batting First XI") || xiValidationError(bowlingFirstXi, "Bowling First XI") || xiOverlapError(battingFirstXi, bowlingFirstXi) || bowlingPlanError(bowlingOrder, "Default bowling plan");
+  const startingXi = dragListNames("startingXIList");
+  const impactSubName = $("impactSubSelect")?.value || "";
+  const t = myTeam();
+  const xiError = xiValidationError(startingXi, "Starting XI") || impactSubError(impactSubName, startingXi, t.roster) || bowlingPlanError(bowlingOrder, "Default bowling plan");
   if (xiError) {
     alert(xiError);
     return;
   }
   state = await api("/api/presets", {
-    batting_order: battingFirstXi,
+    batting_order: startingXi,
     bowling_order: bowlingOrder,
-    batting_first_xi: battingFirstXi,
-    bowling_first_xi: bowlingFirstXi,
-    bat_to_bowl: { out: $("batToBowlOut")?.value || "", in: $("batToBowlIn")?.value || "" },
-    bowl_to_bat: { out: $("bowlToBatOut")?.value || "", in: $("bowlToBatIn")?.value || "" },
+    starting_xi: startingXi,
+    impact_sub_name: impactSubName,
     wicketkeeper: playerByName($("squadKeeper")?.value || "")?.role === "Wicketkeeper" ? $("squadKeeper").value : "",
   });
   render();
@@ -1438,13 +1415,11 @@ function renderSquad() {
   const t = myTeam();
   $("captainSelect").innerHTML = t.roster.map(p => `<option value="${esc(p.name)}" ${p.name === t.captain ? "selected" : ""}>Captain: ${esc(p.name)}</option>`).join("");
   $("viceSelect").innerHTML = t.roster.map(p => `<option value="${esc(p.name)}" ${p.name === t.vice_captain ? "selected" : ""}>Vice: ${esc(p.name)}</option>`).join("");
-  const batFirst = uniqueXi(t.suggested_batting_order?.length ? t.suggested_batting_order : (t.batting_first_xi?.length ? t.batting_first_xi : t.roster.slice(0, 11).map(p => p.name)), t.roster);
-  const bowlFirst = uniqueXi(t.bowling_first_xi?.length ? t.bowling_first_xi : batFirst, t.roster);
+  const startingXi = uniqueXi(t.starting_xi?.length ? t.starting_xi : t.roster.slice(0, 11).map(p => p.name), t.roster);
   const bowlDefault = t.saved_bowling_order?.length ? t.saved_bowling_order : [];
   const keeperOptions = t.roster.filter(p => p.role === "Wicketkeeper").map(p => `<option value="${esc(p.name)}">Keeper: ${esc(p.name)}</option>`).join("") || `<option value="">Draft a wicketkeeper first</option>`;
-  const batBench = benchNames(t.roster, batFirst);
-  const bowlBench = benchNames(t.roster, bowlFirst);
-  const planBowlers = bowlingOptions(bowlFirst);
+  const startingBench = benchNames(t.roster, startingXi);
+  const planBowlers = bowlingOptions([...startingXi, t.impact_sub_name].filter(Boolean));
   $("squadKeeper").innerHTML = keeperOptions;
   $("squadKeeper").onchange = refreshDragBadges;
   $("battingPreset").innerHTML = "";
@@ -1455,26 +1430,20 @@ function renderSquad() {
     ${draggableList("squadBowlPlanPool", planBowlers, planBowlers.length, true, { group: "squadPlan", pool: true, copySource: true, showMeta: true })}
   `;
   $("xiPreset").innerHTML = `
-    <div class="notice">Build two match presets here. Each XI is grouped by where players naturally bat — openers, middle order, death overs, tail — so you can see at a glance whether the order makes sense. Drag players between each XI and its bench pool; Save Match Presets also saves the default keeper and impact sub choices.</div>
+    <div class="notice">Your Starting XI plays innings 1. Below it, pick your Impact Sub from the bench — by default it's your best spare bowler. The XI is grouped by where players naturally bat — openers, middle order, death overs, tail — so you can see at a glance whether the order makes sense. Drag players between the XI and its bench pool; Save Match Presets also saves the default keeper.</div>
     <div class="grid">
-      <div><h2>Batting First XI</h2><p class="notice compact">Sets the total. Slot order here is the actual batting order.</p>${draggableList("batFirstXIList", batFirst, 11, true, { group: "squadBat", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Batting Bench Pool</h2>${draggableList("batBenchPool", batBench, batBench.length, true, { group: "squadBat", pool: true, showNaturalSlot: true })}</div>
-      <div><h2>Bowling First XI</h2><p class="notice compact">Defends a total. Slot order here is the actual batting order if this side bats second.</p>${draggableList("bowlFirstXIList", bowlFirst, 11, true, { group: "squadBowl", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Bowling Bench Pool</h2>${draggableList("bowlBenchPool", bowlBench, bowlBench.length, true, { group: "squadBowl", pool: true, showNaturalSlot: true })}</div>
+      <div><h2>Starting XI</h2><p class="notice compact">Slot order here is the actual batting order.</p>${draggableList("startingXIList", startingXi, 11, true, { group: "squadStarting", showZones: true, showNaturalSlot: true })}<h2 class="gap-top">Bench Pool</h2>${draggableList("startingXIBenchPool", startingBench, startingBench.length, true, { group: "squadStarting", pool: true, showNaturalSlot: true })}</div>
     </div>
-    <h2 class="gap-top">Impact Sub Presets</h2>
-    <div class="notice">The Impact Player rule lets you swap one player at the innings break. The usual IPL pattern: defending a total, bring on an extra specialist bowler; chasing, bring on an extra hitter (often a finisher batting #5-8). Pick your "out"/"in" pair for each direction below — the dropdowns show role and natural slot to help you choose.</div>
+    <h2 class="gap-top">Impact Sub</h2>
+    <div class="notice">If you bat first, your Impact Sub comes on for a batter at the innings break. If you bowl first, your Impact Sub starts the match in place of that batter and the original player returns at the break.</div>
     <div class="toolbar impact-preset-toolbar">
-      <label>Defending: bowler comes in for <select id="batToBowlOut">${impactOptions(t.roster)}</select></label>
-      <label>bring in <select id="batToBowlIn">${impactOptions(t.roster)}</select></label>
-      <label>Chasing: hitter comes in for <select id="bowlToBatOut">${impactOptions(t.roster)}</select></label>
-      <label>bring in <select id="bowlToBatIn">${impactOptions(t.roster)}</select></label>
+      <label>Impact Sub <select id="impactSubSelect">${impactOptions(t.roster)}</select></label>
     </div>`;
   if ($("squadKeeper")) $("squadKeeper").value = t.saved_wicketkeeper || t.roster.find(p => p.role === "Wicketkeeper")?.name || "";
-  const batOnly = batFirst.find(name => !bowlFirst.includes(name)) || "";
-  const bowlOnly = bowlFirst.find(name => !batFirst.includes(name)) || "";
-  if ($("batToBowlOut")) $("batToBowlOut").value = t.bat_to_bowl_sub?.out || batOnly || t.roster[0]?.name || "";
-  if ($("batToBowlIn")) $("batToBowlIn").value = t.bat_to_bowl_sub?.in || bowlOnly || t.roster[0]?.name || "";
-  if ($("bowlToBatOut")) $("bowlToBatOut").value = t.bowl_to_bat_sub?.out || bowlOnly || t.roster[0]?.name || "";
-  if ($("bowlToBatIn")) $("bowlToBatIn").value = t.bowl_to_bat_sub?.in || batOnly || t.roster[0]?.name || "";
+  if ($("impactSubSelect")) {
+    $("impactSubSelect").value = t.impact_sub_name || "";
+    $("impactSubSelect").onchange = refreshBowlingPlanPools;
+  }
   enableDragLists();
   renderSquadTable();
 }
@@ -1504,10 +1473,8 @@ $("beginMatchBtn").onclick = beginMatch;
 $("simulateRoundBtn").onclick = simulateRound;
 $("saveLeadershipBtn").onclick = saveLeadership;
 $("savePresetsBtn").onclick = savePresets;
-$("autoBatXiBtn").onclick = autofillBattingXi;
-$("clearBatXiBtn").onclick = clearBattingXi;
-$("autoBowlXiBtn").onclick = autofillBowlingXi;
-$("clearBowlXiBtn").onclick = clearBowlingXi;
+$("autoStartingXiBtn").onclick = autofillStartingXi;
+$("clearStartingXiBtn").onclick = clearStartingXi;
 $("autoBowlPlanBtn").onclick = autofillBowlingPlan;
 $("clearBowlPlanBtn").onclick = clearBowlingPlan;
 

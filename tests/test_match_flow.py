@@ -55,7 +55,7 @@ def test_set_user_xi_rejects_wrong_sized_xi():
     team = league.user_team()
     force_toss(match, winner_team=team, decision="bat")
     with pytest.raises(ValueError):
-        match.set_user_xi(presets["batting_first_xi"][:10], context="batting")
+        match.set_user_xi(presets["starting_xi"][:10], context="batting")
 
 
 def test_full_match_simulates_to_completion_bat_first():
@@ -91,7 +91,7 @@ def test_full_match_simulates_to_completion_bowl_first():
     # Chasing: may need to confirm a batting order before the second innings starts.
     if match.status == "batting_order":
         order_names = [p.name for p in league.smart_batting_order(match.xis[team.name])]
-        match.set_user_xi(presets["bowling_first_xi"], batting_order=order_names, context="bowling")
+        match.set_user_xi([p.name for p in match.xis[team.name]], batting_order=order_names, context="bowling")
     play_through_innings(match)
 
     assert match.status in ("complete", "super_over_setup")
@@ -116,9 +116,14 @@ def test_complete_live_match_advances_round_and_records_result():
     assert match.status == "complete"
 
     round_before = league.round_num
+    league.status_message = "stale message from a previous round"
     league.complete_live_match()
     assert league.live_match is None
     assert league.round_num == round_before + 1 or league.phase == "league_complete"
+    assert league.status_message != "stale message from a previous round"
+    if league.phase == "season":
+        assert f"Week {round_before}" in league.status_message
+        assert team.name in league.status_message
 
 
 def test_simulate_match_auto_runs_a_full_cpu_v_cpu_match(drafted):
@@ -128,6 +133,17 @@ def test_simulate_match_auto_runs_a_full_cpu_v_cpu_match(drafted):
     assert card is not None
     assert card["winner"] in (t1.name, t2.name)
     assert "team1" in card and "team2" in card
+
+
+def test_quick_sim_applies_default_impact_sub_for_user_team():
+    """auto_finish() (quick-sim) should apply the user's default Impact Sub pairing, not decline it."""
+    league, match, presets = _ready(seed=31)
+    team = league.user_team()
+    match.auto_finish()
+    assert match.status == "complete"
+    swap_out, swap_in = match.pending_swaps[team.name]
+    assert swap_out and swap_in and swap_out != swap_in
+    assert any(f"{swap_out} out, {swap_in} in" in entry for entry in match.impact_subs)
 
 
 def _other_team_name(match, team):
