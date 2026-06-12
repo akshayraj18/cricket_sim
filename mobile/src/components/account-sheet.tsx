@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
+import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
@@ -16,7 +17,13 @@ const MODE_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
 export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const theme = useTheme();
   const { mode, setMode } = useAppTheme();
-  const { user, signOut } = useAuth();
+  const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
+
+  // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   const handleSignOut = async () => {
     onClose();
@@ -39,6 +46,30 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             <ThemedText themeColor="textDim" style={styles.email}>
               {user.email}
             </ThemedText>
+          ) : null}
+
+          {isGuest ? (
+            <>
+              <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+                Save your career
+              </ThemedText>
+              <ThemedText themeColor="textDim" style={styles.helpText}>
+                You&apos;re playing as a guest on this device. Link an account to keep your career safe and play
+                across devices.
+              </ThemedText>
+              {appleAvailable && (
+                <Pressable
+                  onPress={linkApple}
+                  style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+                  <ThemedText style={styles.linkButtonText}> Link Apple</ThemedText>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={linkGoogle}
+                style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+                <ThemedText style={styles.linkButtonText}>Link Google</ThemedText>
+              </Pressable>
+            </>
           ) : null}
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
@@ -65,7 +96,17 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             })}
           </View>
 
-          <Button label="Sign Out" variant="ghost" accentColor={theme.red} onPress={handleSignOut} style={styles.signOut} />
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Account
+          </ThemedText>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [
+              styles.signOut,
+              { borderColor: theme.red, opacity: pressed ? 0.7 : 1 },
+            ]}>
+            <ThemedText style={[styles.signOutText, { color: theme.red }]}>Sign Out</ThemedText>
+          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -111,6 +152,23 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
     marginBottom: Spacing.two,
   },
+  helpText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginBottom: Spacing.two,
+  },
+  linkButton: {
+    paddingVertical: 11,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.two,
+  },
+  linkButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
   modeRow: {
     flexDirection: 'row',
     gap: Spacing.two,
@@ -131,6 +189,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   signOut: {
-    marginTop: Spacing.four,
+    marginTop: Spacing.two,
+    paddingVertical: 12,
+    borderRadius: Radius.sm,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

@@ -32,8 +32,15 @@ async function refreshAccessToken(): Promise<string | null> {
   });
 
   if (!res.ok) {
-    await clearTokens();
-    return null;
+    // Only a definitive auth rejection (401/403) means the refresh token is
+    // actually invalid — clear it so the user re-authenticates. A transient
+    // server error (5xx, e.g. backend restarting) must NOT wipe a valid
+    // session, or the user's careers would appear to vanish on a blip.
+    if (res.status === 401 || res.status === 403) {
+      await clearTokens();
+      return null;
+    }
+    throw new ApiError(res.status, `Token refresh failed (${res.status})`);
   }
 
   const data = await res.json();

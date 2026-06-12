@@ -1,0 +1,33 @@
+# Dependabot keeps dependencies current and lets GitHub fully resolve the
+# dependency graph (the uv workspace otherwise trips its per-directory crawl).
+# Updates are grouped and rate-limited so we don't get a flood of PRs.
+version: 2
+updates:
+  # Python backend + sim engine (uv workspace; root uv.lock covers all members).
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
+  # Expo / React Native mobile app.
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      mobile-dependencies:
+        patterns:
+          - "*"
+
+  # GitHub Actions used by the CI workflow.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

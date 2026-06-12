@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "cric-sim",
     "slug": "cric",
     "owner": "akshraj",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "cric-sim",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.akshraj.cric"
+      "bundleIdentifier": "com.akshraj.cric",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.akshraj.cric",
@@ -39,7 +40,22 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.474477947414-bff512hqin1s695shti2nic0dg1t31hk"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

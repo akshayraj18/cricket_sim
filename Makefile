@@ -1,6 +1,6 @@
 .PHONY: install run kill test unit integration regression lint clean \
 	backend-up backend-down backend-run backend-migrate backend-test \
-	mobile mobile-install
+	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
@@ -67,10 +67,34 @@ backend-test:
 # shell may still resolve to an older Node). Picks the highest v20/v21/v22+ dir.
 MOBILE_NODE_BIN := $(shell ls -d $(HOME)/.nvm/versions/node/v2[0-9]* 2>/dev/null | sort -V | tail -1)/bin
 
-# Start the Expo dev client + Metro bundler at http://localhost:8081
-# (use `make mobile ARGS="--clear"` to reset the bundler cache).
+# Start the Expo dev client + Metro bundler on all interfaces (port 8081).
+# Works for both a physical device on the same Wi-Fi (via the LAN IP) and the
+# iOS Simulator / Android emulator (via 127.0.0.1). Do NOT use `--localhost`:
+# it binds IPv6-only ([::1]) and the simulator's IPv4 (127.0.0.1) request is
+# then refused. (use `make mobile ARGS="--clear"` to reset the bundler cache.)
 mobile:
 	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo start --dev-client --port 8081 $(ARGS)
+
+# Point the booted iOS Simulator's dev client at 127.0.0.1:8081 and open it.
+# Run `make mobile` first (in another shell), then this — handy when the dev
+# client is stuck on a stale LAN-IP URL and shows "Could not connect".
+mobile-sim-open:
+	xcrun simctl openurl booted "cric-sim://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
+
+# Build + run the native iOS dev client on a simulator. Needed after adding a
+# native module / config-plugin (e.g. Apple/Google sign-in). Regenerates the
+# native project from app.json, signs with your Apple team, and launches.
+# Set LANG/LC_ALL so CocoaPods (Ruby) doesn't choke on a non-UTF-8 locale.
+mobile-ios:
+	cd mobile && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo run:ios
+
+# Typecheck the mobile app (matches the CI `mobile` job).
+mobile-typecheck:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npm run typecheck
+
+# Lint the mobile app (matches the CI `mobile` job).
+mobile-lint:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npm run lint
 
 # Install the mobile app's npm dependencies with the pinned Node.
 mobile-install:

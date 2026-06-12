@@ -4,6 +4,11 @@ import { Platform } from 'react-native';
 
 const ACCESS_TOKEN_KEY = 'cricket_sim.access_token';
 const REFRESH_TOKEN_KEY = 'cricket_sim.refresh_token';
+// A guest account has no password, so its refresh token is the only way back
+// into it. We stash it under a separate key that signOut does NOT clear, so a
+// guest can sign out and later resume the SAME account (and its career) via
+// "Continue as Guest" instead of getting a fresh, empty guest.
+const GUEST_REFRESH_TOKEN_KEY = 'cricket_sim.guest_refresh_token';
 
 export interface TokenPair {
   accessToken: string;
@@ -45,4 +50,18 @@ export async function setTokens(tokens: TokenPair): Promise<void> {
 
 export async function clearTokens(): Promise<void> {
   await Promise.all([deleteItem(ACCESS_TOKEN_KEY), deleteItem(REFRESH_TOKEN_KEY)]);
+}
+
+/** Remember this device's guest refresh token so the guest account can be resumed later. */
+export async function setGuestRefreshToken(refreshToken: string): Promise<void> {
+  await setItem(GUEST_REFRESH_TOKEN_KEY, refreshToken);
+}
+
+export async function getGuestRefreshToken(): Promise<string | null> {
+  return getItem(GUEST_REFRESH_TOKEN_KEY);
+}
+
+/** Forget the saved guest credential — e.g. once the guest links a real account. */
+export async function clearGuestRefreshToken(): Promise<void> {
+  await deleteItem(GUEST_REFRESH_TOKEN_KEY);
 }
