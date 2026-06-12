@@ -29,6 +29,7 @@ updates:
         patterns:
           - "*"
     ignore:
+      # Expo SDK + React Native are SDK-locked — upgrade via `npx expo install`.
       - dependency-name: "expo"
       - dependency-name: "expo-*"
       - dependency-name: "@expo/*"
@@ -39,6 +40,14 @@ updates:
       - dependency-name: "@react-native/*"
       - dependency-name: "@react-native-async-storage/async-storage"
       - dependency-name: "@react-native-community/*"
+      # eslint-config-expo pins the compatible eslint major; a raw major bump
+      # (e.g. eslint 9 -> 10) breaks `expo lint`. Ignore lint-toolchain majors;
+      # patch/minor updates still come through.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-config-expo"
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions used by the CI workflow.
   - package-ecosystem: "github-actions"
