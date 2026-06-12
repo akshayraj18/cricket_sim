@@ -5,7 +5,7 @@ description = "IPL franchise career simulation: engine, legacy web UI, and FastA
 requires-python = ">=3.12"
 dependencies = [
     "cricket-sim-engine",
-    "kagglehub>=1.0.1",
+    "kagglehub>=1.0.2",
     "pandas>=3.0.3",
 ]
 
