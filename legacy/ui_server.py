@@ -116,10 +116,8 @@ class Handler(BaseHTTPRequestHandler):
                 STATE.set_user_presets(
                     body.get("batting_order", []),
                     body.get("bowling_order", []),
-                    body.get("batting_first_xi", []),
-                    body.get("bowling_first_xi", []),
-                    body.get("bat_to_bowl", {}),
-                    body.get("bowl_to_bat", {}),
+                    body.get("starting_xi"),
+                    body.get("impact_sub_name"),
                     body.get("wicketkeeper", ""),
                 )
             elif self.path == "/api/open-retention":

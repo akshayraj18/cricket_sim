@@ -18,10 +18,8 @@ class LeadershipRequest(BaseModel):
 class PresetsRequest(BaseModel):
     batting_order: list[str] = []
     bowling_order: list[str] = []
-    batting_first_xi: list[str] | None = None
-    bowling_first_xi: list[str] | None = None
-    bat_to_bowl: dict[str, str] | None = None
-    bowl_to_bat: dict[str, str] | None = None
+    starting_xi: list[str] | None = None
+    impact_sub_name: str | None = None
     wicketkeeper: str = ""
 
 
