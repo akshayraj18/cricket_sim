@@ -297,10 +297,8 @@ class LeagueState:
                 self.live_match.score.setdefault("bowling_aggression", {p.name: 2 for p in self.live_match.score.get("bowling_pool", [])})
         for team in getattr(self, "teams", []):
             team.saved_playing_xi_names = getattr(team, "saved_playing_xi_names", [])
-            team.saved_batting_first_xi_names = getattr(team, "saved_batting_first_xi_names", [])
-            team.saved_bowling_first_xi_names = getattr(team, "saved_bowling_first_xi_names", [])
-            team.saved_bat_to_bowl_sub = getattr(team, "saved_bat_to_bowl_sub", {"out": "", "in": ""})
-            team.saved_bowl_to_bat_sub = getattr(team, "saved_bowl_to_bat_sub", {"out": "", "in": ""})
+            team.saved_starting_xi_names = getattr(team, "saved_starting_xi_names", [])
+            team.saved_impact_sub_name = getattr(team, "saved_impact_sub_name", "")
             team.saved_wicketkeeper_name = getattr(team, "saved_wicketkeeper_name", "")
             team.saved_batting_order_names = getattr(team, "saved_batting_order_names", [])
             team.saved_bowling_over_names = getattr(team, "saved_bowling_over_names", [])
@@ -610,14 +608,24 @@ class LeagueState:
         """Assign the user's captain, vice-captain, and (optionally) preferred wicketkeeper from their squad.
 
         Raises `ValueError` if the named captain/vice can't be resolved to
-        two distinct squad members, or the named keeper isn't an eligible
-        wicketkeeper option.
+        two distinct squad members, the named keeper isn't an eligible
+        wicketkeeper option, or any of the three isn't in the saved Starting
+        XI (the captain, vice-captain, and designated wicketkeeper must
+        always be in the Starting XI).
         """
         team = self.user_team()
         captain = next((p for p in team.roster if p.name == captain_name), None)
         vice = next((p for p in team.roster if p.name == vice_name), None)
         if not captain or not vice or captain == vice:
             raise ValueError("Choose two different players from your squad.")
+        starting_xi = list(getattr(team, "saved_starting_xi_names", []))
+        if starting_xi:
+            if captain.name not in starting_xi:
+                raise ValueError("Captain must be in the Starting XI.")
+            if vice.name not in starting_xi:
+                raise ValueError("Vice-captain must be in the Starting XI.")
+            if wicketkeeper_name and wicketkeeper_name not in starting_xi:
+                raise ValueError("Wicketkeeper must be in the Starting XI.")
         team.captain = captain
         team.vice_captain = vice
         if wicketkeeper_name:
@@ -626,53 +634,73 @@ class LeagueState:
                 raise ValueError("Choose an eligible wicketkeeper from your squad.")
             team.saved_wicketkeeper_name = keeper.name
 
-    def set_user_presets(self, batting_order, bowling_order, batting_first_xi=None, bowling_first_xi=None, bat_to_bowl=None, bowl_to_bat=None, wicketkeeper_name=""):
-        """Save the user's reusable match-day defaults: separate batting-first/bowling-first XIs, a default batting order, a default 20-over bowling plan, Impact Player swap pairings for each scenario, and a preferred keeper.
+    def _reassign_leadership_for_xi(self, team, players):
+        """Auto-reassign captain/vice-captain/wicketkeeper to fit a new Starting XI (`players`).
 
-        Validates XI composition (11 unique squad members, overseas limit,
-        minimum batting/bowling options for the relevant scenario) and that
-        the two scenario XIs differ by at most one player (since the Impact
-        Player rule only allows a single swap). When the user hasn't set
-        explicit Impact Player pairings but both XIs are valid and differ by
-        exactly one player each way, infers sensible swap pairings
-        automatically — e.g. if XI A drops a bowler that XI B includes (and
-        vice versa), assume that's the intended bat-to-bowl/bowl-to-bat sub.
-        Raises `ValueError` on any invalid combination.
+        Called whenever the saved Starting XI changes and the current
+        captain, vice-captain, or designated keeper falls outside it (every
+        leader must always be in the Starting XI). The new keeper is the
+        highest-`current_ovr` wicketkeeper-eligible player in `players`; the
+        new captain is the highest-`current_ovr` player in `players`; the new
+        vice-captain is the next-highest. Falls back to leaving
+        captain/vice-captain unset if `players` has no wicketkeeper option
+        (the caller validates that case separately).
+        """
+        names_in_xi = {p.name for p in players}
+        keeper_options = sorted([p for p in players if is_wicketkeeper_option(p)], key=lambda p: p.current_ovr, reverse=True)
+        if (not team.captain or team.captain.name not in names_in_xi
+                or not team.vice_captain or team.vice_captain.name not in names_in_xi
+                or getattr(team, "saved_wicketkeeper_name", "") not in names_in_xi):
+            if keeper_options:
+                team.saved_wicketkeeper_name = keeper_options[0].name
+            ranked = sorted(players, key=lambda p: p.current_ovr, reverse=True)
+            team.captain = ranked[0]
+            team.vice_captain = ranked[1]
+
+    def set_user_presets(self, batting_order, bowling_order, starting_xi=None, impact_sub_name=None, wicketkeeper_name=""):
+        """Save the user's reusable match-day defaults under the "11+1" model: a Starting XI, a single Impact Sub, a default batting order, a default 20-over bowling plan, and a preferred keeper.
+
+        Validates XI composition (11 unique squad members, overseas limit, at
+        least 6 batting options, at least one wicketkeeper-eligible player)
+        and that the Impact Sub is a roster player not already in the
+        Starting XI. The captain, vice-captain, and designated wicketkeeper
+        must always be in the Starting XI; if the new Starting XI doesn't
+        contain all three, leadership is auto-reassigned (see
+        `_reassign_leadership_for_xi`) rather than rejecting the change.
+        Raises `ValueError` on any invalid combination. A falsy
+        `starting_xi`/`impact_sub_name` (`None`, `[]`, `""`) clears the
+        corresponding saved preset, reverting to the smart default computed
+        elsewhere (e.g. `team_dict`, `resolve_match_xi`).
         """
         team = self.user_team()
         roster_names = {p.name for p in team.roster}
-        for attr, names in (("saved_batting_first_xi_names", batting_first_xi or []), ("saved_bowling_first_xi_names", bowling_first_xi or [])):
-            clean_xi = [name for name in names if name in roster_names]
+        if starting_xi:
+            clean_xi = [name for name in starting_xi if name in roster_names]
             if clean_xi:
                 if len(clean_xi) != 11 or len(set(clean_xi)) != 11:
-                    raise ValueError("Saved XI presets must contain 11 unique squad players.")
+                    raise ValueError("Starting XI must contain 11 unique squad players.")
                 players = [next(p for p in team.roster if p.name == name) for name in clean_xi]
                 if sum(1 for p in players if p.is_overseas) > 4:
-                    raise ValueError("Saved XI presets cannot include more than 4 overseas players.")
-                if attr == "saved_batting_first_xi_names" and len([p for p in players if counts_as_batter(p)]) < 6:
-                    raise ValueError("Batting First XI needs at least 6 batting options including all-rounders and wicketkeepers.")
-                if attr == "saved_bowling_first_xi_names" and len([p for p in players if counts_as_bowler(p)]) < 5:
-                    raise ValueError("Bowling First XI needs at least 5 bowling options including all-rounders.")
-                setattr(team, attr, clean_xi)
-        if batting_first_xi and bowling_first_xi:
-            bat_set = set([name for name in batting_first_xi if name in roster_names])
-            bowl_set = set([name for name in bowling_first_xi if name in roster_names])
-            if len(bat_set) == 11 and len(bowl_set) == 11 and len(bat_set - bowl_set) > 1:
-                raise ValueError("Batting First XI and Bowling First XI can be identical or differ by only one impact-sub player.")
-        if bat_to_bowl:
-            team.saved_bat_to_bowl_sub = {"out": bat_to_bowl.get("out", ""), "in": bat_to_bowl.get("in", "")}
-        if bowl_to_bat:
-            team.saved_bowl_to_bat_sub = {"out": bowl_to_bat.get("out", ""), "in": bowl_to_bat.get("in", "")}
-        manual_bat_to_bowl = bool((bat_to_bowl or {}).get("out") and (bat_to_bowl or {}).get("in"))
-        manual_bowl_to_bat = bool((bowl_to_bat or {}).get("out") and (bowl_to_bat or {}).get("in"))
-        if batting_first_xi and bowling_first_xi and (not manual_bat_to_bowl or not manual_bowl_to_bat):
-            bat_only = next((name for name in batting_first_xi if name not in bowling_first_xi), "")
-            bowl_only = next((name for name in bowling_first_xi if name not in batting_first_xi), "")
-            if bat_only and bowl_only:
-                if not manual_bat_to_bowl:
-                    team.saved_bat_to_bowl_sub = {"out": bat_only, "in": bowl_only}
-                if not manual_bowl_to_bat:
-                    team.saved_bowl_to_bat_sub = {"out": bowl_only, "in": bat_only}
+                    raise ValueError("Starting XI cannot include more than 4 overseas players.")
+                if len([p for p in players if counts_as_batter(p)]) < 6:
+                    raise ValueError("Starting XI needs at least 6 batting options including all-rounders and wicketkeepers.")
+                if not any(is_wicketkeeper_option(p) for p in players):
+                    raise ValueError("Starting XI needs at least one wicketkeeper.")
+                team.saved_starting_xi_names = clean_xi
+                self._reassign_leadership_for_xi(team, players)
+        else:
+            team.saved_starting_xi_names = []
+        if impact_sub_name:
+            if impact_sub_name not in roster_names:
+                raise ValueError("Choose an Impact Sub from your squad.")
+            current_xi = list(getattr(team, "saved_starting_xi_names", []))
+            if impact_sub_name in current_xi:
+                raise ValueError("Impact Sub must not already be in the Starting XI.")
+            if impact_sub_name in (team.captain.name if team.captain else "", team.vice_captain.name if team.vice_captain else "", getattr(team, "saved_wicketkeeper_name", "")):
+                raise ValueError("Impact Sub cannot be the captain, vice-captain, or wicketkeeper.")
+            team.saved_impact_sub_name = impact_sub_name
+        else:
+            team.saved_impact_sub_name = ""
         if wicketkeeper_name:
             keeper = next((p for p in team.roster if p.name == wicketkeeper_name and is_wicketkeeper_option(p)), None)
             if not keeper:
@@ -689,11 +717,11 @@ class LeagueState:
             raise ValueError("No bowler can bowl more than 4 overs.")
         if bowling and any(bowling[i] == bowling[i - 1] for i in range(1, len(bowling))):
             raise ValueError("A bowler cannot bowl consecutive overs.")
-        team.saved_batting_order_names = batting or list(getattr(team, "saved_batting_first_xi_names", []))
+        team.saved_batting_order_names = batting or list(getattr(team, "saved_starting_xi_names", []))
         team.saved_bowling_over_names = bowling
 
     def default_bowling_plan(self, team):
-        """Build a 20-over bowling plan for `team`: the user's saved plan if they have one, otherwise auto-build one from their bowling-first XI by greedily picking the best phase-fit bowler for each over (never the same bowler in consecutive overs, never more than 4 overs each).
+        """Build a 20-over bowling plan for `team`: the user's saved plan if they have one, otherwise auto-build one from their match-day 12 (Starting XI plus Impact Sub) by greedily picking the best phase-fit bowler for each over (never the same bowler in consecutive overs, never more than 4 overs each).
 
         Returns an empty list if the team can't field at least 5 recognised
         bowlers — the UI then falls back to choosing a bowler each over live.
@@ -701,10 +729,12 @@ class LeagueState:
         saved = list(getattr(team, "saved_bowling_over_names", []))
         if saved:
             return saved
-        xi_names = list(getattr(team, "saved_bowling_first_xi_names", [])) or self.smart_bowling_first_xi(team)
-        xi = [next((p for p in team.roster if p.name == name), None) for name in xi_names]
-        xi = [p for p in xi if p]
-        bowlers = sorted([p for p in xi if is_bowling_role(p)], key=lambda p: p.current_bowling, reverse=True)
+        starting_xi_names = list(getattr(team, "saved_starting_xi_names", [])) or self.smart_starting_xi(team)
+        impact_sub_name = getattr(team, "saved_impact_sub_name", "") or self.smart_impact_sub(team, starting_xi_names)
+        match_day_names = list(starting_xi_names) + ([impact_sub_name] if impact_sub_name else [])
+        match_day = [next((p for p in team.roster if p.name == name), None) for name in match_day_names]
+        match_day = [p for p in match_day if p]
+        bowlers = sorted([p for p in match_day if is_bowling_role(p)], key=lambda p: p.current_bowling, reverse=True)
         if not bowlers:
             bowlers = sorted(team.roster, key=lambda p: p.current_bowling, reverse=True)[:5]
         if len(bowlers) < 5:
@@ -743,10 +773,10 @@ class LeagueState:
         return plan
 
     def default_batting_order(self, team):
-        """A sensible default batting order (player names) for `team`'s batting-first XI: the user's saved order if usable, else freshly computed via `smart_batting_order`. Returns an empty list if the squad has fewer than 11 players."""
+        """A sensible default batting order (player names) for `team`'s Starting XI: the user's saved order if usable, else freshly computed via `smart_batting_order`. Returns an empty list if the squad has fewer than 11 players."""
         if len(team.roster) < 11:
             return []
-        xi_names = getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team)
+        xi_names = getattr(team, "saved_starting_xi_names", []) or self.smart_starting_xi(team)
         xi = [next((p for p in team.roster if p.name == name), None) for name in xi_names]
         xi = [p for p in xi if p]
         return [p.name for p in self.smart_batting_order(xi)]
@@ -788,35 +818,21 @@ class LeagueState:
         return score
 
     def smart_batting_order(self, players):
-        """Arrange `players` (an XI) into a 1-11 batting order, picking the best player for each slot.
+        """Arrange `players` (an XI) into a 1-11 batting order, honouring each player's natural batting slot.
 
-        Every player carries a `preferred_position` (derived from real-world
-        IPL batting-position tendencies for their role/archetype — see
-        `models.derive_preferred_position`), e.g. an "Aggressor" wicketkeeper
-        like Buttler naturally opens, while a "Finisher" walks in around #5-6.
-        Tail-end bowlers (Defensive Tailenders who can't otherwise bat) are
-        seated from #11 upward first, worst batting average deepest. The
-        remaining slots are filled by picking whichever player scores best
-        for that slot's phase (`batting_phase_score`, which factors in
-        current batting rating and archetype fit) minus a penalty for
-        straying from their natural position, then refined with pairwise
-        swaps that improve the total score. This is rating-driven rather
-        than a strict natural-position assignment, so a standout batter can
-        be pushed into an adjacent zone over a lower-rated specialist (e.g.
-        a top-order batter sliding into the lower-middle order, or a
-        finisher batting up at #4) when it produces a stronger order.
+        Every player carries a `preferred_position` (their `natural_slot` from
+        the player CSV, where 1-2 are openers, 3-5 the middle order, 6-7 the
+        death/finisher slots and 8-11 the tail). The order is a strict
+        natural-slot assignment: players are sorted by `preferred_position`
+        first, so a recognised batter never sits behind a tail-end bowler.
+        Ties within the same natural slot are broken by current batting
+        rating (the better batter goes first), with a tiny phase-fit nudge so
+        two equally-rated, equally-slotted players settle in a sensible order.
         """
         remaining = list(dict.fromkeys(players))
-        slots = {i: None for i in range(1, 12)}
-
-        def archetype(player):
-            return getattr(player, "batting_archetype", "")
 
         def natural(player):
             return getattr(player, "preferred_position", 6)
-
-        def is_tail(player):
-            return archetype(player) == "Defensive Tailender" and not counts_as_batter(player)
 
         def slot_phase(slot):
             if slot <= 2:
@@ -825,58 +841,18 @@ class LeagueState:
                 return "Middle Overs"
             return "Death Overs"
 
-        tails = [p for p in remaining if is_tail(p)]
-        others = [p for p in remaining if not is_tail(p)]
-
-        # Tail slots fill from #11 upward, worst-batting tailenders deepest.
-        # Normally that's just 9-11, but if there are more tailenders than
-        # `others` can leave room for (e.g. 5 tail-end bowlers in an XI),
-        # the tail block extends upward (8, 7, ...) so excess tailenders stay
-        # grouped at the bottom of the order by batting ability rather than
-        # scattered into the middle order ahead of recognised batters.
-        tail_slot_count = max(3, 11 - len(others))
-        tails_sorted = sorted(tails, key=lambda p: p.current_batting)
-        for i, slot in enumerate(range(11, 11 - tail_slot_count, -1)):
-            if i >= len(tails_sorted):
-                break
-            slots[slot] = tails_sorted[i]
-        placed_tails = set(tails_sorted[:tail_slot_count])
-        others = [p for p in tails if p not in placed_tails] + others
-        open_top_slots = [s for s in range(1, 12) if slots[s] is None]
-
-        def slot_score(player, slot):
-            return self.batting_phase_score(player, slot_phase(slot)) - 0.5 * abs(natural(player) - slot) ** 2
-
-        # Greedy fill for the remaining (non-tail) slots, then improve with
-        # pairwise swaps: if swapping two players' slots raises the combined
-        # score, do it. This lets a strong batter "leapfrog" into a
-        # better-fitting slot even if a worse-fitting player got there first
-        # during the initial pass.
-        open_slots = open_top_slots
-        for slot in open_slots:
-            if not others:
-                break
-            best = max(others, key=lambda p: slot_score(p, slot))
-            slots[slot] = best
-            others.remove(best)
-
-        filled_slots = [s for s in open_slots if slots[s] is not None]
-        improved = True
-        while improved:
-            improved = False
-            for i in range(len(filled_slots)):
-                for j in range(i + 1, len(filled_slots)):
-                    s1, s2 = filled_slots[i], filled_slots[j]
-                    p1, p2 = slots[s1], slots[s2]
-                    current = slot_score(p1, s1) + slot_score(p2, s2)
-                    swapped = slot_score(p2, s1) + slot_score(p1, s2)
-                    if swapped > current:
-                        slots[s1], slots[s2] = p2, p1
-                        improved = True
-
-        order = [slots[i] for i in range(1, 12) if slots[i] is not None]
-        order += [p for p in remaining if p not in order]
-        return order[:11]
+        # Primary key: natural slot (CSV `natural_slot`). Secondary: a player
+        # who bats better goes ahead of one with the same natural slot. The
+        # phase-fit term is a small final tiebreak only.
+        ordered = sorted(
+            remaining,
+            key=lambda p: (
+                natural(p),
+                -p.current_batting,
+                -self.batting_phase_score(p, slot_phase(natural(p))),
+            ),
+        )
+        return ordered[:11]
 
     def _ensure_natural_top_order_cover(self, selected, roster):
         """Swap in a bench batter if `selected` lacks anyone who naturally opens (preferred_position 1-2).
@@ -950,8 +926,8 @@ class LeagueState:
 
         return self.enforce_role_balance(selected, roster, min_batters=6, min_bowlers=5)
 
-    def smart_batting_first_xi(self, team):
-        """Auto-pick a batting-friendly XI for `team` (used when they'll set the total): best-batting keeper first, then up to 7 batting options ranked by combined phase fit, then the best death-overs bowlers to round out to 11 — passed through `enforce_role_balance`. Returns a list of player names."""
+    def smart_starting_xi(self, team):
+        """Auto-pick a batting-friendly Starting XI for `team`: best-batting keeper first, then up to 7 batting options ranked by combined phase fit, then the best death-overs bowlers to round out to 11 — passed through `enforce_role_balance`. Returns a list of player names."""
         roster = list(team.roster)
         selected = []
         keepers = sorted([p for p in roster if is_wicketkeeper_option(p)], key=lambda p: p.current_batting, reverse=True)
@@ -967,47 +943,66 @@ class LeagueState:
         selected.extend([p for p in roster if p not in selected][:11 - len(selected)])
         return [p.name for p in self.enforce_role_balance(selected, roster, min_batters=6, min_bowlers=4)]
 
-    def smart_bowling_first_xi(self, team):
-        """Auto-pick a bowling-friendly XI for `team` (used when they'll defend a total), derived by lightly adjusting the batting-first XI toward more bowling depth.
+    def smart_impact_sub(self, team, starting_xi_names):
+        """Pick the default Impact Sub for `team`: the best bowling-role player on the roster who isn't in `starting_xi_names` (the "12th player"), ranked by bowling rating. Falls back to the best-rated remaining player if the squad has no spare bowling option. Returns a player name, or "" if every roster player is already in the Starting XI."""
+        bench = [p for p in team.roster if p.name not in starting_xi_names]
+        if not bench:
+            return ""
+        bowlers = sorted([p for p in bench if counts_as_bowler(p)], key=lambda p: p.current_bowling, reverse=True)
+        if bowlers:
+            return bowlers[0].name
+        return sorted(bench, key=lambda p: p.current_ovr, reverse=True)[0].name
 
-        Starts from `smart_batting_first_xi`, protects the top 5 batters from
-        being dropped, and swaps one mid-order spot for the best available
-        bench bowler. If that still leaves the XI identical to the batting
-        XI's full 11, tries swapping in bowling-capable bench players at a
-        few candidate slots until at least one name differs (so the two XIs
-        aren't forced to be byte-identical when better bowling options exist)
-        — all while respecting the overseas cap and bowler-count minimum.
-        The result is arranged into a batting order via `smart_batting_order`
-        (this XI bats second if it wins the toss and bowls first), so the
-        squad page shows it grouped by zone like the batting-first XI.
-        Returns a list of player names.
+    def resolve_match_xi(self, team, batting_first):
+        """Derive `team`'s innings-1 XI and the Impact Sub swap pairing under the "11+1" model.
+
+        `starting_xi` defaults to `smart_starting_xi(team)` and `impact_sub`
+        defaults to `smart_impact_sub(team, starting_xi)`, falling back to the
+        smart default if a saved choice is missing, no longer on the roster,
+        or already in the Starting XI.
+
+        `swap_out`/`swap_in` describe the pairing applied AT THE INNINGS BREAK:
+        - Batting first: the Starting XI plays innings 1 unchanged; at the
+          break, the weakest-bowling Starting XI player (`swap_out`) makes way
+          for the Impact Sub (`swap_in`).
+        - Bowling first: the Impact Sub already starts in place of that same
+          player for innings 1 (so the bowling-heavy XI plays first); at the
+          break, the Impact Sub (`swap_out`) makes way for the original player
+          (`swap_in`), who returns.
+
+        Returns `(innings1_xi_names, swap_out_name, swap_in_name)`. The
+        4-overseas cap is respected when choosing `swap_out`.
         """
-        roster = list(team.roster)
-        bat_names = getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team)
-        selected = [next((p for p in roster if p.name == name), None) for name in bat_names]
-        selected = [p for p in selected if p]
-        protected_batters = set(bat_names[:5])
-        bench_bowlers = sorted([p for p in roster if p not in selected and counts_as_bowler(p)], key=lambda p: p.current_bowling, reverse=True)
-        if not bench_bowlers:
-            bench_bowlers = sorted([p for p in roster if p not in selected], key=lambda p: p.current_ovr, reverse=True)
-        replace_window = [p for p in selected[5:7] if p.name not in protected_batters]
-        replaceable = [p for p in replace_window if not counts_as_bowler(p)] or replace_window or sorted([p for p in selected if p.name not in protected_batters], key=lambda p: (p.current_batting, p.current_ovr))
-        if bench_bowlers and replaceable:
-            selected[selected.index(replaceable[0])] = bench_bowlers[0]
-        selected.extend([p for p in roster if p not in selected][:11 - len(selected)])
-        balanced = self.enforce_role_balance(selected, roster, min_batters=5, min_bowlers=5)
-        if len(set(p.name for p in balanced) & set(bat_names)) == 11:
-            bench = [p for p in sorted(roster, key=lambda p: (counts_as_bowler(p), p.current_bowling, p.current_ovr), reverse=True) if p.name not in bat_names]
-            for candidate in bench:
-                for idx in (6, 5, 7, 8, 9, 10):
-                    trial = list(balanced)
-                    trial[idx] = candidate
-                    if len({p.name for p in trial}) == 11 and sum(1 for p in trial if p.is_overseas) <= 4 and len([p for p in trial if counts_as_bowler(p)]) >= 5:
-                        balanced = trial
-                        break
-                if len(set(p.name for p in balanced) & set(bat_names)) == 10:
-                    break
-        return [p.name for p in self.smart_batting_order(balanced)]
+        roster_names = {p.name for p in team.roster}
+
+        def overseas_ok(xi_names, out_name, in_name):
+            xi_players = [p for p in team.roster if p.name in xi_names]
+            out_player = next((p for p in team.roster if p.name == out_name), None)
+            in_player = next((p for p in team.roster if p.name == in_name), None)
+            overseas = sum(1 for p in xi_players if p.is_overseas)
+            return overseas - int(out_player.is_overseas if out_player else False) + int(in_player.is_overseas if in_player else False) <= 4
+
+        starting_xi = [name for name in getattr(team, "saved_starting_xi_names", []) if name in roster_names]
+        if len(starting_xi) != 11 or len(set(starting_xi)) != 11:
+            starting_xi = self.smart_starting_xi(team)
+
+        impact_sub = getattr(team, "saved_impact_sub_name", "")
+        if impact_sub not in roster_names or impact_sub in starting_xi:
+            impact_sub = self.smart_impact_sub(team, starting_xi)
+
+        leaders = {team.captain.name if team.captain else "", team.vice_captain.name if team.vice_captain else "", getattr(team, "saved_wicketkeeper_name", "")}
+        candidates = sorted(
+            [p for p in team.roster if p.name in starting_xi and p.name not in leaders],
+            key=lambda p: p.current_bowling,
+        )
+        if not candidates:
+            candidates = sorted([p for p in team.roster if p.name in starting_xi], key=lambda p: p.current_bowling)
+        swap_out = next((p.name for p in candidates if overseas_ok(starting_xi, p.name, impact_sub)), candidates[0].name if candidates else "")
+
+        if batting_first:
+            return starting_xi, swap_out, impact_sub
+        innings1_xi = [impact_sub if name == swap_out else name for name in starting_xi]
+        return innings1_xi, impact_sub, swap_out
 
     def enforce_xi_limits(self, selected, roster):
         """Trim `selected` to 11 and swap out the lowest-rated overseas players for the best available domestic ones until the squad respects the 4-overseas-player limit.
@@ -1062,79 +1057,6 @@ class LeagueState:
                 break
         return self.enforce_xi_limits(selected, roster)
 
-    def default_impact_subs(self, team):
-        """Suggest Impact Player swap pairings for `team` in both directions (bat-first -> bowl-first and vice versa), modelled on real IPL Impact Player tendencies.
-
-        In the IPL, sides overwhelmingly use the rule to load up on their
-        strength for the situation: defending a total, teams bring on an
-        extra specialist bowler (often for their weakest-bowling top-order
-        batter); chasing, they bring on an extra hitter — typically a
-        finisher or floater whose `preferred_position` sits in the lower-
-        middle order (5-8) — for their most expendable bowling-only option.
-
-        For each direction, candidates are drawn first from the player the
-        two saved XIs naturally disagree on (when they fit the needed role —
-        a pure specialist bowler makes a poor "extra hitter" suggestion just
-        because they happened to be the odd one out), then from the bench at
-        large, ranked by bowling rating / hitter-score respectively. The
-        paired "out" player is whichever XI incumbent the swap can drop
-        without breaching the 4-overseas cap — `pick_pairing` walks
-        candidates in score order on both sides until it finds a legal
-        combination, so the suggestion is always immediately playable.
-        """
-        def natural(p):
-            return getattr(p, "preferred_position", 6)
-
-        def hitter_score(p):
-            return (5 <= natural(p) <= 8) * 20 + p.current_batting
-
-        bat_xi_names = set(getattr(team, "saved_batting_first_xi_names", []) or self.smart_batting_first_xi(team))
-        bowl_xi_names = set(getattr(team, "saved_bowling_first_xi_names", []) or self.smart_bowling_first_xi(team))
-        bat_xi = [p for p in team.roster if p.name in bat_xi_names]
-        bowl_xi = [p for p in team.roster if p.name in bowl_xi_names]
-        bat_only = [p for p in bat_xi if p.name not in bowl_xi_names]
-        bowl_only = [p for p in bowl_xi if p.name not in bat_xi_names]
-        bench_after_bat = [p for p in team.roster if p.name not in bat_xi_names]
-        bench_after_bowl = [p for p in team.roster if p.name not in bowl_xi_names]
-
-        def overseas_count(players):
-            return sum(1 for p in players if p.is_overseas)
-
-        def overseas_ok(xi, out_player, in_player):
-            return overseas_count(xi) - int(out_player.is_overseas) + int(in_player.is_overseas) <= 4
-
-        def pick_pairing(xi, bench, in_priority_pool, in_score, out_score):
-            """Choose a valid (out, in) pairing for swapping into `xi` from `bench`.
-
-            Tries `in_priority_pool` candidates first (best-fit role-wise),
-            falling back to the full bench, always preferring the highest
-            `in_score` candidate paired with the lowest-`out_score` incumbent
-            that keeps the resulting XI within the overseas cap.
-            """
-            for in_pool in (in_priority_pool, bench):
-                for in_player in sorted(in_pool, key=in_score, reverse=True):
-                    out_candidates = sorted([p for p in xi if p != in_player], key=out_score)
-                    out_player = next((p for p in out_candidates if overseas_ok(xi, p, in_player)), None)
-                    if out_player:
-                        return out_player, in_player
-            return None, None
-
-        bowl_to_bat_in_pool = [p for p in bat_only if is_batting_role(p)] or [p for p in bench_after_bowl if is_batting_role(p)]
-        bat_to_bowl_in_pool = [p for p in bowl_only if is_bowling_role(p)] or [p for p in bench_after_bat if is_bowling_role(p)]
-
-        bat_out, extra_bowler = pick_pairing(
-            bat_xi, bench_after_bat, bat_to_bowl_in_pool,
-            in_score=lambda p: p.current_bowling, out_score=lambda p: p.current_bowling,
-        )
-        bowl_out, extra_hitter = pick_pairing(
-            bowl_xi, bench_after_bowl, bowl_to_bat_in_pool,
-            in_score=hitter_score, out_score=hitter_score,
-        )
-        return {
-            "bat_to_bowl": {"out": bat_out.name if bat_out else "", "in": extra_bowler.name if extra_bowler else ""},
-            "bowl_to_bat": {"out": bowl_out.name if bowl_out else "", "in": extra_hitter.name if extra_hitter else ""},
-        }
-
     def begin_match_day(self, interactive=True):
         """Start the next match day.
 
@@ -1183,9 +1105,12 @@ class LeagueState:
         if not self.live_match or self.live_match.status != "complete":
             raise ValueError("Live match is not complete.")
         if self.phase == "season":
+            card = self.live_match.card
             self.round_num += 1
             if self.round_num > 14:
                 self.finish_league_stage()
+            else:
+                self.status_message = self._round_result_message(self.round_num - 1, [card])
         else:
             self.record_playoff_result(self.live_match.card["winner"])
         self.live_match = None
@@ -1201,6 +1126,22 @@ class LeagueState:
         """
         match = LiveMatch(self, team1, team2, stage)
         return match.auto_finish()
+
+    def _round_result_message(self, round_num, completed):
+        """Builds a status message describing the user's result for a just-finished week.
+
+        Prefers the user's own match (`{winner} {margin} vs {rival}`),
+        falling back to a generic "Week N complete" if the user's team
+        wasn't part of any of the just-simulated cards (e.g. the week had
+        already been resolved).
+        """
+        user_card = next((card for card in completed if self.user_team_name in (card["team1"], card["team2"])), None)
+        if not user_card:
+            return f"Week {round_num} complete."
+        rival = user_card["team2"] if user_card["team1"] == self.user_team_name else user_card["team1"]
+        if user_card["winner"] == self.user_team_name:
+            return f"Week {round_num}: {self.user_team_name} {user_card['margin']} vs {rival}."
+        return f"Week {round_num}: {self.user_team_name} lost to {rival} ({user_card['margin']})."
 
     def simulate_current_round(self):
         """Quick-sim everything left to resolve the current round/match without launching an interactive `LiveMatch`.
@@ -1224,7 +1165,7 @@ class LeagueState:
                 if self.round_num > 14:
                     self.finish_league_stage()
                 else:
-                    self.status_message = f"Round {self.round_num - 1} completed, including {card['team1']} vs {card['team2']}."
+                    self.status_message = self._round_result_message(self.round_num - 1, [card])
                 return
             self.match_log = []
             completed = []
@@ -1235,11 +1176,7 @@ class LeagueState:
             if self.round_num > 14:
                 self.finish_league_stage()
             else:
-                user_card = next((card for card in completed if self.user_team_name in (card["team1"], card["team2"])), None)
-                if user_card:
-                    self.status_message = f"Round {self.round_num - 1} quick-simmed all 5 matches, including {user_card['team1']} vs {user_card['team2']}."
-                else:
-                    self.status_message = f"Round {self.round_num - 1} quick-simmed all 5 matches."
+                self.status_message = self._round_result_message(self.round_num - 1, completed)
         elif self.phase == "playoffs":
             if self.live_match and self.live_match.status != "complete":
                 card = self.live_match.auto_finish()
@@ -1299,7 +1236,7 @@ class LeagueState:
             self.status_message = f"{winner} are IPL {self.season_year} champions. Retention window is next."
         else:
             self.unlock_playoff_match()
-            self.status_message = "Playoff match complete. Review scorecards, then continue to the next playoff when ready."
+            self.status_message = f"{match['name']}: {winner} beat {loser}. Next playoff match unlocked."
 
     def unlock_playoff_match(self):
         """Fill in the participants for Qualifier 2 (Q1 loser vs Eliminator winner) and the Final (Q1 winner vs Q2 winner) once their feeder matches have results — the standard IPL bracket progression."""
@@ -1495,7 +1432,7 @@ class LeagueState:
         }
 
     def archive_season(self, champion, runner_up):
-        """Snapshot the just-finished season into `season_history`: champion, runner-up, season MVP, final points table, and top batting/bowling leaderboards — preserved across the retention/draft reset that follows."""
+        """Snapshot the just-finished season into `season_history`: champion, runner-up, season MVP, final points table, top batting/bowling leaderboards, and the full set of award-race leaderboards — preserved across the retention/draft reset that follows."""
         mvp = self.leaderboard(lambda p: self.mvp_score(p), True, None, 1)[0]
         self.season_history.append({
             "season": self.season_year,
@@ -1505,6 +1442,7 @@ class LeagueState:
             "points_table": [self.team_dict(t) for t in self.standings()],
             "batting": self.batting_table()[:15],
             "bowling": self.bowling_table()[:15],
+            "leaderboards": self.leaderboards(),
             "playoffs": list(self.playoff_results),
         })
 
@@ -1609,14 +1547,33 @@ class LeagueState:
         return f"{wkts}/{runs}" if wkts else "-"
 
     def team_dict(self, team):
-        """Serialise a franchise into the JSON dict the frontend uses for standings, squad, and lineup-planning views: branding, season record/NRR, leadership, saved/suggested lineups and orders, Impact Player default pairings, and the full roster (best-rated first)."""
+        """Serialise a franchise into the JSON dict the frontend uses for standings, squad, and lineup-planning views: branding, season record/NRR, leadership, saved/suggested lineups and orders, the Starting XI + Impact Sub, and the full roster (best-rated first)."""
         meta = TEAM_META[team.name]
         saved_batting = list(getattr(team, "saved_batting_order_names", []))
         saved_bowling = list(getattr(team, "saved_bowling_over_names", []))
         roster_ready = len(team.roster) >= 11
-        batting_first_xi = (list(getattr(team, "saved_batting_first_xi_names", [])) or self.smart_batting_first_xi(team)) if roster_ready else []
-        bowling_first_xi = (list(getattr(team, "saved_bowling_first_xi_names", [])) or self.smart_bowling_first_xi(team)) if roster_ready else []
-        impact_defaults = self.default_impact_subs(team) if roster_ready else {"bat_to_bowl": {"out": "", "in": ""}, "bowl_to_bat": {"out": "", "in": ""}}
+        roster_names = {p.name for p in team.roster}
+
+        starting_xi = [name for name in getattr(team, "saved_starting_xi_names", []) if name in roster_names]
+        if (len(starting_xi) != 11 or len(set(starting_xi)) != 11) and roster_ready:
+            starting_xi = self.smart_starting_xi(team)
+        elif not roster_ready:
+            starting_xi = []
+        # Present the XI in natural batting order (openers first, tail last) so
+        # the slot-by-slot editor reads as a sensible lineup rather than raw
+        # selection order — `smart_batting_order` uses each player's natural slot.
+        if len(starting_xi) == 11:
+            xi_players = [next((p for p in team.roster if p.name == name), None) for name in starting_xi]
+            xi_players = [p for p in xi_players if p]
+            if len(xi_players) == 11:
+                starting_xi = [p.name for p in self.smart_batting_order(xi_players)]
+
+        impact_sub_name = getattr(team, "saved_impact_sub_name", "")
+        if roster_ready and (impact_sub_name not in roster_names or impact_sub_name in starting_xi):
+            impact_sub_name = self.smart_impact_sub(team, starting_xi)
+        elif not roster_ready:
+            impact_sub_name = ""
+
         return {
             "name": team.name, "abbr": meta["abbr"], "home": meta["home"], "primary": meta["primary"], "accent": meta["accent"],
             "points": team.points, "wins": team.wins, "losses": team.losses, "played": team.games_played,
@@ -1624,11 +1581,9 @@ class LeagueState:
             "vice_captain": team.vice_captain.name if team.vice_captain else "",
             "saved_batting_order": saved_batting,
             "saved_bowling_order": saved_bowling,
-            "batting_first_xi": batting_first_xi,
-            "bowling_first_xi": bowling_first_xi,
+            "starting_xi": starting_xi,
+            "impact_sub_name": impact_sub_name,
             "saved_wicketkeeper": getattr(team, "saved_wicketkeeper_name", ""),
-            "bat_to_bowl_sub": getattr(team, "saved_bat_to_bowl_sub", impact_defaults["bat_to_bowl"]) or impact_defaults["bat_to_bowl"],
-            "bowl_to_bat_sub": getattr(team, "saved_bowl_to_bat_sub", impact_defaults["bowl_to_bat"]) or impact_defaults["bowl_to_bat"],
             "suggested_batting_order": saved_batting or (self.default_batting_order(team) if roster_ready else []),
             "suggested_bowling_order": saved_bowling or (self.default_bowling_plan(team) if roster_ready else []),
             "roster": [self.player_dict(p) for p in sorted(team.roster, key=lambda x: x.current_ovr, reverse=True)],

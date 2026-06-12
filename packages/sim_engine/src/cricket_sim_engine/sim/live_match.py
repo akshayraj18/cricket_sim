@@ -44,6 +44,7 @@ class LiveMatch:
         self.inn1_bat = None
         self.inn1_bowl = None
         self.xis = {}
+        self.pending_swaps = {}
         self.batting_orders = {}
         self.bowling_pools = {}
         self.bowling_plan_for = {}
@@ -107,8 +108,9 @@ class LiveMatch:
                     xi = self.league.smart_cpu_xi(team)
                 self.xis[team.name] = xi
                 saved_order = getattr(team, "saved_batting_order_names", []) if team.name == self.league.user_team_name else []
-                order = [next((p for p in xi if p.name == name), None) for name in saved_order]
-                order = [p for p in order if p]
+                order = [p for p in xi if p.name in saved_order]
+                order.sort(key=lambda p: saved_order.index(p.name))
+                order += [p for p in xi if p not in order]
                 self.batting_orders[team.name] = order if len(order) == 11 else self.league.smart_batting_order(xi)
                 self.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
                 self.wicketkeepers.setdefault(team.name, self.default_keeper(team, xi))
@@ -126,7 +128,9 @@ class LiveMatch:
         while self.status == "over":
             self.play_over(auto=True)
         if self.status == "impact":
-            self.apply_impact_sub(auto=True)
+            user_team = self.league.user_team()
+            swap_out, swap_in = self.pending_swaps.get(user_team.name, (None, None))
+            self.apply_impact_sub(out_name=swap_out, in_name=swap_in, auto=True)
         while self.status == "over":
             self.play_over(auto=True)
         if self.status == "super_over_setup":
@@ -135,14 +139,34 @@ class LiveMatch:
         return self.card
 
     def user_preset_xi(self, team):
-        """Build the user's playing XI for an autopilot match from their saved batting/bowling-first preset, falling back to a smart selection if the preset isn't a valid 11."""
-        preset_names = getattr(team, "saved_batting_first_xi_names", []) if team == self.inn1_bat else getattr(team, "saved_bowling_first_xi_names", [])
-        xi = [next((p for p in team.roster if p.name == name), None) for name in preset_names]
-        xi = [p for p in xi if p]
-        if len(xi) != 11:
-            xi_names = self.league.smart_batting_first_xi(team) if team == self.inn1_bat else self.league.smart_bowling_first_xi(team)
-            xi = [next(p for p in team.roster if p.name == name) for name in xi_names]
-        return xi
+        """Build the user's playing XI for an autopilot match under the 11+1 model: the Starting XI (with the Impact Sub already swapped in for innings 1 if bowling first), stashing the at-the-break swap pairing in `pending_swaps`."""
+        batting_first = team == self.inn1_bat
+        xi_names, swap_out, swap_in = self.league.resolve_match_xi(team, batting_first)
+        self.pending_swaps[team.name] = (swap_out, swap_in)
+        xi = [next((p for p in team.roster if p.name == name), None) for name in xi_names]
+        return [p for p in xi if p]
+
+    def update_pending_swap(self, team, xi):
+        """Recompute `pending_swaps[team.name]` for the user's confirmed innings-1 XI.
+
+        Starts from the default `(swap_out, swap_in)` pairing for `team`'s
+        saved Starting XI/Impact Sub (`resolve_match_xi`). If the user's
+        confirmed `xi` differs from the saved Starting XI by exactly one
+        player, that one-player difference becomes the pairing instead — the
+        player missing from `xi` is `swap_out` (returns at the break) and the
+        extra player in `xi` is `swap_in` (leaves at the break), mirroring
+        the default's "one player swaps at the break" structure either way.
+        """
+        batting_first = team == self.inn1_bat
+        _, default_out, default_in = self.league.resolve_match_xi(team, batting_first)
+        starting_xi = set(getattr(team, "saved_starting_xi_names", [])) or set(self.league.smart_starting_xi(team))
+        confirmed = {p.name for p in xi}
+        missing = starting_xi - confirmed
+        extra = confirmed - starting_xi
+        if len(missing) == 1 and len(extra) == 1:
+            self.pending_swaps[team.name] = (next(iter(extra)), next(iter(missing)))
+        else:
+            self.pending_swaps[team.name] = (default_out, default_in)
 
     def default_keeper(self, team, xi):
         """Pick a wicketkeeper for `xi`: prefer the team's previously saved keeper if still selected, else the best-batting keeper option, else just the first player."""
@@ -177,9 +201,12 @@ class LiveMatch:
         `set_bowling_plan`). When `save` is set, the selections are cached on
         the `Team` so the UI can offer to reuse them next match. If this is
         the second-innings lineup (`status == "batting_order"`), starts that
-        innings; otherwise starts the first innings once both XIs are ready.
+        innings; otherwise starts the first innings once both XIs are ready,
+        deriving the at-the-break Impact Sub swap pairing for `pending_swaps`.
         Raises `ValueError` on any composition-rule violation or if lineup
-        selection isn't currently open.
+        selection isn't currently open. The `context` arg is accepted for
+        backward call-site compatibility but the validation branch is derived
+        from `lineup_context()`.
         """
         if self.status not in ("lineup", "batting_order"):
             raise ValueError("Lineup selection is not open.")
@@ -193,10 +220,11 @@ class LiveMatch:
             raise ValueError("Pick exactly 11 players.")
         if sum(1 for p in xi if p.is_overseas) > 4:
             raise ValueError("Playing XI cannot include more than 4 overseas players.")
-        if context == "batting" and len([p for p in xi if counts_as_batter(p)]) < 6:
-            raise ValueError("Batting First XI needs at least 6 batting options including all-rounders and wicketkeepers.")
-        if context == "bowling" and len([p for p in xi if counts_as_bowler(p)]) < 5:
-            raise ValueError("Bowling First XI needs at least 5 bowling options including all-rounders.")
+        bowling_first = self.status == "lineup" and team == self.inn1_bowl
+        if not bowling_first and len([p for p in xi if counts_as_batter(p)]) < 6:
+            raise ValueError("Starting XI needs at least 6 batting options including all-rounders and wicketkeepers.")
+        if bowling_first and len([p for p in xi if counts_as_bowler(p)]) < 4:
+            raise ValueError("Starting XI needs at least 4 bowling options including all-rounders.")
         for player in xi:
             player.intent = (intents or {}).get(player.name, "Normal")
         order_names = batting_order or names
@@ -210,6 +238,8 @@ class LiveMatch:
         self.batting_orders[team.name] = order
         self.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
         self.set_bowling_plan(team, bowling_order or [])
+        if self.status == "lineup":
+            self.update_pending_swap(team, xi)
         if save:
             team.saved_playing_xi_names = [p.name for p in xi]
             team.saved_wicketkeeper_name = keeper.name
@@ -774,13 +804,22 @@ class LiveMatch:
             in_player = next((p for p in bench if p.name == in_name), None)
             if not out_player or not in_player:
                 raise ValueError("Choose one player from XI and one from bench.")
+            leaders = {user_team.captain, user_team.vice_captain}
+            keeper_name = getattr(user_team, "saved_wicketkeeper_name", "")
+            if out_player in leaders or out_player.name == keeper_name:
+                raise ValueError("Cannot sub out the captain, vice-captain, or wicketkeeper.")
             new_xi = [in_player if p == out_player else p for p in xi]
             if sum(1 for p in new_xi if p.is_overseas) > 4:
                 raise ValueError("Impact sub would break the overseas limit.")
             self.xis[user_team.name] = new_xi
-            order = [p for p in self.batting_orders[user_team.name] if p != out_player]
-            if in_player not in order:
-                order.append(in_player)
+            # The post-sub XI's batting order follows the squad's saved
+            # Starting XI batting order (so a returning batter reclaims their
+            # usual slot); anyone not in that order (e.g. an Impact Sub bowler
+            # coming in for the first time) bats at the tail.
+            starting_order_names = getattr(user_team, "saved_batting_order_names", []) or self.league.default_batting_order(user_team)
+            order = [p for p in new_xi if p.name in starting_order_names]
+            order.sort(key=lambda p: starting_order_names.index(p.name))
+            order += [p for p in new_xi if p not in order]
             self.batting_orders[user_team.name] = order[:11]
             self.bowling_pools[user_team.name] = [p for p in new_xi if is_bowling_role(p)] or new_xi
             if self.wicketkeepers.get(user_team.name) == out_player or self.wicketkeepers.get(user_team.name) not in new_xi:
@@ -906,6 +945,11 @@ class LiveMatch:
         suggested_players = self.suggested_roster(self.lineup_context() == "bowling")
         if self.status == "batting_order" and user_team.name in self.xis:
             suggested_players = self.xis[user_team.name]
+        lineup_xi, swap_out, swap_in = self.league.resolve_match_xi(user_team, user_team == self.inn1_bat)
+        impact_sub_name = getattr(user_team, "saved_impact_sub_name", "") or self.league.smart_impact_sub(user_team, lineup_xi)
+        swap_notice = ""
+        if self.lineup_context() == "bowling":
+            swap_notice = f"{swap_out} (impact sub) starts in place of {swap_in} — {swap_in} returns at the innings break."
         return {
             "status": self.status,
             "stage": self.stage,
@@ -920,8 +964,9 @@ class LiveMatch:
             "suggested": [self.league.player_dict(p) for p in suggested_players],
             "saved_xi": user_team.saved_playing_xi_names,
             "saved_wicketkeeper": getattr(user_team, "saved_wicketkeeper_name", ""),
-            "batting_first_xi": getattr(user_team, "saved_batting_first_xi_names", []) or self.league.smart_batting_first_xi(user_team),
-            "bowling_first_xi": getattr(user_team, "saved_bowling_first_xi_names", []) or self.league.smart_bowling_first_xi(user_team),
+            "lineup_xi": lineup_xi,
+            "impact_sub_name": impact_sub_name,
+            "swap_notice": swap_notice,
             "saved_order": user_team.saved_batting_order_names,
             "saved_bowling_order": getattr(user_team, "saved_bowling_over_names", []),
             "score": self.live_score_payload(),
@@ -998,15 +1043,18 @@ class LiveMatch:
         }
 
     def impact_payload(self):
-        """Impact Player sub options at the innings break: the user's current XI and bench, or `None` if it's not currently the break."""
+        """Impact Player sub options at the innings break: the user's current XI and bench, plus the default swap pairing (`default_out`/`default_in`) to preselect, or `None` if it's not currently the break."""
         if self.status != "impact":
             return None
         user = self.league.user_team()
         xi = self.xis[user.name]
         bench = [p for p in user.roster if p not in xi]
+        default_out, default_in = self.pending_swaps.get(user.name, ("", ""))
         return {
             "xi": [self.league.player_dict(p) for p in xi],
             "bench": [self.league.player_dict(p) for p in bench],
+            "default_out": default_out or "",
+            "default_in": default_in or "",
         }
 
     def super_over_payload(self):
