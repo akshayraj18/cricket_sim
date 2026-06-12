@@ -67,10 +67,19 @@ backend-test:
 # shell may still resolve to an older Node). Picks the highest v20/v21/v22+ dir.
 MOBILE_NODE_BIN := $(shell ls -d $(HOME)/.nvm/versions/node/v2[0-9]* 2>/dev/null | sort -V | tail -1)/bin
 
-# Start the Expo dev client + Metro bundler at http://localhost:8081
-# (use `make mobile ARGS="--clear"` to reset the bundler cache).
+# Start the Expo dev client + Metro bundler on all interfaces (port 8081).
+# Works for both a physical device on the same Wi-Fi (via the LAN IP) and the
+# iOS Simulator / Android emulator (via 127.0.0.1). Do NOT use `--localhost`:
+# it binds IPv6-only ([::1]) and the simulator's IPv4 (127.0.0.1) request is
+# then refused. (use `make mobile ARGS="--clear"` to reset the bundler cache.)
 mobile:
 	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo start --dev-client --port 8081 $(ARGS)
+
+# Point the booted iOS Simulator's dev client at 127.0.0.1:8081 and open it.
+# Run `make mobile` first (in another shell), then this — handy when the dev
+# client is stuck on a stale LAN-IP URL and shows "Could not connect".
+mobile-sim-open:
+	xcrun simctl openurl booted "mobile://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
 
 # Install the mobile app's npm dependencies with the pinned Node.
 mobile-install:
