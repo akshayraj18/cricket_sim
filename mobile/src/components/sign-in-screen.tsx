@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 export function SignInScreen() {
   const theme = useTheme();
-  const { continueAsGuest, error, status } = useAuth();
+  const { continueAsGuest, retry, offline, error, status } = useAuth();
   const isLoading = status === 'loading';
 
   return (
@@ -32,23 +32,49 @@ export function SignInScreen() {
             </ThemedText>
           )}
 
-          <Pressable
-            onPress={continueAsGuest}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 },
-            ]}>
-            {isLoading ? (
-              <ActivityIndicator color="#1a1404" />
-            ) : (
-              <ThemedText style={styles.primaryButtonText}>Continue as Guest</ThemedText>
-            )}
-          </Pressable>
+          {offline ? (
+            // A stored session exists but the backend was unreachable. Offer a
+            // retry instead of "Continue as Guest" so the user doesn't start a
+            // fresh account and orphan their existing career.
+            <>
+              <ThemedText themeColor="red" style={styles.error}>
+                Couldn&apos;t reach the server. Your saved game is safe — check your connection and try again.
+              </ThemedText>
+              <Pressable
+                onPress={retry}
+                disabled={isLoading}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                {isLoading ? (
+                  <ActivityIndicator color="#1a1404" />
+                ) : (
+                  <ThemedText style={styles.primaryButtonText}>Retry</ThemedText>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable
+                onPress={continueAsGuest}
+                disabled={isLoading}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                {isLoading ? (
+                  <ActivityIndicator color="#1a1404" />
+                ) : (
+                  <ThemedText style={styles.primaryButtonText}>Continue as Guest</ThemedText>
+                )}
+              </Pressable>
 
-          <ThemedText themeColor="textFaint" style={styles.fineprint}>
-            Sign in with Apple or Google coming soon — start as a guest and link an account later.
-          </ThemedText>
+              <ThemedText themeColor="textFaint" style={styles.fineprint}>
+                Sign in with Apple or Google coming soon — start as a guest and link an account later.
+              </ThemedText>
+            </>
+          )}
         </View>
       </SafeAreaView>
     </View>
