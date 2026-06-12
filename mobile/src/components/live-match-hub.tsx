@@ -435,7 +435,7 @@ function ImpactStage({
         <ThemedText style={styles.panelTitle}>Substitution Desk</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
           Your saved Impact Sub is preselected — pick a different XI player to remove or bench player to bring on if
-          you'd rather.
+          you&apos;d rather.
         </ThemedText>
         <ThemedText themeColor="textFaint" style={styles.fieldLabel}>
           Out
