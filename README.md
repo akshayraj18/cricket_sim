@@ -1,6 +1,8 @@
 # IPL Franchise Sim
 
-A browser-based IPL franchise career simulation. Pick a team, run the mega draft, play or sim every match over-by-over, manage retentions, and build a dynasty across multiple seasons.
+An IPL franchise career simulation. Pick a team, run the mega draft, play or sim every match over-by-over, manage retentions, and build a dynasty across multiple seasons.
+
+Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI + Postgres + Redis** service, with the original browser frontend kept for validation. Accounts are durable: play as a guest and link Sign in with Apple / Google to keep your career across devices.
 
 ## Features
 
@@ -9,7 +11,7 @@ A browser-based IPL franchise career simulation. Pick a team, run the mega draft
 - **Three starting modes** — current-era mega draft, all-time-greats mega draft (500+ historical IPL legends with career-based ratings), or skip the draft entirely and start the season with each franchise's real-world IPL 2026 roster.
 - **Three difficulty levels** — Easy, Medium, Hard (affects CPU squad quality and match engine).
 - **Leadership** — assign captain, vice-captain, and preferred wicketkeeper.
-- **Saved presets** — set a default batting order, 20-over bowling plan, batting-first XI, bowling-first XI, and Impact Player swap pairs that auto-apply every match.
+- **Saved presets ("11+1" model)** — set a Starting XI and one Impact Sub, plus a default batting order and 20-over bowling plan, that auto-apply every match. The captain, vice-captain, and designated wicketkeeper are locked into the Starting XI and can't be subbed out.
 
 ### Season Structure
 - **14-round league stage** — 5 matches per round across all 10 teams. Simulate any round instantly or play your match live.
@@ -96,7 +98,14 @@ backend/                      — FastAPI service (Postgres + Redis) — see bac
   alembic/                    — DB migrations
   docker-compose.yml          — local Postgres + Redis
 
-webapp/                       — existing static frontend (index.html, app.js, styles.css)
+mobile/                       — React Native / Expo app (the primary frontend)
+  src/
+    app/                       — expo-router screens (tabs: home, squad, season, stats, history)
+    components/                — draft hub, live-match hub, squad/lineup editors, sign-in, account sheet
+    context/                   — Auth, Career, League, Theme providers
+    api/                       — typed client for the FastAPI backend (auth, careers, live match)
+
+webapp/                       — original static browser frontend (index.html, app.js, styles.css)
 
 legacy/                        — original stdlib HTTP server (ui_server.py), kept as a fallback
                                   until the FastAPI backend reaches feature parity
@@ -115,3 +124,40 @@ make backend-down      # stop Postgres + Redis
 ```
 
 Copy `backend/.env.example` to `backend/.env` to override defaults (DB URL, Redis URL, JWT secret).
+
+## Mobile app (React Native / Expo)
+
+The app lives in `mobile/` and talks to the FastAPI backend. Expo/Metro needs Node ≥ 20.19.4; the `make mobile*` targets auto-select the newest installed nvm Node ≥ 20.
+
+```bash
+make backend-up && make backend-migrate && make backend-run   # backend first
+
+make mobile-install    # install JS deps (first time)
+make mobile            # start Metro + the dev client on :8081
+make mobile-ios        # build + run the native iOS dev client on a simulator
+make mobile-typecheck  # tsc --noEmit  (matches CI)
+make mobile-lint       # expo lint    (matches CI)
+```
+
+If the iOS Simulator's dev client shows "Could not connect to development server",
+run `make mobile-sim-open` to point it at `127.0.0.1:8081`.
+
+**Native modules / sign-in.** Apple and Google sign-in are native modules, so they
+only work in a development build (`make mobile-ios`), not a bare Metro reload.
+After changing a config plugin or native dependency, re-run `make mobile-ios`.
+
+- **Sign in with Apple** (iOS) needs a paid Apple Developer team to provision the
+  capability; set it under the target's Signing & Capabilities in Xcode.
+- **Google sign-in** needs OAuth client IDs (iOS + Web) from Google Cloud Console.
+  Provide them via `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` / `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
+  and the backend's `google_client_ids`. The Web client ID is the token audience the
+  backend verifies, so the two must match. Never commit OAuth client *secrets*.
+
+### Accounts & cloud save
+
+- Play immediately as a **guest** — the career is saved server-side and survives
+  sign-out and app reloads on the same device.
+- **Link Apple or Google** from the account sheet to make the account durable and
+  portable; the existing guest career carries over.
+- Tokens: short-lived access token + 30-day rotating refresh token, stored in the
+  device keychain (`expo-secure-store`).

@@ -1,6 +1,6 @@
 .PHONY: install run kill test unit integration regression lint clean \
 	backend-up backend-down backend-run backend-migrate backend-test \
-	mobile mobile-install
+	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
@@ -79,7 +79,22 @@ mobile:
 # Run `make mobile` first (in another shell), then this — handy when the dev
 # client is stuck on a stale LAN-IP URL and shows "Could not connect".
 mobile-sim-open:
-	xcrun simctl openurl booted "mobile://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
+	xcrun simctl openurl booted "cric-sim://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
+
+# Build + run the native iOS dev client on a simulator. Needed after adding a
+# native module / config-plugin (e.g. Apple/Google sign-in). Regenerates the
+# native project from app.json, signs with your Apple team, and launches.
+# Set LANG/LC_ALL so CocoaPods (Ruby) doesn't choke on a non-UTF-8 locale.
+mobile-ios:
+	cd mobile && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo run:ios
+
+# Typecheck the mobile app (matches the CI `mobile` job).
+mobile-typecheck:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npm run typecheck
+
+# Lint the mobile app (matches the CI `mobile` job).
+mobile-lint:
+	cd mobile && PATH="$(MOBILE_NODE_BIN):$$PATH" npm run lint
 
 # Install the mobile app's npm dependencies with the pinned Node.
 mobile-install:

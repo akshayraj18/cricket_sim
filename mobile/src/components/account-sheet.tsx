@@ -1,6 +1,8 @@
-import { Platform, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
@@ -16,6 +18,12 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
   const theme = useTheme();
   const { mode, setMode } = useAppTheme();
   const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
+
+  // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   const handleSignOut = async () => {
     onClose();
@@ -49,7 +57,7 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
                 You&apos;re playing as a guest on this device. Link an account to keep your career safe and play
                 across devices.
               </ThemedText>
-              {Platform.OS === 'ios' && (
+              {appleAvailable && (
                 <Pressable
                   onPress={linkApple}
                   style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
