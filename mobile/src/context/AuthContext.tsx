@@ -8,7 +8,19 @@ import {
   signInWithGoogle as nativeGoogleSignIn,
 } from '@/api/socialAuth';
 import { AuthResponse, UserOut } from '@/api/types';
-import { clearTokens, getTokens, setTokens } from '@/api/tokenStorage';
+import {
+  clearGuestRefreshToken,
+  clearTokens,
+  getGuestRefreshToken,
+  getTokens,
+  setGuestRefreshToken,
+  setTokens,
+} from '@/api/tokenStorage';
+
+/** A user with no linked provider and no email is an anonymous guest. */
+function isGuest(user: UserOut | null): boolean {
+  return !!user && !user.has_apple_link && !user.has_google_link && !user.email;
+}
 
 type AuthStatus = 'loading' | 'signed-out' | 'signed-in';
 
@@ -19,10 +31,16 @@ interface AuthContextValue {
   offline: boolean;
   /** Creates (or resumes) an anonymous guest session. */
   continueAsGuest: () => Promise<void>;
+  /** True if the current user is an anonymous guest (no linked provider). */
+  isGuest: boolean;
   /** Sign in with Apple (iOS). */
   signInWithApple: () => Promise<void>;
   /** Sign in with Google. */
   signInWithGoogle: () => Promise<void>;
+  /** Link Apple to the current (guest) account, keeping its career. iOS only. */
+  linkApple: () => Promise<void>;
+  /** Link Google to the current (guest) account, keeping its career. */
+  linkGoogle: () => Promise<void>;
   /** Retry restoring a stored session (e.g. after the backend comes back). */
   retry: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -85,6 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applyAuthResponse = useCallback(async ({ user: authedUser, tokens }: AuthResponse) => {
     await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+    // Remember a guest's refresh token durably so the account can be resumed
+    // after sign-out; a real (linked) account doesn't need this fallback.
+    if (isGuest(authedUser)) {
+      await setGuestRefreshToken(tokens.refresh_token);
+    } else {
+      await clearGuestRefreshToken();
+    }
     setUser(authedUser);
     setOffline(false);
     setStatus('signed-in');
@@ -93,6 +118,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const continueAsGuest = async () => {
     setError(null);
     try {
+      // Resume this device's existing guest account if we have its credential,
+      // so the guest's career survives a sign-out. Fall back to creating a new
+      // guest only if there's no saved one (or it's been revoked/expired).
+      const savedGuestToken = await getGuestRefreshToken();
+      if (savedGuestToken) {
+        try {
+          const tokens = await authApi.refresh(savedGuestToken);
+          await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+          await setGuestRefreshToken(tokens.refresh_token);
+          const me = await authApi.me();
+          setUser(me);
+          setOffline(false);
+          setStatus('signed-in');
+          return;
+        } catch {
+          // Saved guest credential is gone/expired — clear it and make a new guest.
+          await clearGuestRefreshToken();
+        }
+      }
       await applyAuthResponse(await authApi.guest());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start guest session');
@@ -121,6 +165,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Linking keeps the current session/user (and thus the guest's career) and
+  // just attaches a provider, so the account becomes durable and portable.
+  const linkApple = async () => {
+    setError(null);
+    try {
+      const { token } = await nativeAppleSignIn();
+      const updated = await authApi.linkApple(token);
+      await clearGuestRefreshToken();
+      setUser(updated);
+    } catch (err) {
+      if (err instanceof SocialAuthCancelledError) return;
+      setError(err instanceof Error ? err.message : 'Linking Apple failed');
+    }
+  };
+
+  const linkGoogle = async () => {
+    setError(null);
+    try {
+      const { token } = await nativeGoogleSignIn();
+      const updated = await authApi.linkGoogle(token);
+      await clearGuestRefreshToken();
+      setUser(updated);
+    } catch (err) {
+      if (err instanceof SocialAuthCancelledError) return;
+      setError(err instanceof Error ? err.message : 'Linking Google failed');
+    }
+  };
+
   const retry = useCallback(async () => {
     setStatus('loading');
     await restoreSession();
@@ -134,7 +206,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ status, user, offline, continueAsGuest, signInWithApple, signInWithGoogle, retry, signOut, error }),
+    () => ({
+      status,
+      user,
+      offline,
+      isGuest: isGuest(user),
+      continueAsGuest,
+      signInWithApple,
+      signInWithGoogle,
+      linkApple,
+      linkGoogle,
+      retry,
+      signOut,
+      error,
+    }),
     [status, user, offline, retry, error]
   );
 

@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
@@ -15,7 +15,7 @@ const MODE_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
 export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const theme = useTheme();
   const { mode, setMode } = useAppTheme();
-  const { user, signOut } = useAuth();
+  const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
 
   const handleSignOut = async () => {
     onClose();
@@ -38,6 +38,30 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             <ThemedText themeColor="textDim" style={styles.email}>
               {user.email}
             </ThemedText>
+          ) : null}
+
+          {isGuest ? (
+            <>
+              <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+                Save your career
+              </ThemedText>
+              <ThemedText themeColor="textDim" style={styles.helpText}>
+                You&apos;re playing as a guest on this device. Link an account to keep your career safe and play
+                across devices.
+              </ThemedText>
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  onPress={linkApple}
+                  style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+                  <ThemedText style={styles.linkButtonText}> Link Apple</ThemedText>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={linkGoogle}
+                style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+                <ThemedText style={styles.linkButtonText}>Link Google</ThemedText>
+              </Pressable>
+            </>
           ) : null}
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
@@ -119,6 +143,23 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: Spacing.three,
     marginBottom: Spacing.two,
+  },
+  helpText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginBottom: Spacing.two,
+  },
+  linkButton: {
+    paddingVertical: 11,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.two,
+  },
+  linkButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   modeRow: {
     flexDirection: 'row',
