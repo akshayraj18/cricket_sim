@@ -68,7 +68,8 @@ def test_team_round_trip_preserves_roster_and_leadership():
     team.losses = 2
     team.saved_wicketkeeper_name = "Bench Player"
     team.saved_batting_order_names = [p.name for p in (p1, p2, p3)]
-    team.saved_bat_to_bowl_sub = {"out": p1.name, "in": p2.name}
+    team.saved_starting_xi_names = [p.name for p in (p1, p2, p3)]
+    team.saved_impact_sub_name = p3.name
 
     restored = Team.from_dict(team.to_dict())
 
@@ -84,7 +85,8 @@ def test_team_round_trip_preserves_roster_and_leadership():
     assert restored.losses == 2
     assert restored.saved_wicketkeeper_name == "Bench Player"
     assert restored.saved_batting_order_names == team.saved_batting_order_names
-    assert restored.saved_bat_to_bowl_sub == team.saved_bat_to_bowl_sub
+    assert restored.saved_starting_xi_names == team.saved_starting_xi_names
+    assert restored.saved_impact_sub_name == team.saved_impact_sub_name
 
 
 def test_team_round_trip_with_no_leadership():

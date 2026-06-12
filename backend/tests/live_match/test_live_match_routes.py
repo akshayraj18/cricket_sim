@@ -42,7 +42,7 @@ async def _resolve_toss_and_lineup(client: AsyncClient, headers: dict, career_id
         payload = resp.json()
 
     while payload["status"] == "lineup":
-        xi = payload["batting_first_xi"] if payload["lineup_context"] == "batting" else payload["bowling_first_xi"]
+        xi = payload["lineup_xi"]
         resp = await client.post(f"/careers/{career_id}/match/lineup", json={"xi": xi}, headers=headers)
         assert resp.status_code == 200, resp.text
         payload = resp.json()

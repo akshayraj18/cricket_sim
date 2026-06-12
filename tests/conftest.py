@@ -42,27 +42,23 @@ def resolve(team, player_names):
 
 
 def apply_smart_presets(league):
-    """Build and save batting-first/bowling-first XIs, orders, bowling plan, and impact subs from the `smart_*`/`default_*` helpers — the same defaults the UI offers the user. Returns the dict of generated preset names for assertions."""
+    """Build and save the Starting XI, Impact Sub, batting order, and bowling plan from the `smart_*`/`default_*` helpers — the same defaults the UI offers the user. Returns the dict of generated preset names for assertions."""
     team = league.user_team()
-    bat_xi_names = league.smart_batting_first_xi(team)
-    bowl_xi_names = league.smart_bowling_first_xi(team)
-    bat_order = league.smart_batting_order(resolve(team, bat_xi_names))
+    starting_xi_names = league.smart_starting_xi(team)
+    impact_sub_name = league.smart_impact_sub(team, starting_xi_names)
+    bat_order = league.smart_batting_order(resolve(team, starting_xi_names))
     bowl_plan = league.default_bowling_plan(team)
-    impact_defaults = league.default_impact_subs(team)
     league.set_user_presets(
         batting_order=names(bat_order),
         bowling_order=bowl_plan,
-        batting_first_xi=bat_xi_names,
-        bowling_first_xi=bowl_xi_names,
-        bat_to_bowl=impact_defaults["bat_to_bowl"],
-        bowl_to_bat=impact_defaults["bowl_to_bat"],
+        starting_xi=starting_xi_names,
+        impact_sub_name=impact_sub_name,
     )
     return {
-        "batting_first_xi": bat_xi_names,
-        "bowling_first_xi": bowl_xi_names,
+        "starting_xi": starting_xi_names,
+        "impact_sub_name": impact_sub_name,
         "batting_order": names(bat_order),
         "bowling_plan": bowl_plan,
-        "impact_defaults": impact_defaults,
     }
 
 
@@ -80,16 +76,12 @@ def force_toss(match, winner_team, decision):
 
 
 def submit_user_xi_for_innings_role(league, match, presets):
-    """Submit the user's XI matching whichever role (batting-first vs bowling-first) they've been assigned by the toss, using the saved smart presets."""
+    """Submit the user's innings-1 XI under the "11+1" model, derived via `resolve_match_xi` for whichever role (batting-first vs bowling-first) they've been assigned by the toss."""
     team = league.user_team()
-    if match.inn1_bat == team:
-        xi_names = presets["batting_first_xi"]
-        order = league.smart_batting_order(resolve(team, xi_names))
-        context = "batting"
-    else:
-        xi_names = presets["bowling_first_xi"]
-        order = league.smart_batting_order(resolve(team, xi_names))
-        context = "bowling"
+    batting_first = match.inn1_bat == team
+    xi_names, _swap_out, _swap_in = league.resolve_match_xi(team, batting_first)
+    order = league.smart_batting_order(resolve(team, xi_names))
+    context = "batting" if batting_first else "bowling"
     match.set_user_xi(
         xi_names,
         batting_order=names(order),
