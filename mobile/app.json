@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "cric-sim",
     "slug": "cric",
     "owner": "akshraj",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "cric-sim",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",

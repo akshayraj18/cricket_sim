@@ -39,7 +39,11 @@ async def verify_google_id_token(id_token: str) -> GoogleIdentity:
             id_token,
             key,
             algorithms=[header.get("alg", "RS256")],
-            options={"verify_aud": False},
+            # We verify aud/iss ourselves below. `at_hash` binds the ID token to
+            # an OAuth access_token we don't receive (the app sends only the ID
+            # token), so skip it — the RS256 signature already guarantees the
+            # token's integrity.
+            options={"verify_aud": False, "verify_at_hash": False},
         )
     except JWTError as exc:
         raise GoogleTokenError(f"Google identity token verification failed: {exc}") from exc

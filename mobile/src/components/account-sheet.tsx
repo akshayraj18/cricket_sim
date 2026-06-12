@@ -1,7 +1,6 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
@@ -65,7 +64,17 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             })}
           </View>
 
-          <Button label="Sign Out" variant="ghost" accentColor={theme.red} onPress={handleSignOut} style={styles.signOut} />
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Account
+          </ThemedText>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [
+              styles.signOut,
+              { borderColor: theme.red, opacity: pressed ? 0.7 : 1 },
+            ]}>
+            <ThemedText style={[styles.signOutText, { color: theme.red }]}>Sign Out</ThemedText>
+          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -131,6 +140,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   signOut: {
-    marginTop: Spacing.four,
+    marginTop: Spacing.two,
+    paddingVertical: 12,
+    borderRadius: Radius.sm,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
