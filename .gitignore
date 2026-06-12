@@ -12,3 +12,9 @@ player_datasets/
 
 # Notes
 ideas.txt
+
+# Editor / tool configs (personal, not needed to build or run)
+.vscode/
+.claude/
+**/.vscode/
+**/.claude/
