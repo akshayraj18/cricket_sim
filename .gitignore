@@ -16,6 +16,12 @@ player_datasets/
 # Notes
 ideas.txt
 
+# Secrets / credentials (OAuth client secrets, IDs, keys) — never commit
+docs/ids.txt
+*.secrets
+google-services.json
+GoogleService-Info.plist
+
 # Editor / tool configs (personal, not needed to build or run)
 .vscode/
 .claude/

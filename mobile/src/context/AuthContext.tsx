@@ -2,7 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { authApi } from '@/api/auth';
 import { ApiError, SessionExpiredError } from '@/api/client';
-import { UserOut } from '@/api/types';
+import {
+  SocialAuthCancelledError,
+  signInWithApple as nativeAppleSignIn,
+  signInWithGoogle as nativeGoogleSignIn,
+} from '@/api/socialAuth';
+import { AuthResponse, UserOut } from '@/api/types';
 import { clearTokens, getTokens, setTokens } from '@/api/tokenStorage';
 
 type AuthStatus = 'loading' | 'signed-out' | 'signed-in';
@@ -14,6 +19,10 @@ interface AuthContextValue {
   offline: boolean;
   /** Creates (or resumes) an anonymous guest session. */
   continueAsGuest: () => Promise<void>;
+  /** Sign in with Apple (iOS). */
+  signInWithApple: () => Promise<void>;
+  /** Sign in with Google. */
+  signInWithGoogle: () => Promise<void>;
   /** Retry restoring a stored session (e.g. after the backend comes back). */
   retry: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -74,16 +83,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, [restoreSession]);
 
+  const applyAuthResponse = useCallback(async ({ user: authedUser, tokens }: AuthResponse) => {
+    await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+    setUser(authedUser);
+    setOffline(false);
+    setStatus('signed-in');
+  }, []);
+
   const continueAsGuest = async () => {
     setError(null);
     try {
-      const { user: guestUser, tokens } = await authApi.guest();
-      await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
-      setUser(guestUser);
-      setOffline(false);
-      setStatus('signed-in');
+      await applyAuthResponse(await authApi.guest());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start guest session');
+    }
+  };
+
+  const signInWithApple = async () => {
+    setError(null);
+    try {
+      const { token, displayName } = await nativeAppleSignIn();
+      await applyAuthResponse(await authApi.apple(token, displayName));
+    } catch (err) {
+      if (err instanceof SocialAuthCancelledError) return;
+      setError(err instanceof Error ? err.message : 'Apple sign-in failed');
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setError(null);
+    try {
+      const { token, displayName } = await nativeGoogleSignIn();
+      await applyAuthResponse(await authApi.google(token, displayName));
+    } catch (err) {
+      if (err instanceof SocialAuthCancelledError) return;
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
     }
   };
 
@@ -100,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ status, user, offline, continueAsGuest, retry, signOut, error }),
+    () => ({ status, user, offline, continueAsGuest, signInWithApple, signInWithGoogle, retry, signOut, error }),
     [status, user, offline, retry, error]
   );
 

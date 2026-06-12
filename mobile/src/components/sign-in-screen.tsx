@@ -1,15 +1,25 @@
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 export function SignInScreen() {
   const theme = useTheme();
-  const { continueAsGuest, retry, offline, error, status } = useAuth();
+  const scheme = useColorScheme();
+  const { continueAsGuest, signInWithApple, signInWithGoogle, retry, offline, error, status } = useAuth();
   const isLoading = status === 'loading';
+
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -56,22 +66,60 @@ export function SignInScreen() {
             </>
           ) : (
             <>
+              {appleAvailable && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={
+                    scheme === 'dark'
+                      ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                      : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  }
+                  cornerRadius={Radius.sm}
+                  style={styles.appleButton}
+                  onPress={signInWithApple}
+                />
+              )}
+
+              <Pressable
+                onPress={signInWithGoogle}
+                disabled={isLoading}
+                style={({ pressed }) => [
+                  styles.googleButton,
+                  { backgroundColor: theme.bgElevated, borderColor: theme.border, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                <Image
+                  source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
+                  style={styles.googleLogo}
+                />
+                <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
+              </Pressable>
+
+              <View style={styles.dividerRow}>
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <ThemedText themeColor="textFaint" style={styles.dividerText}>
+                  or
+                </ThemedText>
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              </View>
+
               <Pressable
                 onPress={continueAsGuest}
                 disabled={isLoading}
                 style={({ pressed }) => [
-                  styles.primaryButton,
-                  { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 },
+                  styles.guestButton,
+                  { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
                 ]}>
                 {isLoading ? (
-                  <ActivityIndicator color="#1a1404" />
+                  <ActivityIndicator color={theme.text} />
                 ) : (
-                  <ThemedText style={styles.primaryButtonText}>Continue as Guest</ThemedText>
+                  <ThemedText themeColor="textDim" style={styles.guestButtonText}>
+                    Continue as Guest
+                  </ThemedText>
                 )}
               </Pressable>
 
               <ThemedText themeColor="textFaint" style={styles.fineprint}>
-                Sign in with Apple or Google coming soon — start as a guest and link an account later.
+                Guest play is saved on this device — sign in with Apple or Google to keep your career across devices.
               </ThemedText>
             </>
           )}
@@ -109,7 +157,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   actions: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   error: {
     textAlign: 'center',
@@ -124,6 +172,52 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
     color: '#1a1404',
+  },
+  appleButton: {
+    height: 50,
+    width: '100%',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    height: 50,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  googleLogo: {
+    width: 18,
+    height: 18,
+  },
+  googleButtonText: {
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginVertical: Spacing.one,
+  },
+  divider: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  guestButton: {
+    borderRadius: Radius.sm,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  guestButtonText: {
+    fontWeight: '600',
+    fontSize: 14,
   },
   fineprint: {
     fontSize: 12,
