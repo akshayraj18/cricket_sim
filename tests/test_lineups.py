@@ -95,6 +95,37 @@ def test_smart_impact_sub_is_a_bowling_option_not_in_starting_xi(drafted):
     assert counts_as_bowler(impact_sub)
 
 
+def test_team_dict_preserves_user_saved_xi_order(drafted):
+    """A manually reordered Starting XI must round-trip verbatim through team_dict.
+
+    team_dict re-sorts the *smart default* XI into natural batting order for a
+    nicer editor view, but it must NOT re-sort a user's explicitly saved order
+    (otherwise "Save Match Presets" appears to revert to the autofill).
+    """
+    league = drafted
+    team = league.user_team()
+    default_xi = league.team_dict(team)["starting_xi"]
+
+    # A custom order distinct from the smart default (rotate the tail to the top).
+    custom_xi = [default_xi[-1]] + default_xi[:-1]
+    league.set_user_presets(custom_xi, [], starting_xi=custom_xi)
+
+    assert league.team_dict(team)["starting_xi"] == custom_xi
+
+
+def test_team_dict_orders_default_xi_by_natural_slot(drafted):
+    """With no saved XI, team_dict still presents the smart default in natural
+    batting order (recognised batters ahead of tail-end bowlers)."""
+    league = drafted
+    team = league.user_team()
+    team.saved_starting_xi_names = []  # no saved order -> smart default path
+
+    xi_names = league.team_dict(team)["starting_xi"]
+    positions = [next(p for p in team.roster if p.name == n).preferred_position for n in xi_names]
+    # Non-decreasing enough that the openers come before the tail.
+    assert positions[0] <= 3 and positions[-1] >= 8
+
+
 def test_resolve_match_xi_batting_first_keeps_starting_xi_unchanged(drafted):
     league = drafted
     team = league.user_team()

@@ -1554,19 +1554,20 @@ class LeagueState:
         roster_ready = len(team.roster) >= 11
         roster_names = {p.name for p in team.roster}
 
+        # The user's explicitly saved Starting XI is returned VERBATIM — its
+        # slot order is the batting order they chose, so we must not re-sort it.
         starting_xi = [name for name in getattr(team, "saved_starting_xi_names", []) if name in roster_names]
-        if (len(starting_xi) != 11 or len(set(starting_xi)) != 11) and roster_ready:
-            starting_xi = self.smart_starting_xi(team)
+        has_saved_xi = len(starting_xi) == 11 and len(set(starting_xi)) == 11
+        if not has_saved_xi and roster_ready:
+            # No saved XI yet: build the smart default and present it in natural
+            # batting order (openers first, tail last) so the slot-by-slot
+            # editor reads as a sensible lineup rather than raw selection order.
+            smart_xi = self.smart_starting_xi(team)
+            xi_players = [next((p for p in team.roster if p.name == name), None) for name in smart_xi]
+            xi_players = [p for p in xi_players if p]
+            starting_xi = [p.name for p in self.smart_batting_order(xi_players)] if len(xi_players) == 11 else smart_xi
         elif not roster_ready:
             starting_xi = []
-        # Present the XI in natural batting order (openers first, tail last) so
-        # the slot-by-slot editor reads as a sensible lineup rather than raw
-        # selection order — `smart_batting_order` uses each player's natural slot.
-        if len(starting_xi) == 11:
-            xi_players = [next((p for p in team.roster if p.name == name), None) for name in starting_xi]
-            xi_players = [p for p in xi_players if p]
-            if len(xi_players) == 11:
-                starting_xi = [p.name for p in self.smart_batting_order(xi_players)]
 
         impact_sub_name = getattr(team, "saved_impact_sub_name", "")
         if roster_ready and (impact_sub_name not in roster_names or impact_sub_name in starting_xi):
