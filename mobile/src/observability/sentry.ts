@@ -13,8 +13,17 @@ const SENTRY_DSN =
 
 let initialised = false;
 
+// Allow forcing Sentry on in dev for testing the integration.
+const ENABLE_IN_DEV = process.env.EXPO_PUBLIC_SENTRY_ENABLE_IN_DEV === 'true';
+
 export function initSentry() {
   if (initialised || !SENTRY_DSN) return;
+  // Skip in development by default: dev errors aren't actionable, and the dev
+  // build's Metro/debugger sockets produce noise like "SIGPIPE: Signal 13"
+  // that never occurs in a release build. Set EXPO_PUBLIC_SENTRY_ENABLE_IN_DEV
+  // to test the integration locally.
+  if (__DEV__ && !ENABLE_IN_DEV) return;
+
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: __DEV__ ? 'development' : 'production',
@@ -22,6 +31,8 @@ export function initSentry() {
     sendDefaultPii: false,
     // Errors only for now; bump to sample performance traces later.
     tracesSampleRate: 0,
+    // Dev-tooling socket teardown surfaces as SIGPIPE — not a real app crash.
+    ignoreErrors: ['SIGPIPE', /Signal 13/],
   });
   // Route caught render errors from the top-level boundary into Sentry.
   setErrorReporter((error, componentStack) => {
