@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationsContext';
 import { useOnboardingControls } from '@/context/OnboardingContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,6 +21,7 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
   const { mode, setMode } = useAppTheme();
   const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
   const { replay: replayTutorial } = useOnboardingControls();
+  const { permissionGranted, enabled: remindersEnabled, setEnabled: setRemindersEnabled } = useNotifications();
 
   const handleHowToPlay = () => {
     onClose();
@@ -104,6 +106,31 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
           </View>
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Reminders
+          </ThemedText>
+          {permissionGranted ? (
+            <View style={styles.toggleRow}>
+              <ThemedText style={styles.toggleLabel}>Season reminders</ThemedText>
+              <Switch
+                value={remindersEnabled}
+                onValueChange={(next) => setRemindersEnabled(next)}
+                trackColor={{ true: theme.green }}
+              />
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => Linking.openSettings()}
+              style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+              <ThemedText style={styles.linkButtonText}>Enable in Settings</ThemedText>
+            </Pressable>
+          )}
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            {permissionGranted
+              ? 'We’ll nudge you when your season or transfer window is waiting.'
+              : 'Turn on notifications for cric-sim to get reminded when your season is waiting.'}
+          </ThemedText>
+
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Help
           </ThemedText>
           <Pressable
@@ -184,6 +211,16 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.one,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   modeRow: {
     flexDirection: 'row',

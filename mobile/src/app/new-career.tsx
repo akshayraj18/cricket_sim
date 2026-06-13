@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Difficulty, DraftPoolType } from '@/api/types';
 import { Radius, Spacing, TEAM_NAMES, TeamColors, getTeamAccentText } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
+import { useNotifications } from '@/context/NotificationsContext';
 import { useCareers } from '@/hooks/use-careers';
 import { useAnalytics } from '@/observability/analytics';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -47,6 +48,7 @@ export default function NewCareerScreen() {
   const scheme = useColorScheme();
   const { createCareer } = useCareers();
   const { setActiveCareerId } = useCareer();
+  const { promptPermission } = useNotifications();
   const analytics = useAnalytics();
 
   const [name, setName] = useState('');
@@ -68,6 +70,8 @@ export default function NewCareerScreen() {
       });
       analytics.capture('career_created', { team, difficulty, draft_pool: draftPoolType });
       setActiveCareerId(career.id);
+      // First career created → ask to enable re-engagement reminders (one-time).
+      promptPermission();
       router.replace('/(tabs)/season');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create career');

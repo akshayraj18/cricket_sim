@@ -58,7 +58,13 @@
       ],
       "@sentry/react-native",
       "expo-localization",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-notifications",
+        {
+          "color": "#1f9d55"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
