@@ -11,9 +11,10 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, GOLD, Radius, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 type HistoryTab = 'log' | 'seasons' | 'alltime';
@@ -524,6 +525,10 @@ function AllTimeLeaderCard({
   isTeam?: boolean;
 }) {
   const theme = useTheme();
+  const scheme = useColorScheme();
+  // Keep the value text legible in dark mode (near-black accents like MVP's
+  // slate would vanish), while the stripe keeps the vivid color.
+  const valueColor = getLegibleAccentValue(color, scheme);
   return (
     <Card style={styles.leaderCard}>
       <View style={[styles.leaderAccent, { backgroundColor: color }]} />
@@ -546,8 +551,10 @@ function AllTimeLeaderCard({
                   </ThemedText>
                 ) : null}
               </View>
-              <ThemedText style={[styles.leaderValue, { color }]}>
-                {row.total}
+              <ThemedText style={[styles.leaderValue, { color: valueColor }]}>
+                {typeof row.total === 'number' && !Number.isInteger(row.total)
+                  ? Math.round(row.total * 10) / 10
+                  : row.total}
                 {suffix ? ` ${suffix}` : ''}
               </ThemedText>
             </>

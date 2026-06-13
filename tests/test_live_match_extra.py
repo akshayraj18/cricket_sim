@@ -252,6 +252,11 @@ def test_resolve_dismissal_credits_keeper_on_stumping():
     assert dismissal["fielder"] == keeper.name
     assert dismissal["bowler_gets_wicket"] is True
     assert keeper.stats["stumpings"] == keeper_stumpings_before + 1
+    # The scorecard form omits the batter's name (the row already shows it);
+    # the commentary form keeps it.
+    assert dismissal["how_out"] == f"st {keeper.name} b {spin_bowler.name}"
+    assert not dismissal["how_out"].startswith(striker.name)
+    assert dismissal["description"].startswith(striker.name)
 
 
 def test_resolve_dismissal_run_out_does_not_credit_bowler():
@@ -280,6 +285,31 @@ def test_resolve_dismissal_caught_credits_bowler_and_fielder():
     if dismissal["dismissal"] == "caught":
         assert dismissal["bowler_gets_wicket"] is True
         assert dismissal["description"].startswith(striker.name)
+        assert dismissal["how_out"] == f"c {dismissal['fielder']} b {bowler.name}"
+        assert not dismissal["how_out"].startswith(striker.name)
+
+
+def test_scorecard_dismissal_omits_batter_name():
+    """The scorecard dismissal string (score["dismissals"]) drops the batter's
+    own name — the row already shows it, so "Phil Salt run out (X)" would be
+    redundant. Play out an innings and check every recorded dismissal."""
+    league, match, presets, team = _start_live_innings(seed=140)
+    import random
+    random.seed(3)
+    # Play the full innings so wickets accumulate.
+    safety = 0
+    while match.status == "over" and safety < 30:
+        match.play_over(auto=True, max_balls=6, stop_on_wicket=False)
+        safety += 1
+
+    dismissals = match.score["dismissals"]
+    assert dismissals, "expected at least one wicket to fall over a full innings"
+    for batter_name, how_out in dismissals.items():
+        assert not how_out.startswith(batter_name), (
+            f"dismissal for {batter_name} should not repeat the name: {how_out!r}"
+        )
+        # It should read like a real dismissal form.
+        assert how_out.startswith(("c ", "st ", "run out")), how_out
 
 
 # --- Super Over flow -------------------------------------------------------------------

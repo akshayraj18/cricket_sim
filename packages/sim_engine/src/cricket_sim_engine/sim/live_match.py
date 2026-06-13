@@ -519,7 +519,7 @@ class LiveMatch:
             self.score["partnership_runs"] = 0
             self.score["partnership_balls"] = 0
             self.score["striker_idx"] = max(self.score["striker_idx"], self.score["non_striker_idx"]) + 1
-            self.score["dismissals"][striker.name] = dismissal["description"]
+            self.score["dismissals"][striker.name] = dismissal.get("how_out", dismissal["description"])
             return {"kind": "wicket", "label": "W", **dismissal}
         runs = int(outcome)
         self.score["runs"] += runs
@@ -564,6 +564,9 @@ class LiveMatch:
                 "batter": striker.name,
                 "bowler": bowler.name,
                 "fielder": keeper.name,
+                # `how_out` omits the batter's name (the scorecard already shows
+                # it); `description` keeps it for the commentary feed.
+                "how_out": f"st {keeper.name} b {bowler.name}",
                 "description": f"{striker.name} st {keeper.name} b {bowler.name}",
                 "bowler_gets_wicket": True,
             }
@@ -575,6 +578,7 @@ class LiveMatch:
                 "batter": striker.name,
                 "bowler": bowler.name,
                 "fielder": fielder.name,
+                "how_out": f"run out ({fielder.name})",
                 "description": f"{striker.name} run out ({fielder.name})",
                 "bowler_gets_wicket": False,
             }
@@ -586,6 +590,7 @@ class LiveMatch:
             "batter": striker.name,
             "bowler": bowler.name,
             "fielder": catcher.name,
+            "how_out": f"c {catcher.name} b {bowler.name}",
             "description": f"{striker.name} c {catcher.name} b {bowler.name}",
             "bowler_gets_wicket": True,
         }
@@ -946,6 +951,13 @@ class LiveMatch:
         if self.status == "batting_order" and user_team.name in self.xis:
             suggested_players = self.xis[user_team.name]
         lineup_xi, swap_out, swap_in = self.league.resolve_match_xi(user_team, user_team == self.inn1_bat)
+        # At the chase (batting_order) stage the impact sub has already been
+        # applied, so the engine's computed batting order is authoritative —
+        # the original resolve_match_xi order would put a returning batter at
+        # the tail. Use the actual post-sub order so the editor shows (and
+        # confirming preserves) the correct lineup.
+        if self.status == "batting_order" and user_team.name in self.batting_orders:
+            lineup_xi = [p.name for p in self.batting_orders[user_team.name]]
         impact_sub_name = getattr(user_team, "saved_impact_sub_name", "") or self.league.smart_impact_sub(user_team, lineup_xi)
         swap_notice = ""
         if self.lineup_context() == "bowling":

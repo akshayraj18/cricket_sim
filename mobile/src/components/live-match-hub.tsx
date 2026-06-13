@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
-import { Radius, Spacing, TeamColors } from '@/constants/theme';
+import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   ORDER_ZONES,
@@ -829,15 +829,19 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const ballsLeft = Math.max(0, 120 - score.balls);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: accent ?? '#1f9d55' }]}>
-      <ThemedText style={styles.scoreboardSmall}>{score.batting_team}</ThemedText>
+    <View style={[styles.scoreboard, { backgroundColor: getTeamBackground(score.batting_team) }]}>
+      <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
+        {score.batting_team}
+      </ThemedText>
       <View style={styles.scoreboardScoreRow}>
-        <ThemedText style={styles.scoreboardLine}>{score.scoreline}</ThemedText>
-        <ThemedText style={styles.scoreboardSmall}>
-          Overs {overs}
-          {score.target ? ` · Target ${score.target}` : ''}
+        <ThemedText style={styles.scoreboardLine}>
+          {score.runs}/{score.wickets}
         </ThemedText>
+        <ThemedText style={styles.scoreboardOvers}>({overs} ov)</ThemedText>
       </View>
+      {score.target ? (
+        <ThemedText style={styles.scoreboardSmall}>Target {score.target}</ThemedText>
+      ) : null}
 
       {score.striker ? (
         <View style={styles.batterLine}>
@@ -1145,10 +1149,12 @@ const styles = StyleSheet.create({
   scoreboard: {
     borderRadius: Radius.md,
     padding: Spacing.three,
-    gap: 4,
+    paddingTop: Spacing.three + 2,
+    gap: 6,
   },
   scoreboardSmall: {
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: '600',
     color: 'rgba(255,255,255,0.85)',
   },
@@ -1156,19 +1162,35 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
   },
+  scoreboardTeam: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.9)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   scoreboardLine: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 34,
+    lineHeight: 42,
+    fontWeight: '900',
     color: '#fff',
+  },
+  scoreboardOvers: {
+    fontSize: 15,
+    lineHeight: 42,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.85)',
   },
   scoreboardMessage: {
     fontSize: 13,
+    lineHeight: 19,
     color: '#fff',
   },
   scoreboardScoreRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: Spacing.two,
+    marginTop: 2,
   },
   batterLine: {
     flexDirection: 'row',
