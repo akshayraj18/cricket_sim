@@ -8,6 +8,7 @@ import {
   signInWithGoogle as nativeGoogleSignIn,
 } from '@/api/socialAuth';
 import { AuthResponse, UserOut } from '@/api/types';
+import { useAnalytics } from '@/observability/analytics';
 import {
   clearGuestRefreshToken,
   clearTokens,
@@ -64,6 +65,7 @@ function isAuthFailure(err: unknown): boolean {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const analytics = useAnalytics();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserOut | null>(null);
   const [offline, setOffline] = useState(false);
@@ -101,19 +103,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, [restoreSession]);
 
-  const applyAuthResponse = useCallback(async ({ user: authedUser, tokens }: AuthResponse) => {
-    await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
-    // Remember a guest's refresh token durably so the account can be resumed
-    // after sign-out; a real (linked) account doesn't need this fallback.
-    if (isGuest(authedUser)) {
-      await setGuestRefreshToken(tokens.refresh_token);
-    } else {
-      await clearGuestRefreshToken();
-    }
-    setUser(authedUser);
-    setOffline(false);
-    setStatus('signed-in');
-  }, []);
+  const applyAuthResponse = useCallback(
+    async ({ user: authedUser, tokens }: AuthResponse, method: 'guest' | 'apple' | 'google') => {
+      await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+      // Remember a guest's refresh token durably so the account can be resumed
+      // after sign-out; a real (linked) account doesn't need this fallback.
+      if (isGuest(authedUser)) {
+        await setGuestRefreshToken(tokens.refresh_token);
+      } else {
+        await clearGuestRefreshToken();
+      }
+      analytics.identify(authedUser.id);
+      analytics.capture('signed_in', { method });
+      setUser(authedUser);
+      setOffline(false);
+      setStatus('signed-in');
+    },
+    [analytics]
+  );
 
   const continueAsGuest = async () => {
     setError(null);
@@ -128,6 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await setTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
           await setGuestRefreshToken(tokens.refresh_token);
           const me = await authApi.me();
+          analytics.identify(me.id);
+          analytics.capture('signed_in', { method: 'guest' });
           setUser(me);
           setOffline(false);
           setStatus('signed-in');
@@ -137,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearGuestRefreshToken();
         }
       }
-      await applyAuthResponse(await authApi.guest());
+      await applyAuthResponse(await authApi.guest(), 'guest');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start guest session');
     }
@@ -147,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const { token, displayName } = await nativeAppleSignIn();
-      await applyAuthResponse(await authApi.apple(token, displayName));
+      await applyAuthResponse(await authApi.apple(token, displayName), 'apple');
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Apple sign-in failed');
@@ -158,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const { token, displayName } = await nativeGoogleSignIn();
-      await applyAuthResponse(await authApi.google(token, displayName));
+      await applyAuthResponse(await authApi.google(token, displayName), 'google');
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
@@ -173,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token } = await nativeAppleSignIn();
       const updated = await authApi.linkApple(token);
       await clearGuestRefreshToken();
+      analytics.capture('account_linked', { provider: 'apple' });
       setUser(updated);
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
@@ -186,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token } = await nativeGoogleSignIn();
       const updated = await authApi.linkGoogle(token);
       await clearGuestRefreshToken();
+      analytics.capture('account_linked', { provider: 'google' });
       setUser(updated);
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
@@ -200,6 +211,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await clearTokens();
+    analytics.capture('signed_out');
+    analytics.reset();
     setUser(null);
     setOffline(false);
     setStatus('signed-out');
