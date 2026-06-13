@@ -14,6 +14,7 @@ import { Difficulty, DraftPoolType } from '@/api/types';
 import { Radius, Spacing, TEAM_NAMES, TeamColors, getTeamAccentText } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useCareers } from '@/hooks/use-careers';
+import { useAnalytics } from '@/observability/analytics';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -46,6 +47,7 @@ export default function NewCareerScreen() {
   const scheme = useColorScheme();
   const { createCareer } = useCareers();
   const { setActiveCareerId } = useCareer();
+  const analytics = useAnalytics();
 
   const [name, setName] = useState('');
   const [team, setTeam] = useState(TEAM_NAMES[0]);
@@ -64,6 +66,7 @@ export default function NewCareerScreen() {
         difficulty,
         draft_pool_type: draftPoolType,
       });
+      analytics.capture('career_created', { team, difficulty, draft_pool: draftPoolType });
       setActiveCareerId(career.id);
       router.replace('/(tabs)/season');
     } catch (err) {

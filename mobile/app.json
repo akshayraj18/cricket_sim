@@ -55,7 +55,10 @@
             "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      "@sentry/react-native",
+      "expo-localization",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

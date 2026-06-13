@@ -45,3 +45,12 @@ export const GOOGLE_WEB_CLIENT_ID =
 export const GOOGLE_IOS_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ??
   '474477947414-bff512hqin1s695shti2nic0dg1t31hk.apps.googleusercontent.com';
+
+/**
+ * PostHog product-analytics project key + host (US Cloud). The project token is
+ * a write-only client key, safe to ship in the app; prefer the
+ * EXPO_PUBLIC_POSTHOG_* env vars. Leave the key blank to disable analytics.
+ */
+export const POSTHOG_API_KEY =
+  process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? 'phc_mUVAzBYQqHVXXdApccNhYQMjGJQukhUmaJDviG9o53Rp';
+export const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
