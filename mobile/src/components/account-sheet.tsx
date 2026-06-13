@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useOnboardingControls } from '@/context/OnboardingContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -18,6 +19,12 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
   const theme = useTheme();
   const { mode, setMode } = useAppTheme();
   const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
+  const { replay: replayTutorial } = useOnboardingControls();
+
+  const handleHowToPlay = () => {
+    onClose();
+    replayTutorial();
+  };
 
   // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -95,6 +102,15 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
               );
             })}
           </View>
+
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Help
+          </ThemedText>
+          <Pressable
+            onPress={handleHowToPlay}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>How to Play</ThemedText>
+          </Pressable>
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Account

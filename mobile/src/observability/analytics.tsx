@@ -19,7 +19,13 @@ export type AnalyticsEvent =
   | 'draft_completed'
   | 'match_played' // props: { mode: 'quick_sim' | 'live' }
   | 'season_completed'
-  | 'impact_sub_used';
+  | 'impact_sub_used'
+  | 'tutorial_started' // props: { source: 'first_run' | 'replay' }
+  | 'tutorial_completed' // props: { slides: number }
+  | 'tutorial_skipped' // props: { slide: number }
+  | 'notifications_enabled' // props: { source: 'prompt' | 'settings' }
+  | 'notifications_disabled' // props: { source: 'settings' }
+  | 'notification_opened'; // props: { kind: string }
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   if (!POSTHOG_API_KEY) return <>{children}</>;

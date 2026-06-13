@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { AuthProvider } from '@/context/AuthContext';
 import { CareerProvider } from '@/context/CareerContext';
 import { LeagueProvider } from '@/context/LeagueContext';
+import { OnboardingProvider } from '@/context/OnboardingContext';
 import { AppThemeProvider } from '@/context/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AnalyticsProvider } from '@/observability/analytics';
@@ -30,17 +31,19 @@ function ThemedStack() {
       <AnimatedSplashOverlay />
       <AnalyticsProvider>
         <AuthProvider>
-          <CareerProvider>
-            <LeagueProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="new-career"
-                  options={{ presentation: 'modal', headerShown: true, title: 'New Career' }}
-                />
-              </Stack>
-            </LeagueProvider>
-          </CareerProvider>
+          <OnboardingProvider>
+            <CareerProvider>
+              <LeagueProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="new-career"
+                    options={{ presentation: 'modal', headerShown: true, title: 'New Career' }}
+                  />
+                </Stack>
+              </LeagueProvider>
+            </CareerProvider>
+          </OnboardingProvider>
         </AuthProvider>
       </AnalyticsProvider>
     </ThemeProvider>
