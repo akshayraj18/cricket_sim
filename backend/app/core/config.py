@@ -30,5 +30,12 @@ class Settings(BaseSettings):
     google_issuers: list[str] = ["https://accounts.google.com", "accounts.google.com"]
     google_jwks_url: str = "https://www.googleapis.com/oauth2/v3/certs"
 
+    # Observability. Sentry is disabled unless a DSN is provided (so dev/test
+    # don't send events). `environment` tags events; `traces_sample_rate`
+    # controls performance-trace sampling (0 = errors only).
+    sentry_dsn: str = ""
+    environment: str = "development"
+    sentry_traces_sample_rate: float = 0.0
+
 
 settings = Settings()
