@@ -124,6 +124,12 @@ def test_impact_sub_applies_correctly_when_chasing():
     if natural_idx != 10:
         assert order_after.index(sub["in"]) != 10
 
+    # The chase-stage payload's `lineup_xi` (what the mobile editor seeds from)
+    # must reflect the post-sub batting order — not re-derive resolve_match_xi,
+    # which would put the returning batter back at the tail.
+    payload_xi = match.payload()["lineup_xi"]
+    assert payload_xi == order_after
+
 
 def test_impact_sub_rejects_player_not_in_xi_or_bench():
     league, match, presets = _build_ready_match(seed=303)
