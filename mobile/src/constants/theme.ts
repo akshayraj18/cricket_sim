@@ -258,6 +258,38 @@ export function getContrastText(backgroundHex: string): string {
   return relativeLuminance(backgroundHex) > 0.55 ? '#1a1404' : '#ffffff';
 }
 
+/** Saturation of a hex color (HSL S), 0 (gray) to 1 (fully saturated). */
+function saturation(hex: string): number {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const l = (max + min) / 2;
+  return l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+}
+
+/**
+ * A solid, saturated team color for use as a FILLED background (scoreboard,
+ * primary match buttons) with white text on top. Picks whichever of the
+ * team's two colors is the most vivid (avoiding near-black/near-white/gray
+ * identity colors like SRH's black or PBKS's silver), then darkens very light
+ * picks (CSK gold) so white text stays legible. Always returns a color dark
+ * enough for `#fff` foreground.
+ */
+export function getTeamBackground(teamName: string): string {
+  const meta = TeamColors[teamName];
+  if (!meta) return '#1f9d55';
+  // Prefer the more saturated of the two team colors; that skips grayscale.
+  const candidate = saturation(meta.primary) >= saturation(meta.accent) ? meta.primary : meta.accent;
+  // If even the better candidate is washed-out gray, fall back to the swatch.
+  const base = saturation(candidate) < 0.15 ? TeamSwatches[teamName]?.light ?? candidate : candidate;
+  // Ensure it's dark enough for white text; darken toward near-black if needed.
+  return relativeLuminance(base) > 0.5 ? mixHex(base, '#111111', 0.45) : base;
+}
+
 /**
  * Given a team's two colors, returns the lighter one as a pill background
  * and the darker one as its text color — a two-tone team look without a
@@ -284,6 +316,24 @@ export function getReadableAccentText(accentHex: string, scheme: 'light' | 'dark
   }
   if (scheme === 'dark' && luminance < 0.18) {
     return mixHex(accentHex, Colors.dark.text, 0.5);
+  }
+  return accentHex;
+}
+
+/**
+ * A strongly legible version of `accentHex` for use as PROMINENT value text on
+ * a card background (e.g. leaderboard stat figures). Unlike
+ * `getReadableAccentText` (a subtle 50% nudge for chips), this pushes a too-dark
+ * (dark mode) or too-light (light mode) accent most of the way to the theme's
+ * body text color so the number reads clearly; mid-tone accents pass through.
+ */
+export function getLegibleAccentValue(accentHex: string, scheme: 'light' | 'dark'): string {
+  const luminance = relativeLuminance(accentHex);
+  if (scheme === 'dark' && luminance < 0.4) {
+    return mixHex(accentHex, Colors.dark.text, 0.8);
+  }
+  if (scheme === 'light' && luminance > 0.7) {
+    return mixHex(accentHex, Colors.light.text, 0.8);
   }
   return accentHex;
 }

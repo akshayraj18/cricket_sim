@@ -2,7 +2,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { PlayerDict } from '@/api/types';
-import { Radius, Spacing } from '@/constants/theme';
+import { getReadableAccentText, Radius, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 const ROLE_BADGES: Record<string, string> = {
@@ -39,9 +40,14 @@ export function PlayerRow({
   subtitle?: string;
 }) {
   const theme = useTheme();
+  const scheme = useColorScheme();
   const isBowler = player.role.includes('Bowler');
 
   const Wrapper = onPress ? Pressable : View;
+
+  // A team accent can be near-black/near-white and vanish on the badge; run it
+  // through the contrast-safe helper so the role text stays legible in both themes.
+  const badgeText = accentColor ? getReadableAccentText(accentColor, scheme) : theme.text;
 
   return (
     <Wrapper
@@ -52,7 +58,7 @@ export function PlayerRow({
         pressed && onPress ? styles.pressed : null,
       ]}>
       <View style={[styles.posBadge, { backgroundColor: theme.bgElevated, borderColor: theme.border }]}>
-        <ThemedText style={[styles.posBadgeText, { color: accentColor ?? theme.textDim }]}>
+        <ThemedText style={[styles.posBadgeText, { color: badgeText }]}>
           {roleBadge(player.role)}
         </ThemedText>
       </View>

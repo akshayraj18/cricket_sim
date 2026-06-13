@@ -10,11 +10,21 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getTeamSwatch, Radius, Spacing } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, getTeamSwatch, Radius, Spacing } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
+
+/** Display a leaderboard stat value: round floats to one decimal (dropping a
+ * trailing .0) so MVP scores read "2152.9" not "2152.8999999999996". */
+function formatStat(value: PlayerDict[keyof PlayerDict] | undefined): string {
+  if (value == null) return '-';
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  }
+  return String(value);
+}
 
 type StatsTab = 'batting' | 'bowling' | 'leaders';
 
@@ -352,6 +362,10 @@ function LeaderboardCard({
   against?: 'hs_against' | 'best_bowling_against';
 }) {
   const theme = useTheme();
+  const scheme = useColorScheme();
+  // The accent (e.g. MVP Race's near-black slate) can vanish as value text in
+  // dark mode; force it legible while keeping the stripe vivid.
+  const valueColor = getLegibleAccentValue(color, scheme);
   return (
     <Card style={styles.leaderCard}>
       <View style={[styles.leaderAccent, { backgroundColor: color }]} />
@@ -373,7 +387,7 @@ function LeaderboardCard({
                   {againstText}
                 </ThemedText>
               </View>
-              <ThemedText style={[styles.leaderValue, { color }]}>{String(p[statKey] ?? '-')}</ThemedText>
+              <ThemedText style={[styles.leaderValue, { color: valueColor }]}>{formatStat(p[statKey])}</ThemedText>
             </Pressable>
           );
         })}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/card';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getTeamSwatch, GOLD, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getTeamBackground, getTeamSwatch, GOLD, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -35,7 +35,10 @@ export default function SeasonScreen() {
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
-  const accent = team?.accent;
+  // Use a saturated, dark-enough team color for filled buttons/highlights so
+  // grayscale identity colors (SRH black, PBKS silver) don't render as drab
+  // gray backgrounds; the Button picks legible foreground text via contrast.
+  const accent = team ? getTeamBackground(team.name) : undefined;
 
   if (!activeCareerId) {
     return (
@@ -276,6 +279,19 @@ function FixturesPanel({
   const scheme = useColorScheme();
   const [week, setWeek] = useState(payload.round || 1);
   const [teamFilter, setTeamFilter] = useState('All Teams');
+
+  // Follow the season forward after a quick-sim: `payload.round` points at the
+  // NEXT (not-yet-played) round, so show the round that was just completed
+  // (round - 1, clamped) — the user wants to see the fresh results, not jump
+  // ahead to an empty upcoming week.
+  const prevRound = useRef(payload.round);
+  useEffect(() => {
+    if (payload.round && payload.round !== prevRound.current) {
+      const justPlayed = Math.min(Math.max(1, payload.round - 1), payload.schedule.length);
+      setWeek(justPlayed);
+      prevRound.current = payload.round;
+    }
+  }, [payload.round, payload.schedule.length]);
 
   const userAccent = getTeamSwatch(payload.user_team ?? '', scheme);
 
