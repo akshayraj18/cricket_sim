@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
@@ -553,6 +554,15 @@ function NextBatterStage({
 // Over hub — main ball-by-ball control screen
 // ---------------------------------------------------------------------------
 
+type HubSection = 'controls' | 'batting' | 'bowling' | 'overs';
+
+const HUB_SECTIONS: { key: HubSection; label: string }[] = [
+  { key: 'controls', label: 'Game Controls' },
+  { key: 'batting', label: 'Batting Card' },
+  { key: 'bowling', label: 'Bowling Card' },
+  { key: 'overs', label: 'Recent Overs' },
+];
+
 function OverHubStage({
   match,
   accent,
@@ -570,6 +580,7 @@ function OverHubStage({
   const [strikerAgg, setStrikerAgg] = useState(score?.striker_aggression ?? 3);
   const [nonStrikerAgg, setNonStrikerAgg] = useState(score?.non_striker_aggression ?? 3);
   const [bowlerAgg, setBowlerAgg] = useState(score?.bowler_aggression ?? 2);
+  const [section, setSection] = useState<HubSection>('controls');
 
   if (!score) return null;
 
@@ -596,6 +607,10 @@ function OverHubStage({
     <View style={styles.stage}>
       <Scoreboard match={match} accent={accent} />
 
+      <SegmentedControl segments={HUB_SECTIONS} value={section} onChange={setSection} accentColor={accent} />
+
+      {section === 'controls' && (
+        <>
       <Card>
         <ThemedText style={styles.panelTitle}>Ball Controls</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -655,43 +670,52 @@ function OverHubStage({
           );
         })}
       </Card>
+        </>
+      )}
 
-      <Card>
-        <ThemedText style={styles.panelTitle}>Batting Card</ThemedText>
-        <BattingCardTable bats={score.bat_stats} score={score} onPlayerPress={setProfilePlayer} />
-      </Card>
-      <Card>
-        <ThemedText style={styles.panelTitle}>Bowling Card</ThemedText>
-        <BowlingCardTable bowls={score.bowl_stats} onPlayerPress={setProfilePlayer} />
-      </Card>
+      {section === 'batting' && (
+        <Card>
+          <ThemedText style={styles.panelTitle}>Batting Card</ThemedText>
+          <BattingCardTable bats={score.bat_stats} score={score} onPlayerPress={setProfilePlayer} />
+        </Card>
+      )}
 
-      <Card>
-        <ThemedText style={styles.panelTitle}>Recent Overs</ThemedText>
-        {score.over_log.length === 0 && (
-          <ThemedText themeColor="textDim" style={styles.helpText}>
-            No overs bowled yet.
-          </ThemedText>
-        )}
-        {score.over_log.map((o, i) => (
-          <View key={i} style={styles.overLogRow}>
-            <ThemedText style={styles.overLogTitle}>
-              Over {o.over}: {o.bowler}
+      {section === 'bowling' && (
+        <Card>
+          <ThemedText style={styles.panelTitle}>Bowling Card</ThemedText>
+          <BowlingCardTable bowls={score.bowl_stats} onPlayerPress={setProfilePlayer} />
+        </Card>
+      )}
+
+      {section === 'overs' && (
+        <Card>
+          <ThemedText style={styles.panelTitle}>Recent Overs</ThemedText>
+          {score.over_log.length === 0 && (
+            <ThemedText themeColor="textDim" style={styles.helpText}>
+              No overs bowled yet.
             </ThemedText>
-            <View style={styles.overLogBalls}>
-              {o.events.map((e, j) => (
-                <BallChip key={j} event={e} accent={accent} />
-              ))}
+          )}
+          {score.over_log.map((o, i) => (
+            <View key={i} style={styles.overLogRow}>
+              <ThemedText style={styles.overLogTitle}>
+                Over {o.over}: {o.bowler}
+              </ThemedText>
+              <View style={styles.overLogBalls}>
+                {o.events.map((e, j) => (
+                  <BallChip key={j} event={e} accent={accent} />
+                ))}
+              </View>
+              {o.events
+                .filter((e) => e.kind === 'wicket')
+                .map((e, j) => (
+                  <ThemedText key={j} themeColor="red" style={styles.wicketNote}>
+                    {e.description}
+                  </ThemedText>
+                ))}
             </View>
-            {o.events
-              .filter((e) => e.kind === 'wicket')
-              .map((e, j) => (
-                <ThemedText key={j} themeColor="red" style={styles.wicketNote}>
-                  {e.description}
-                </ThemedText>
-              ))}
-          </View>
-        ))}
-      </Card>
+          ))}
+        </Card>
+      )}
 
       <PlayerProfileSheet player={profilePlayer} onClose={() => setProfilePlayer(null)} accentColor={accent} />
     </View>
