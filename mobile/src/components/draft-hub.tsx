@@ -217,6 +217,8 @@ export function DraftHub({
               options={roleOptions}
               onChange={setRoleFilter}
               accentColor={accent}
+              style={styles.filterCell}
+              minWidth={0}
             />
             <Dropdown
               label="Slot"
@@ -224,13 +226,19 @@ export function DraftHub({
               options={ZONE_OPTIONS}
               onChange={setZoneFilter}
               accentColor={accent}
+              style={styles.filterCell}
+              minWidth={0}
             />
+          </View>
+          <View style={styles.filterRow}>
             <Dropdown
               label="Nationality"
               value={nationality}
               options={NATIONALITY_OPTIONS}
               onChange={setNationality}
               accentColor={accent}
+              style={styles.filterCell}
+              minWidth={0}
             />
             <Dropdown
               label="Sort"
@@ -238,6 +246,8 @@ export function DraftHub({
               options={SORT_OPTIONS}
               onChange={(v) => setSortKey(v as SortKey)}
               accentColor={accent}
+              style={styles.filterCell}
+              minWidth={0}
             />
           </View>
           <ScrollView style={styles.scrollList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
@@ -432,9 +442,11 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.two,
     marginBottom: Spacing.two,
+  },
+  filterCell: {
+    flex: 1,
   },
   listCard: {
     paddingBottom: 4,
