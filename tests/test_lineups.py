@@ -95,6 +95,49 @@ def test_smart_impact_sub_is_a_bowling_option_not_in_starting_xi(drafted):
     assert counts_as_bowler(impact_sub)
 
 
+def test_complete_starting_xi_keeps_valid_picks_and_fills_gaps(drafted):
+    """When the roster changes under a saved XI, the still-valid picks are kept
+    (in order) and only the missing slots are filled — the whole XI isn't wiped."""
+    league = drafted
+    team = league.user_team()
+    saved = league.smart_starting_xi(team)
+
+    # Simulate two saved players no longer being on the roster (released/traded).
+    partial = list(saved)
+    dropped = [partial[3], partial[7]]
+    survivors = [n for n in partial if n not in dropped]
+    team.roster = [p for p in team.roster if p.name not in dropped]
+
+    completed = league.complete_starting_xi(team, survivors)
+    assert len(completed) == 11
+    assert len(set(completed)) == 11
+    # Every surviving saved pick is preserved, in their original relative order.
+    assert [n for n in completed if n in survivors] == survivors
+    # Gaps are filled with roster players (never the dropped names).
+    assert all(n not in dropped for n in completed)
+    roster_names = {p.name for p in team.roster}
+    assert all(n in roster_names for n in completed)
+
+
+def test_saved_xi_survives_a_roster_change_instead_of_reverting(drafted):
+    """team_dict must not throw away a user's whole saved XI when one player
+    leaves the roster — it preserves the rest and fills the single gap."""
+    league = drafted
+    team = league.user_team()
+    saved = league.team_dict(team)["starting_xi"]
+    league.set_user_presets(saved, [], starting_xi=saved)
+
+    # Drop one saved player from the roster, as a retention/trade would.
+    gone = saved[5]
+    team.roster = [p for p in team.roster if p.name != gone]
+
+    reconciled = league.team_dict(team)["starting_xi"]
+    assert len(reconciled) == 11
+    assert gone not in reconciled
+    # The 10 untouched picks are all still present.
+    assert all(n in reconciled for n in saved if n != gone)
+
+
 def test_team_dict_preserves_user_saved_xi_order(drafted):
     """A manually reordered Starting XI must round-trip verbatim through team_dict.
 
