@@ -1,5 +1,5 @@
 .PHONY: install run kill test unit integration regression lint clean \
-	backend-up backend-down backend-run backend-migrate backend-test \
+	backend-up backend-down backend-run backend-migrate backend-test gen-secret \
 	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
@@ -60,6 +60,17 @@ backend-run:
 # Run backend tests against the local Postgres container (requires backend-up).
 backend-test:
 	cd backend && uv run pytest tests/ $(ARGS)
+
+# Generate a strong JWT secret and write it to backend/.env.local (gitignored).
+# Run ONCE per environment — changing the secret invalidates all existing
+# sessions (everyone gets logged out). In production, set JWT_SECRET via your
+# host's secrets/env panel instead of a file.
+gen-secret:
+	@cd backend && uv run python -c "import secrets, pathlib; \
+		p = pathlib.Path('.env.local'); \
+		existing = p.read_text() if p.exists() else ''; \
+		print('Refusing to overwrite an existing JWT_SECRET in .env.local — delete it first to rotate.') if 'JWT_SECRET=' in existing else \
+		(p.open('a').write(('\n' if existing and not existing.endswith('\n') else '') + 'JWT_SECRET=' + secrets.token_urlsafe(48) + '\n'), print('Wrote a new JWT_SECRET to backend/.env.local (gitignored).'))"
 
 # --- Expo mobile app (mobile/) -------------------------------------------------
 

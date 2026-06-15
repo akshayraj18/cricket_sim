@@ -19,7 +19,7 @@ from app.auth.providers import google
 from app.auth.providers.google import GoogleTokenError, verify_google_id_token
 from app.core.config import settings
 
-from ._token_signing import at_hash, rsa_keypair, sign
+from ._token_signing import at_hash, rsa_keypair, sign, sign_hs256
 
 
 @pytest.fixture
@@ -88,6 +88,16 @@ async def test_rejects_token_signed_by_wrong_key(google_key):
     """A token signed by a key that isn't in the published JWKS is rejected."""
     other_key, _ = rsa_keypair()
     token = sign(other_key, _base_claims())
+
+    with pytest.raises(GoogleTokenError):
+        await verify_google_id_token(token)
+
+
+async def test_rejects_hs256_algorithm_confusion(google_key):
+    """RS256->HS256 confusion: an HS256-signed token must be rejected because
+    the verifier pins accepted algorithms to RS256 (it doesn't trust the
+    token's own `alg` header)."""
+    token = sign_hs256("public-key-as-hmac-secret", _base_claims())
 
     with pytest.raises(GoogleTokenError):
         await verify_google_id_token(token)

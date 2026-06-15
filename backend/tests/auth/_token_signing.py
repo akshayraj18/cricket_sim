@@ -34,6 +34,15 @@ def sign(private_key, claims: dict) -> str:
     return jwt.encode(claims, pem, algorithm=ALGORITHMS.RS256, headers={"kid": KID})
 
 
+def sign_hs256(secret: str, claims: dict) -> str:
+    """Sign a token with HS256 (a non-RS256 algorithm). A verifier that pins
+    algorithms to RS256 must reject this regardless of the secret — it stands in
+    for the RS256->HS256 algorithm-confusion downgrade. (python-jose refuses to
+    HMAC-sign with an actual RSA key, so we use a plain string secret; the point
+    under test is that the *algorithm* is rejected.)"""
+    return jwt.encode(claims, secret, algorithm=ALGORITHMS.HS256, headers={"kid": KID})
+
+
 def at_hash(access_token: str) -> str:
     """The OIDC at_hash: base64url of the left half of SHA-256(access_token)."""
     digest = hashlib.sha256(access_token.encode()).digest()

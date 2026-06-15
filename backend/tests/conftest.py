@@ -13,6 +13,14 @@ from app.main import app
 TEST_REDIS_URL = settings.redis_url.rsplit("/", 1)[0] + "/15"
 
 
+@pytest.fixture(autouse=True)
+def disable_rate_limiting(monkeypatch):
+    """Most tests fire many auth requests in quick succession; the per-client
+    rate limit would otherwise reject them. The limiter has its own dedicated
+    test in test_rate_limit.py which re-enables it explicitly."""
+    monkeypatch.setattr(settings, "rate_limit_enabled", False)
+
+
 @pytest.fixture
 async def client():
     """An AsyncClient for the app, with auth/career tables and the test Redis DB cleared afterwards.

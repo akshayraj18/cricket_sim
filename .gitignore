@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.local
+.env.*.local
 .pytest_cache/
 *.egg-info/
 
@@ -15,6 +17,7 @@ player_datasets/
 
 # Notes
 ideas.txt
+docs/LAUNCH_ROADMAP.md
 
 # Secrets / credentials (OAuth client secrets, IDs, keys) — never commit
 docs/ids.txt

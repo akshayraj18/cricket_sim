@@ -13,7 +13,7 @@ from app.auth.providers import apple
 from app.auth.providers.apple import AppleTokenError, verify_apple_identity_token
 from app.core.config import settings
 
-from ._token_signing import rsa_keypair, sign
+from ._token_signing import rsa_keypair, sign, sign_hs256
 
 
 @pytest.fixture
@@ -47,6 +47,16 @@ async def test_verifies_valid_token(apple_key):
 
     assert identity.sub == claims["sub"]
     assert identity.email == "player@privaterelay.appleid.com"
+
+
+async def test_rejects_hs256_algorithm_confusion(apple_key):
+    """RS256->HS256 confusion: an HS256-signed token must be rejected because
+    the verifier pins accepted algorithms to RS256 (it doesn't trust the
+    token's own `alg` header)."""
+    token = sign_hs256("public-key-as-hmac-secret", _base_claims())
+
+    with pytest.raises(AppleTokenError):
+        await verify_apple_identity_token(token)
 
 
 async def test_token_without_email_is_ok(apple_key):
