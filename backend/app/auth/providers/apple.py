@@ -38,7 +38,10 @@ async def verify_apple_identity_token(identity_token: str) -> AppleIdentity:
         claims = jwt.decode(
             identity_token,
             key,
-            algorithms=[header.get("alg", "RS256")],
+            # Pin the algorithm instead of trusting the token's `alg` header,
+            # which otherwise allows "none"/HMAC downgrade forgery. Apple signs
+            # identity tokens with RS256.
+            algorithms=["RS256"],
             issuer=settings.apple_issuer,
             options={"verify_aud": False},
         )

@@ -38,7 +38,10 @@ async def verify_google_id_token(id_token: str) -> GoogleIdentity:
         claims = jwt.decode(
             id_token,
             key,
-            algorithms=[header.get("alg", "RS256")],
+            # Pin the accepted algorithms instead of trusting the token's own
+            # `alg` header — otherwise an attacker could downgrade to "none" or
+            # an HMAC alg and forge a token. Google signs ID tokens with RS256.
+            algorithms=["RS256"],
             # We verify aud/iss ourselves below. `at_hash` binds the ID token to
             # an OAuth access_token we don't receive (the app sends only the ID
             # token), so skip it — the RS256 signature already guarantees the
