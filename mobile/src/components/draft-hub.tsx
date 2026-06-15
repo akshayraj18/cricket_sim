@@ -7,6 +7,7 @@ import { PlayerProfileSheet } from '@/components/player-profile-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dropdown, type DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Spacing } from '@/constants/theme';
@@ -15,7 +16,24 @@ import { ORDER_ZONES, slotZoneLabel, uniqueXi } from '@/utils/lineup';
 
 type DraftTab = 'available' | 'order' | 'squad';
 
-const ZONE_FILTERS = ['All Slots', ...ORDER_ZONES.map((z) => z.label)];
+const ZONE_OPTIONS: DropdownOption[] = [
+  { value: 'All Slots', label: 'All slots' },
+  ...ORDER_ZONES.map((z) => ({ value: z.label, label: z.label })),
+];
+
+const NATIONALITY_OPTIONS: DropdownOption[] = [
+  { value: 'all', label: 'All players' },
+  { value: 'indian', label: 'Indian only' },
+  { value: 'overseas', label: 'Overseas only' },
+];
+
+type SortKey = 'ovr' | 'bat' | 'bowl' | 'age';
+const SORT_OPTIONS: DropdownOption[] = [
+  { value: 'ovr', label: 'Overall OVR' },
+  { value: 'bat', label: 'Batting OVR' },
+  { value: 'bowl', label: 'Bowling OVR' },
+  { value: 'age', label: 'Age' },
+];
 
 const TABS: { key: DraftTab; label: string }[] = [
   { key: 'available', label: 'Available' },
@@ -40,6 +58,8 @@ export function DraftHub({
   const [profilePlayer, setProfilePlayer] = useState<PlayerDict | null>(null);
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [zoneFilter, setZoneFilter] = useState('All Slots');
+  const [nationality, setNationality] = useState('all');
+  const [sortKey, setSortKey] = useState<SortKey>('ovr');
   const [tab, setTab] = useState<DraftTab>('available');
   const [search, setSearch] = useState('');
 
@@ -48,9 +68,12 @@ export function DraftHub({
   const userTeam = payload.teams.find((t) => t.name === payload.user_team);
   const isUserTurn = draftStarted && draft.current_team === payload.user_team;
 
-  const roles = useMemo(() => {
+  const roleOptions = useMemo<DropdownOption[]>(() => {
     const set = new Set(draft.available.map((p) => p.role));
-    return ['All Roles', ...Array.from(set)];
+    return [
+      { value: 'All Roles', label: 'All roles' },
+      ...Array.from(set).map((r) => ({ value: r, label: r })),
+    ];
   }, [draft.available]);
 
   const players = useMemo(() => {
@@ -59,12 +82,21 @@ export function DraftHub({
     if (zoneFilter !== 'All Slots') {
       filtered = filtered.filter((p) => slotZoneLabel(p.preferred_position) === zoneFilter);
     }
+    if (nationality === 'indian') filtered = filtered.filter((p) => !p.overseas);
+    else if (nationality === 'overseas') filtered = filtered.filter((p) => p.overseas);
     const query = search.trim().toLowerCase();
     if (query) {
       filtered = filtered.filter((p) => p.name.toLowerCase().includes(query));
     }
-    return [...filtered].sort((a, b) => b.ovr - a.ovr);
-  }, [draft.available, roleFilter, zoneFilter, search]);
+    // Age sorts youngest-first; the OVR/bat/bowl sorts are highest-first.
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortKey === 'age') return a.age - b.age;
+      if (sortKey === 'bat') return b.bat - a.bat;
+      if (sortKey === 'bowl') return b.bowl - a.bowl;
+      return b.ovr - a.ovr;
+    });
+    return sorted;
+  }, [draft.available, roleFilter, zoneFilter, nationality, sortKey, search]);
 
   const draftOrder = useMemo(() => [...draft.history].reverse(), [draft.history]);
 
@@ -178,19 +210,35 @@ export function DraftHub({
               { color: theme.text, borderColor: theme.border, backgroundColor: theme.bgElevated },
             ]}
           />
-          <View style={styles.pillRow}>
-            {roles.map((r) => (
-              <Pressable key={r} onPress={() => setRoleFilter(r)}>
-                <Pill label={r} accentColor={roleFilter === r ? accent : undefined} />
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.pillRow}>
-            {ZONE_FILTERS.map((z) => (
-              <Pressable key={z} onPress={() => setZoneFilter(z)}>
-                <Pill label={z} accentColor={zoneFilter === z ? accent : undefined} />
-              </Pressable>
-            ))}
+          <View style={styles.filterRow}>
+            <Dropdown
+              label="Role"
+              value={roleFilter}
+              options={roleOptions}
+              onChange={setRoleFilter}
+              accentColor={accent}
+            />
+            <Dropdown
+              label="Slot"
+              value={zoneFilter}
+              options={ZONE_OPTIONS}
+              onChange={setZoneFilter}
+              accentColor={accent}
+            />
+            <Dropdown
+              label="Nationality"
+              value={nationality}
+              options={NATIONALITY_OPTIONS}
+              onChange={setNationality}
+              accentColor={accent}
+            />
+            <Dropdown
+              label="Sort"
+              value={sortKey}
+              options={SORT_OPTIONS}
+              onChange={(v) => setSortKey(v as SortKey)}
+              accentColor={accent}
+            />
           </View>
           <ScrollView style={styles.scrollList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
             {players.map((p) => (
@@ -380,6 +428,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+    marginBottom: Spacing.two,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
     marginBottom: Spacing.two,
   },
   listCard: {
