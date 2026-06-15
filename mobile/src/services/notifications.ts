@@ -12,6 +12,9 @@ import { Platform } from 'react-native';
 export const IDLE_REMINDER_DAYS = 3;
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
+/** Delay before an idle re-engagement reminder fires. */
+const IDLE_REMINDER_SECONDS = IDLE_REMINDER_DAYS * SECONDS_PER_DAY;
+
 /**
  * How notifications behave if one fires while the app is foregrounded. Re-engagement
  * reminders are only meaningful when the app is closed, but showing an alert is the
@@ -62,7 +65,7 @@ export function planReminders({ activePhase, permissionGranted, enabled }: PlanI
         kind: 'transfer_window',
         title: 'Your transfer window is open 🔁',
         body: 'Lock in your retentions and shape your squad before the next season.',
-        delaySeconds: IDLE_REMINDER_DAYS * SECONDS_PER_DAY,
+        delaySeconds: IDLE_REMINDER_SECONDS,
       },
     ];
   }
@@ -74,7 +77,7 @@ export function planReminders({ activePhase, permissionGranted, enabled }: PlanI
         kind: 'season_waiting',
         title: 'Your season is waiting 🏏',
         body: 'Jump back in — your league needs you in the dugout.',
-        delaySeconds: IDLE_REMINDER_DAYS * SECONDS_PER_DAY,
+        delaySeconds: IDLE_REMINDER_SECONDS,
       },
     ];
   }
