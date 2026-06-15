@@ -1,4 +1,4 @@
-import { ApiError, SessionExpiredError } from '@/api/client';
+import { ApiError, SessionExpiredError, TimeoutError } from '@/api/client';
 
 /**
  * Turn any thrown error into a user-facing { title, message } pair with
@@ -13,11 +13,19 @@ export interface UserFacingError {
   retryable: boolean;
 }
 
-/** A bare `fetch` rejection (no connection / server unreachable) is a TypeError. */
+/**
+ * A bare `fetch` rejection (no connection / server unreachable / lost
+ * connection / our own timeout). React Native and iOS surface these with a
+ * range of messages — "Network request failed", "The network connection was
+ * lost", "fetch failed", "Could not connect to the server", plus our
+ * AbortError timeout — so match broadly rather than on one exact string.
+ */
 function isNetworkError(err: unknown): boolean {
-  return (
-    err instanceof TypeError &&
-    /network request failed|failed to fetch|network error/i.test(err.message)
+  if (err instanceof TimeoutError) return true;
+  if (err instanceof DOMException && err.name === 'AbortError') return true;
+  if (!(err instanceof Error)) return false;
+  return /network request failed|network connection was lost|fetch failed|failed to fetch|could not connect|network error|timed out|timeout|connection appears to be offline|abort/i.test(
+    err.message
   );
 }
 

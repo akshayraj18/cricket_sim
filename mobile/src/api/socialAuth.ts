@@ -56,7 +56,19 @@ export async function signInWithApple(): Promise<SocialAuthResult> {
 
     return { token: credential.identityToken, displayName: name || undefined };
   } catch (err) {
-    if (err instanceof Error && 'code' in err && (err as { code?: string }).code === 'ERR_REQUEST_CANCELED') {
+    // Treat Apple cancellations/benign aborts as a cancel (no error UI). Beyond
+    // the documented ERR_REQUEST_CANCELED, rapidly tapping the button yields
+    // native ASAuthorizationError codes 1000/1001 ("unknown"/"canceled") and a
+    // "canceled" message — none of which are real failures worth surfacing.
+    const code = err instanceof Error && 'code' in err ? String((err as { code?: unknown }).code) : '';
+    const msg = err instanceof Error ? err.message.toLowerCase() : '';
+    if (
+      code === 'ERR_REQUEST_CANCELED' ||
+      code === '1000' ||
+      code === '1001' ||
+      msg.includes('cancel') ||
+      msg.includes('unknown reason')
+    ) {
       throw new SocialAuthCancelledError();
     }
     throw err;

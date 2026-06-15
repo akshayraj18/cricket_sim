@@ -19,13 +19,42 @@ export class SessionExpiredError extends Error {
   }
 }
 
+/** Raised when a request exceeds REQUEST_TIMEOUT_MS (e.g. no/stalled network). */
+export class TimeoutError extends Error {
+  constructor() {
+    super('The request timed out. Please check your connection and try again.');
+    this.name = 'TimeoutError';
+  }
+}
+
+/** How long to wait before giving up on a request so the UI never hangs forever. */
+const REQUEST_TIMEOUT_MS = 15000;
+
+/**
+ * `fetch` with a hard timeout. A dropped/stalled connection can otherwise leave
+ * a request pending indefinitely, freezing screens like "Quick Sim" in their
+ * loading state. On timeout we abort the request and throw a TimeoutError.
+ */
+async function fetchWithTimeout(input: string, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw new TimeoutError();
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   const tokens = await getTokens();
   if (!tokens) return null;
 
-  const res = await fetch(`${API_URL}/auth/refresh`, {
+  const res = await fetchWithTimeout(`${API_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: tokens.refreshToken }),
@@ -65,7 +94,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     if (tokens) headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
-  let res = await fetch(`${API_URL}${path}`, {
+  let res = await fetchWithTimeout(`${API_URL}${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -81,7 +110,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       throw new SessionExpiredError();
     }
 
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetchWithTimeout(`${API_URL}${path}`, {
       method,
       headers: { ...headers, Authorization: `Bearer ${newAccessToken}` },
       body: body !== undefined ? JSON.stringify(body) : undefined,

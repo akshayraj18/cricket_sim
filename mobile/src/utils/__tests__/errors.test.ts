@@ -1,4 +1,4 @@
-import { ApiError, SessionExpiredError } from '@/api/client';
+import { ApiError, SessionExpiredError, TimeoutError } from '@/api/client';
 
 import { getUserFacingError } from '../errors';
 
@@ -8,6 +8,18 @@ describe('getUserFacingError', () => {
     expect(result.title).toBe('No connection');
     expect(result.retryable).toBe(true);
     expect(result.message).toMatch(/connection/i);
+  });
+
+  it('recognises iOS "network connection was lost" as a connection problem', () => {
+    const result = getUserFacingError(new TypeError('The network connection was lost.'));
+    expect(result.title).toBe('No connection');
+    expect(result.retryable).toBe(true);
+  });
+
+  it('treats a request timeout as a retryable connection problem', () => {
+    const result = getUserFacingError(new TimeoutError());
+    expect(result.title).toBe('No connection');
+    expect(result.retryable).toBe(true);
   });
 
   it('maps a session-expiry to a sign-in prompt (not retryable)', () => {
