@@ -15,6 +15,7 @@ export type AnalyticsEvent =
   | 'signed_in' // props: { method: 'guest' | 'apple' | 'google' }
   | 'account_linked' // props: { provider: 'apple' | 'google' }
   | 'signed_out'
+  | 'account_deleted'
   | 'career_created' // props: { team, difficulty, draft_pool }
   | 'draft_completed'
   | 'match_played' // props: { mode: 'quick_sim' | 'live' }

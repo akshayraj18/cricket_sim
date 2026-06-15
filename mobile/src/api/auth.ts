@@ -27,4 +27,7 @@ export const authApi = {
     apiClient.post<TokenPair>('/auth/refresh', { refresh_token: refreshToken }, { skipAuth: true }),
 
   me: () => apiClient.get<UserOut>('/auth/me'),
+
+  /** Permanently delete the current account and all its data. Irreversible. */
+  deleteAccount: () => apiClient.delete<void>('/auth/me'),
 };

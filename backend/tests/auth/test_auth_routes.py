@@ -54,6 +54,47 @@ async def test_refresh_with_invalid_token_rejected(client: AsyncClient):
     assert resp.status_code == 401
 
 
+async def test_delete_account_requires_auth(client: AsyncClient):
+    resp = await client.delete("/auth/me")
+    assert resp.status_code == 401
+
+
+async def test_delete_account_removes_user_and_revokes_session(client: AsyncClient):
+    body = await _create_guest(client)
+    headers = {"Authorization": f"Bearer {body['tokens']['access_token']}"}
+
+    resp = await client.delete("/auth/me", headers=headers)
+    assert resp.status_code == 204
+
+    # The user is gone: their access token no longer resolves to a user...
+    assert (await client.get("/auth/me", headers=headers)).status_code == 401
+    # ...and their refresh token can't mint a new session.
+    refresh = await client.post("/auth/refresh", json={"refresh_token": body["tokens"]["refresh_token"]})
+    assert refresh.status_code == 401
+
+
+async def test_delete_account_cascades_to_careers(client: AsyncClient):
+    body = await _create_guest(client)
+    headers = {"Authorization": f"Bearer {body['tokens']['access_token']}"}
+    create = await client.post(
+        "/careers",
+        json={
+            "name": "Doomed Career",
+            "user_team_name": "Mumbai Indians",
+            "difficulty": "medium",
+            "draft_pool_type": "rosters2026",
+        },
+        headers=headers,
+    )
+    assert create.status_code == 200, create.text
+
+    assert (await client.delete("/auth/me", headers=headers)).status_code == 204
+
+    # The careers list now errors (user gone) — the career was cascade-deleted,
+    # not orphaned.
+    assert (await client.get("/careers", headers=headers)).status_code == 401
+
+
 async def test_apple_sign_in_creates_new_user(client: AsyncClient, monkeypatch):
     async def fake_verify(identity_token: str):
         return AppleIdentity(sub="apple-sub-123", email="player@example.com")
