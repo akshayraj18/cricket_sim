@@ -25,3 +25,9 @@ class PresetsRequest(BaseModel):
 
 class RetentionRequest(BaseModel):
     players: list[str]
+
+
+class RenameRequest(BaseModel):
+    kind: str  # "team" | "player"
+    old_name: str
+    new_name: str

@@ -20,6 +20,14 @@ export const seasonApi = {
   setPresets: (careerId: string, body: PresetsRequest) =>
     apiClient.post<LeaguePayload>(`${base(careerId)}/presets`, body),
 
+  /** Rename a team or player in this career (the roster editor). */
+  rename: (careerId: string, kind: 'team' | 'player', oldName: string, newName: string) =>
+    apiClient.post<LeaguePayload>(`${base(careerId)}/rename`, {
+      kind,
+      old_name: oldName,
+      new_name: newName,
+    }),
+
   simulateRound: (careerId: string) =>
     apiClient.post<LeaguePayload>(`${base(careerId)}/season/simulate-round`),
 

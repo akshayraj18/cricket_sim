@@ -2,7 +2,7 @@ import uuid
 
 from httpx import AsyncClient
 
-USER_TEAM = "Mumbai Indians"
+USER_TEAM = "Mumbai Mavericks"
 
 
 async def _create_draft_career(client: AsyncClient, headers: dict, **overrides) -> dict:
@@ -219,4 +219,56 @@ async def test_start_playoffs_requires_league_complete(client: AsyncClient, auth
     career = await _create_season_career(client, auth_headers)
 
     resp = await client.post(f"/careers/{career['id']}/season/start-playoffs", headers=auth_headers)
+    assert resp.status_code == 400
+
+
+async def test_rename_team_and_player(client: AsyncClient, auth_headers: dict):
+    career = await _create_season_career(client, auth_headers)
+    cid = career["id"]
+
+    payload = (await client.get(f"/careers/{cid}/payload", headers=auth_headers)).json()
+    user_team = next(t for t in payload["teams"] if t["name"] == payload["user_team"])
+    player_name = user_team["roster"][0]["name"]
+
+    # Rename the user's team.
+    resp = await client.post(
+        f"/careers/{cid}/rename",
+        json={"kind": "team", "old_name": USER_TEAM, "new_name": "Bombay United"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["user_team"] == "Bombay United"
+
+    # Rename a player; the change is reflected in the returned payload.
+    resp = await client.post(
+        f"/careers/{cid}/rename",
+        json={"kind": "player", "old_name": player_name, "new_name": "Star Player"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    all_names = {p["name"] for t in resp.json()["teams"] for p in t["roster"]}
+    assert "Star Player" in all_names
+    assert player_name not in all_names
+
+    # Persisted: a fresh payload still shows the new names.
+    payload2 = (await client.get(f"/careers/{cid}/payload", headers=auth_headers)).json()
+    assert payload2["user_team"] == "Bombay United"
+
+
+async def test_rename_rejects_bad_input(client: AsyncClient, auth_headers: dict):
+    career = await _create_season_career(client, auth_headers)
+    cid = career["id"]
+    # Empty name -> 400.
+    resp = await client.post(
+        f"/careers/{cid}/rename",
+        json={"kind": "team", "old_name": USER_TEAM, "new_name": "  "},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 400
+    # Unknown kind -> 400.
+    resp = await client.post(
+        f"/careers/{cid}/rename",
+        json={"kind": "nonsense", "old_name": "x", "new_name": "y"},
+        headers=auth_headers,
+    )
     assert resp.status_code == 400

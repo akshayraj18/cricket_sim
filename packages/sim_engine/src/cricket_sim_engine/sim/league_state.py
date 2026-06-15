@@ -1576,7 +1576,14 @@ class LeagueState:
 
     def team_dict(self, team):
         """Serialise a franchise into the JSON dict the frontend uses for standings, squad, and lineup-planning views: branding, season record/NRR, leadership, saved/suggested lineups and orders, the Starting XI + Impact Sub, and the full roster (best-rated first)."""
-        meta = TEAM_META[team.name]
+        # A user-renamed team keeps its original branding (abbr/colors) via
+        # `meta_name`; fall back to a neutral default for an unknown name.
+        meta_key = getattr(team, "meta_name", team.name)
+        meta = TEAM_META.get(meta_key) or TEAM_META.get(team.name) or {
+            "abbr": team.name[:3].upper(),
+            "primary": "#3a3f4b",
+            "accent": "#9aa0a6",
+        }
         saved_batting = list(getattr(team, "saved_batting_order_names", []))
         saved_bowling = list(getattr(team, "saved_bowling_over_names", []))
         roster_ready = len(team.roster) >= 11
@@ -1699,3 +1706,110 @@ class LeagueState:
             "runouts": self.leaderboard(lambda p: p.stats["runouts"], limit=50),
             "mvp": self.leaderboard(lambda p: self.mvp_score(p), limit=50),
         }
+
+    # --- User-facing renaming (roster editor) ---------------------------------
+
+    def _all_player_names(self):
+        return {p.name for t in self.teams for p in t.roster} | {p.name for p in self.player_pool}
+
+    def rename_player(self, old_name, new_name):
+        """Rename a player everywhere in this career (roster object + all saved
+        presets, leadership, and stored match/history references).
+
+        Raises ValueError if `old_name` doesn't exist, `new_name` is blank, or
+        `new_name` already belongs to a different player. The change is global
+        to this career only — it's how a user restores a real name if they want.
+        """
+        new_name = (new_name or "").strip()
+        if not new_name:
+            raise ValueError("Name cannot be empty.")
+        if old_name == new_name:
+            return
+        existing = self._all_player_names()
+        if old_name not in existing:
+            raise ValueError("That player isn't in this league.")
+        if new_name in existing:
+            raise ValueError("Another player already has that name.")
+
+        # Update the Player objects (rosters + free-agent pool).
+        for p in [pl for t in self.teams for pl in t.roster] + list(self.player_pool):
+            if p.name == old_name:
+                p.name = new_name
+        # Update every saved string reference held on the teams.
+        for team in self.teams:
+            _replace_in_obj(team, old_name, new_name)
+        # Update name strings buried in the serialised history/result collections.
+        self._deep_rename(old_name, new_name)
+
+    def rename_team(self, old_name, new_name):
+        """Rename a franchise everywhere in this career (Team object, the user's
+        team pointer, schedule/standings/results/history references)."""
+        new_name = (new_name or "").strip()
+        if not new_name:
+            raise ValueError("Name cannot be empty.")
+        if old_name == new_name:
+            return
+        team_names = {t.name for t in self.teams}
+        if old_name not in team_names:
+            raise ValueError("That team isn't in this league.")
+        if new_name in team_names:
+            raise ValueError("Another team already has that name.")
+
+        for team in self.teams:
+            if team.name == old_name:
+                # Preserve the original branding key so the franchise keeps its
+                # abbr/colors after a rename (team_dict looks meta up by this).
+                if not getattr(team, "meta_name", None):
+                    team.meta_name = old_name
+                team.name = new_name
+        if self.user_team_name == old_name:
+            self.user_team_name = new_name
+        # Update player.team_name back-pointers + buried history references.
+        for p in [pl for t in self.teams for pl in t.roster] + list(self.player_pool):
+            if getattr(p, "team_name", None) == old_name:
+                p.team_name = new_name
+        self._deep_rename(old_name, new_name)
+
+    def _deep_rename(self, old_name, new_name):
+        """Replace an exact name string anywhere in the JSON-serialisable career
+        collections (schedule, fixture/playoff results, match log, season
+        history, draft history). These hold names as plain strings, so a deep
+        walk catches references that aren't reachable as Player/Team objects."""
+        self.schedule = _deep_replace(self.schedule, old_name, new_name)
+        self.fixture_results = _deep_replace(self.fixture_results, old_name, new_name)
+        self.playoff_matches = _deep_replace(self.playoff_matches, old_name, new_name)
+        self.playoff_results = _deep_replace(self.playoff_results, old_name, new_name)
+        self.match_log = _deep_replace(self.match_log, old_name, new_name)
+        self.season_history = _deep_replace(self.season_history, old_name, new_name)
+        self.draft_history = _deep_replace(self.draft_history, old_name, new_name)
+
+
+def _replace_in_obj(team, old_name, new_name):
+    """Replace `old_name` with `new_name` in a Team's saved name-string fields."""
+    if team.saved_impact_sub_name == old_name:
+        team.saved_impact_sub_name = new_name
+    if team.saved_wicketkeeper_name == old_name:
+        team.saved_wicketkeeper_name = new_name
+    for attr in (
+        "saved_playing_xi_names",
+        "saved_starting_xi_names",
+        "saved_batting_order_names",
+        "saved_bowling_over_names",
+    ):
+        names = getattr(team, attr, None)
+        if names:
+            setattr(team, attr, [new_name if n == old_name else n for n in names])
+    # captain / vice_captain are Player objects already renamed via the roster.
+
+
+def _deep_replace(value, old_name, new_name):
+    """Recursively replace exact `old_name` strings within lists/tuples/dicts."""
+    if isinstance(value, str):
+        return new_name if value == old_name else value
+    if isinstance(value, list):
+        return [_deep_replace(v, old_name, new_name) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_deep_replace(v, old_name, new_name) for v in value)
+    if isinstance(value, dict):
+        return {k: _deep_replace(v, old_name, new_name) for k, v in value.items()}
+    return value

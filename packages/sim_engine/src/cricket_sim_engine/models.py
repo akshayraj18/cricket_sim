@@ -272,6 +272,9 @@ class Team:
 
     def __init__(self, name):
         self.name = name
+        # Original TEAM_META branding key, set if the user renames this team so
+        # it keeps its abbr/colors. None = use `name` for branding lookup.
+        self.meta_name = None
         self.roster = []
         self.points = 0
         self.wins = 0
@@ -309,6 +312,7 @@ class Team:
         """Serialise this franchise's roster, season record, leadership, and saved UI presets to a JSON-safe dict for DB persistence."""
         return {
             "name": self.name,
+            "meta_name": getattr(self, "meta_name", None),
             "roster": [p.to_dict() for p in self.roster],
             "points": self.points, "wins": self.wins, "losses": self.losses,
             "runs_scored": self.runs_scored, "balls_faced": self.balls_faced,
@@ -327,6 +331,7 @@ class Team:
     def from_dict(cls, data):
         """Reconstruct a `Team` (including its roster) from a dict produced by `to_dict()`. Captain/vice-captain are resolved by name against the rebuilt roster."""
         team = cls(data["name"])
+        team.meta_name = data.get("meta_name")
         team.roster = [Player.from_dict(p) for p in data.get("roster", [])]
         team.points = data.get("points", 0)
         team.wins = data.get("wins", 0)
