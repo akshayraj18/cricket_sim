@@ -9,7 +9,7 @@ import pytest
 
 from cricket_sim_engine.sim.league_state import LeagueState
 
-USER_TEAM = "Mumbai Indians"
+USER_TEAM = "Mumbai Mavericks"
 
 
 def fresh_league(user_team=USER_TEAM, difficulty="medium", seed=12345):

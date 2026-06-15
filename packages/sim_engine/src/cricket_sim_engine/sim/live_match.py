@@ -596,7 +596,7 @@ class LiveMatch:
         }
 
     def scoreline(self):
-        """Short human-readable score string, e.g. "Mumbai Indians 142/3 (15.2)"."""
+        """Short human-readable score string, e.g. "Mumbai Mavericks 142/3 (15.2)"."""
         overs = f"{self.score['balls'] // 6}.{self.score['balls'] % 6}"
         return f"{self.score['batting_team'].name} {self.score['runs']}/{self.score['wickets']} ({overs})"
 

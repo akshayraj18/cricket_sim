@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 from cricket_sim_engine.sim.league_state import LeagueState
 
-USER_TEAM = "Mumbai Indians"
+USER_TEAM = "Mumbai Mavericks"
 
 
 async def _create_career(client: AsyncClient, headers: dict, **overrides) -> dict:

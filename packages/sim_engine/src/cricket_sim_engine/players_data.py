@@ -13,9 +13,9 @@ from cricket_sim_engine.models import Player
 DATA_DIR = os.path.dirname(__file__)
 
 IPL_TEAMS_LIST = [
-    "Chennai Super Kings", "Mumbai Indians", "Royal Challengers Bengaluru",
-    "Kolkata Knight Riders", "Sunrisers Hyderabad", "Rajasthan Royals",
-    "Delhi Capitals", "Gujarat Titans", "Lucknow Super Giants", "Punjab Kings"
+    "Chennai Cholas", "Mumbai Mavericks", "Bengaluru Bulls",
+    "Kolkata Knights", "Hyderabad Hawks", "Rajasthan Raptors",
+    "Delhi Dynamos", "Gujarat Gladiators", "Lucknow Lions", "Punjab Panthers"
 ]
 
 # Real-world IPL 2026 squads (post-auction), keyed by franchise name and
@@ -24,75 +24,75 @@ IPL_TEAMS_LIST = [
 # one of these rosters is considered off an IPL roster for 2026 and is
 # carried over into the free-agent pool for the next draft.
 IPL_2026_ROSTERS = {
-    "Royal Challengers Bengaluru": [
-        "Virat Kohli", "Josh Hazlewood", "Phil Salt", "Rajat Patidar", "Jitesh Sharma",
-        "Bhuvneshwar Kumar", "Rasikh Salam", "Krunal Pandya", "Yash Dayal", "Tim David",
-        "Suyash Sharma", "Jacob Bethell", "Devdutt Padikkal", "Nuwan Thushara", "Romario Shepherd",
-        "Swapnil Singh", "Abhinandan Singh", "Jacob Duffy", "Jordan Cox",
-        "Satvik Deswal", "Vicky Ostwal", "Mangesh Yadav", "Vihaan Malhotra", "Kanishk Chouhan",
+    "Bengaluru Bulls": [
+        "Vyrat Kuhli", "Jush Hezlewood", "Phyl Selt", "Rejat Petidar", "Jytesh Sherma",
+        "Bhovneshwar Komar", "Resikh Selam", "Kronal Pendya", "Yesh Deyal", "Tym Devid",
+        "Soyash Sherma", "Jecob Bithell", "Divdutt Pedikkal", "Nowan Thoshara", "Rumario Shipherd",
+        "Swepnil Syngh", "Abhynandan Syngh", "Jecob Doffy", "Jurdan Cux",
+        "Setvik Diswal", "Vycky Ostwel", "Mengesh Yedav", "Vyhaan Melhotra", "Kenishk Chuuhan",
     ],
-    "Mumbai Indians": [
-        "Jasprit Bumrah", "Suryakumar Yadav", "Hardik Pandya", "Rohit Sharma", "Trent Boult",
-        "Deepak Chahar", "Tilak Varma", "Naman Dhir", "Will Jacks", "AM Ghazanfar",
-        "Sherfane Rutherford", "Shardul Thakur", "Mitchell Santner", "Ryan Rickelton", "Corbin Bosch",
-        "Robin Minz", "Mayank Markande", "Ashwani Kumar", "Raj Bawa", "Raghu Sharma",
-        "Quinton de Kock", "Danish Malewar", "Mayank Rawat", "Atharva Ankolekar", "Mohd Izhar",
+    "Mumbai Mavericks": [
+        "Jesprit Bomrah", "Soryakumar Yedav", "Herdik Pendya", "Ruhit Sherma", "Trint Buult",
+        "Diepak Chehar", "Tylak Verma", "Neman Dhyr", "Wyll Jecks", "AM Ghezanfar",
+        "Shirfane Rotherford", "Sherdul Thekur", "Mytchell Sentner", "Ryen Ryckelton", "Curbin Busch",
+        "Rubin Mynz", "Meyank Merkande", "Ashweni Komar", "Rej Bewa", "Reghu Sherma",
+        "Qointon de Kuck", "Denish Melewar", "Meyank Rewat", "Atherva Ankulekar", "Muhd Izher",
     ],
-    "Sunrisers Hyderabad": [
-        "Heinrich Klaasen", "Pat Cummins", "Abhishek Sharma", "Travis Head", "Ishan Kishan",
-        "Harshal Patel", "Nitish Kumar Reddy", "Eshan Malinga", "Jaydev Unadkat", "Brydon Carse",
-        "Kamindu Mendis", "Zeeshan Ansari", "Aniket Verma", "Harsh Dubey", "Ravichandran Smaran",
-        "Liam Livingstone", "Shivam Mavi", "Salil Arora", "Sakib Hussain", "Onkar Tarmale",
-        "Praful Hinge", "Krains Fuletra", "Jack Edwards", "Amit Kumar",
+    "Hyderabad Hawks": [
+        "Hiinrich Kleasen", "Pet Commins", "Abhyshek Sherma", "Trevis Hiad", "Ishen Kyshan",
+        "Hershal Petel", "Nytish Komar Riddy", "Eshen Melinga", "Jeydev Unedkat", "Brydun Cerse",
+        "Kemindu Mindis", "Zieshan Anseri", "Anyket Virma", "Hersh Dobey", "Revichandran Smeran",
+        "Lyam Lyvingstone", "Shyvam Mevi", "Selil Arura", "Sekib Hossain", "Onker Termale",
+        "Preful Hynge", "Kreins Foletra", "Jeck Edwerds", "Amyt Komar",
     ],
-    "Chennai Super Kings": [
-        "Sanju Samson", "Ruturaj Gaikwad", "Shivam Dube", "Noor Ahmad", "Khaleel Ahmed",
-        "MS Dhoni", "Anshul Kamboj", "Dewald Brevis", "Gurjapneet Singh", "Nathan Ellis",
-        "Jamie Overton", "Urvil Patel", "Ayush Mhatre", "Mukesh Choudhary", "Shreyas Gopal",
-        "Ramakrishna Ghosh", "Akeal Hosein", "Rahul Chahar", "Matt Henry", "Sarfaraz Khan",
-        "Zak Foulkes", "Matthew Short", "Aman Khan", "Kartik Sharma", "Prashant Veer",
+    "Chennai Cholas": [
+        "Senju Semson", "Roturaj Geikwad", "Shyvam Dobe", "Nuor Ahmed", "Kheleel Ahmid",
+        "MS Dhuni", "Anshol Kemboj", "Diwald Brivis", "Gorjapneet Syngh", "Nethan Ellys",
+        "Jemie Ovirton", "Urvyl Petel", "Ayosh Mhetre", "Mokesh Chuudhary", "Shriyas Gupal",
+        "Remakrishna Ghush", "Akial Husein", "Rehul Chehar", "Mett Hinry", "Serfaraz Khen",
+        "Zek Fuulkes", "Metthew Shurt", "Amen Khen", "Kertik Sherma", "Preshant Vier",
     ],
-    "Delhi Capitals": [
-        "Axar Patel", "KL Rahul", "Kuldeep Yadav", "Mitchell Starc", "T Natarajan",
-        "Tristan Stubbs", "Mukesh Kumar", "Nitish Rana", "Abishek Porel", "Ashutosh Sharma",
-        "Sameer Rizvi", "Dushmantha Chameera", "Vipraj Nigam", "Karun Nair", "Madhav Tiwari",
-        "Tripurana Vijay", "Ajay Mandal", "Ben Duckett", "Prithvi Shaw", "Auqib Nabi",
-        "Pathum Nissanka", "Kyle Jamieson", "Lungi Ngidi", "David Miller", "Sahil Parakh",
+    "Delhi Dynamos": [
+        "Axer Petel", "KL Rehul", "Koldeep Yedav", "Mytchell Sterc", "T Netarajan",
+        "Trystan Stobbs", "Mokesh Komar", "Nytish Rena", "Abyshek Purel", "Ashotosh Sherma",
+        "Semeer Ryzvi", "Doshmantha Chemeera", "Vypraj Nygam", "Kerun Neir", "Medhav Tywari",
+        "Trypurana Vyjay", "Ajey Mendal", "Bin Dockett", "Prythvi Shew", "Aoqib Nebi",
+        "Pethum Nyssanka", "Kyli Jemieson", "Longi Ngydi", "Devid Myller", "Sehil Perakh",
     ],
-    "Kolkata Knight Riders": [
-        "Rinku Singh", "Sunil Narine", "Varun Chakravarthy", "Harshit Rana", "Ramandeep Singh",
-        "Angkrish Raghuvanshi", "Vaibhav Arora", "Ajinkya Rahane", "Rovman Powell", "Manish Pandey",
-        "Umran Malik", "Anukul Roy", "Finn Allen", "Matheesha Pathirana", "Rachin Ravindra",
-        "Cameron Green", "Mustafizur Rahman", "Akash Deep", "Tim Seifert", "Tejasvi Dahiya",
-        "Rahul Tripathi", "Kartik Tyagi", "Prashant Solanki", "Sarthak Ranjan", "Daksh Kamra",
+    "Kolkata Knights": [
+        "Rynku Syngh", "Sonil Nerine", "Verun Chekravarthy", "Hershit Rena", "Remandeep Syngh",
+        "Angkrysh Reghuvanshi", "Veibhav Arura", "Ajynkya Rehane", "Ruvman Puwell", "Menish Pendey",
+        "Umren Melik", "Anokul Ruy", "Fynn Allin", "Metheesha Pethirana", "Rechin Revindra",
+        "Cemeron Grien", "Mostafizur Rehman", "Akesh Diep", "Tym Siifert", "Tijasvi Dehiya",
+        "Rehul Trypathi", "Kertik Tyegi", "Preshant Sulanki", "Serthak Renjan", "Deksh Kemra",
     ],
-    "Rajasthan Royals": [
-        "Yashasvi Jaiswal", "Ravindra Jadeja", "Riyan Parag", "Dhruv Jurel", "Jofra Archer",
-        "Shimron Hetmyer", "Tushar Deshpande", "Sandeep Sharma", "Nandre Burger", "Sam Curran",
-        "Kwena Maphaka", "Vaibhav Sooryavanshi", "Donovan Ferreira", "Shubham Dubey", "Yudhvir Singh",
-        "Lhuan-dre Pretorius", "Adam Milne", "Sushant Mishra", "Kuldeep Sen", "Aman Rao",
-        "Ravi Singh", "Yash Raj Punja", "Vignesh Puthur", "Brijesh Sharma",
+    "Rajasthan Raptors": [
+        "Yeshasvi Jeiswal", "Revindra Jedeja", "Ryyan Perag", "Dhrov Jorel", "Jufra Archir",
+        "Shymron Hitmyer", "Toshar Dishpande", "Sendeep Sherma", "Nendre Borger", "Sem Corran",
+        "Kwina Mephaka", "Veibhav Suoryavanshi", "Dunovan Firreira", "Shobham Dobey", "Yodhvir Syngh",
+        "Lhoan-dri Pritorius", "Adem Mylne", "Soshant Myshra", "Koldeep Sin", "Amen Reo",
+        "Revi Syngh", "Yesh Rej Ponja", "Vygnesh Pothur", "Bryjesh Sherma",
     ],
-    "Gujarat Titans": [
-        "Rashid Khan", "Shubman Gill", "Mohammed Siraj", "Jos Buttler", "Kagiso Rabada",
-        "Prasidh Krishna", "Sai Sudharsan", "Rahul Tewatia", "M Shahrukh Khan", "Washington Sundar",
-        "Glenn Phillips", "Sai Kishore", "Arshad Khan", "Gurnoor Brar", "Ishant Sharma",
-        "Jayant Yadav", "Kumar Kushagra", "Anuj Rawat", "Nishant Sindhu", "Manav Suthar",
-        "Jason Holder", "Tom Banton", "Luke Wood", "Ashok Sharma", "Prithvi Raj",
+    "Gujarat Gladiators": [
+        "Reshid Khen", "Shobman Gyll", "Muhammed Syraj", "Jus Bottler", "Kegiso Rebada",
+        "Presidh Kryshna", "Sei Sodharsan", "Rehul Tiwatia", "M Shehrukh Khen", "Weshington Sondar",
+        "Glinn Phyllips", "Sei Kyshore", "Arshed Khen", "Gornoor Brer", "Ishent Sherma",
+        "Jeyant Yedav", "Komar Koshagra", "Anoj Rewat", "Nyshant Syndhu", "Menav Sothar",
+        "Jeson Hulder", "Tum Benton", "Loke Wuod", "Ashuk Sherma", "Prythvi Rej",
     ],
-    "Lucknow Super Giants": [
-        "Rishabh Pant", "Nicholas Pooran", "Mayank Yadav", "Mohammed Shami", "Avesh Khan",
-        "Abdul Samad", "Ayush Badoni", "Mohsin Khan", "Mitchell Marsh", "Shahbaz Ahmed",
-        "Aiden Markram", "Matthew Breetzke", "Manimaran Siddharth", "Akash Singh", "Arjun Tendulkar",
-        "Arshin Kulkarni", "Prince Yadav", "Digvesh Rathi", "Himmat Singh", "Wanindu Hasaranga",
-        "Anrich Nortje", "Josh Inglis", "Mukul Choudhary", "Naman Tiwari", "Akshat Raghuwanshi",
+    "Lucknow Lions": [
+        "Ryshabh Pent", "Nycholas Puoran", "Meyank Yedav", "Muhammed Shemi", "Avish Khen",
+        "Abdol Semad", "Ayosh Bedoni", "Muhsin Khen", "Mytchell Mersh", "Shehbaz Ahmid",
+        "Ayden Merkram", "Metthew Brietzke", "Menimaran Syddharth", "Akesh Syngh", "Arjon Tindulkar",
+        "Arshyn Kolkarni", "Prynce Yedav", "Dygvesh Rethi", "Hymmat Syngh", "Wenindu Hesaranga",
+        "Anrych Nurtje", "Jush Inglys", "Mokul Chuudhary", "Neman Tywari", "Akshet Reghuwanshi",
     ],
-    "Punjab Kings": [
-        "Shreyas Iyer", "Arshdeep Singh", "Yuzvendra Chahal", "Marcus Stoinis", "Marco Jansen",
-        "Shashank Singh", "Nehal Wadhera", "Prabhsimran Singh", "Priyansh Arya", "Mitchell Owen",
-        "Azmatullah Omarzai", "Lockie Ferguson", "Vijaykumar Vyshak", "Yash Thakur", "Harpreet Brar",
-        "Vishnu Vinod", "Xavier Bartlett", "Pyla Avinash", "Harnoor Singh", "Suryansh Shedge",
-        "Musheer Khan", "Cooper Connolly", "Ben Dwarshuis", "Vishal Nishad", "Praveen Dubey",
+    "Punjab Panthers": [
+        "Shriyas Iyir", "Arshdiep Syngh", "Yozvendra Chehal", "Mercus Stuinis", "Merco Jensen",
+        "Sheshank Syngh", "Nihal Wedhera", "Prebhsimran Syngh", "Pryyansh Arye", "Mytchell Owin",
+        "Azmetullah Omerzai", "Luckie Firguson", "Vyjaykumar Vyshek", "Yesh Thekur", "Herpreet Brer",
+        "Vyshnu Vynod", "Xevier Bertlett", "Pyle Avynash", "Hernoor Syngh", "Soryansh Shidge",
+        "Mosheer Khen", "Cuoper Cunnolly", "Bin Dwershuis", "Vyshal Nyshad", "Preveen Dobey",
     ],
 }
 

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.career import Match as MatchRow, MatchBall as MatchBallRow, Player as PlayerRow
 
-USER_TEAM = "Mumbai Indians"
+USER_TEAM = "Mumbai Mavericks"
 
 
 async def _create_season_career(client: AsyncClient, headers: dict) -> dict:

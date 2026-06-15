@@ -92,9 +92,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/new":
                 draft_pool = body.get("draft_pool", "current")
                 if draft_pool == "rosters2026":
-                    STATE.new_league_with_rosters(body.get("team", "Mumbai Indians"), body.get("difficulty", "hard"))
+                    STATE.new_league_with_rosters(body.get("team", "Mumbai Mavericks"), body.get("difficulty", "hard"))
                 else:
-                    STATE.new_league(body.get("team", "Mumbai Indians"), body.get("difficulty", "hard"), draft_pool)
+                    STATE.new_league(body.get("team", "Mumbai Mavericks"), body.get("difficulty", "hard"), draft_pool)
             elif self.path == "/api/load":
                 replace_state(LeagueState.load(body.get("name") or None))
             elif self.path == "/api/save":

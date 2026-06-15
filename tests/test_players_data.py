@@ -37,11 +37,12 @@ def test_initial_pool_entries_are_players_with_valid_ratings():
         assert 1 <= p.preferred_position <= 11
 
 
-def test_initial_pool_contains_real_players_from_csv():
+def test_initial_pool_contains_players_from_csv():
     pool = get_initial_player_pool()
     names = {p.name for p in pool}
-    assert "Jasprit Bumrah" in names
-    assert "Virat Kohli" in names
+    # Names are the fictional (IP-safe) names shipped in players.csv.
+    assert "Jesprit Bomrah" in names
+    assert "Vyrat Kuhli" in names
 
 
 def test_initial_pool_has_no_duplicate_names():
@@ -62,7 +63,7 @@ def test_initial_pool_padding_uses_domestic_prospect_names_when_short():
 
 def test_natural_slot_column_overrides_derived_position():
     pool = get_initial_player_pool()
-    bumrah = next(p for p in pool if p.name == "Jasprit Bumrah")
+    bumrah = next(p for p in pool if p.name == "Jesprit Bomrah")
     assert bumrah.preferred_position == 11  # natural_slot column in players.csv
 
 
@@ -84,8 +85,9 @@ def test_alltime_pool_entries_are_valid_players():
 def test_alltime_pool_contains_legends():
     pool = get_alltime_player_pool()
     names = {p.name for p in pool}
-    assert "AB de Villiers" in names
-    assert "Chris Gayle" in names
+    # Fictional (IP-safe) names from players_alltime.csv.
+    assert "AB de Vylliers" in names
+    assert "Chrys Geyle" in names
 
 
 def test_alltime_pool_has_no_duplicate_names():
