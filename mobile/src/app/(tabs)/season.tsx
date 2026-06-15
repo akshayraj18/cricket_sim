@@ -19,12 +19,14 @@ import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ContentBottomInset, getTeamBackground, getTeamSwatch, GOLD, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
+import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function SeasonScreen() {
   const theme = useTheme();
+  const { showError } = useError();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
   const [viewedScorecard, setViewedScorecard] = useState<MatchCard | null>(null);
@@ -60,6 +62,7 @@ export default function SeasonScreen() {
       setViewedScorecard(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed');
+      showError(err, { onRetry: () => wrap(fn) });
     } finally {
       setBusy(false);
     }
@@ -163,6 +166,7 @@ function SeasonOverview({
   onViewScorecard: (card: MatchCard) => void;
 }) {
   const theme = useTheme();
+  const { showError } = useError();
   const [tab, setTab] = useState<'fixtures' | 'standings' | 'recent'>('fixtures');
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState(false);
@@ -174,6 +178,7 @@ function SeasonOverview({
       onChange(await fn());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed');
+      showError(err, { onRetry: () => wrap(fn) });
     } finally {
       setBusyAction(false);
     }

@@ -943,6 +943,31 @@ class LeagueState:
         selected.extend([p for p in roster if p not in selected][:11 - len(selected)])
         return [p.name for p in self.enforce_role_balance(selected, roster, min_batters=6, min_bowlers=4)]
 
+    def complete_starting_xi(self, team, saved_names):
+        """Reconcile a saved Starting XI with the current roster, preserving the
+        user's choices as much as possible.
+
+        Keeps the saved names that are still on the roster (in their saved
+        order) and fills only the *missing* slots from the smart default XI, so
+        a roster change (retention/draft/release dropping a player or two) no
+        longer discards the entire saved XI and reverts to autofill. Returns
+        exactly 11 names when the roster can field 11, else the best available.
+        """
+        roster_names = {p.name for p in team.roster}
+        kept = [n for n in saved_names if n in roster_names]
+        # De-dupe while preserving order (a corrupt save could repeat a name).
+        seen = set()
+        kept = [n for n in kept if not (n in seen or seen.add(n))]
+        if len(kept) >= 11:
+            return kept[:11]
+        # Fill the gaps from the smart default, skipping anyone already kept.
+        for name in self.smart_starting_xi(team):
+            if len(kept) >= 11:
+                break
+            if name not in kept:
+                kept.append(name)
+        return kept[:11]
+
     def smart_impact_sub(self, team, starting_xi_names):
         """Pick the default Impact Sub for `team`: the best bowling-role player on the roster who isn't in `starting_xi_names` (the "12th player"), ranked by bowling rating. Falls back to the best-rated remaining player if the squad has no spare bowling option. Returns a player name, or "" if every roster player is already in the Starting XI."""
         bench = [p for p in team.roster if p.name not in starting_xi_names]
@@ -982,9 +1007,12 @@ class LeagueState:
             overseas = sum(1 for p in xi_players if p.is_overseas)
             return overseas - int(out_player.is_overseas if out_player else False) + int(in_player.is_overseas if in_player else False) <= 4
 
-        starting_xi = [name for name in getattr(team, "saved_starting_xi_names", []) if name in roster_names]
+        saved_xi = list(getattr(team, "saved_starting_xi_names", []))
+        starting_xi = [name for name in saved_xi if name in roster_names]
         if len(starting_xi) != 11 or len(set(starting_xi)) != 11:
-            starting_xi = self.smart_starting_xi(team)
+            # Preserve the still-valid saved picks and fill only the gaps,
+            # rather than discarding the whole XI when the roster changes.
+            starting_xi = self.complete_starting_xi(team, saved_xi) if saved_xi else self.smart_starting_xi(team)
 
         impact_sub = getattr(team, "saved_impact_sub_name", "")
         if impact_sub not in roster_names or impact_sub in starting_xi:
@@ -1556,9 +1584,19 @@ class LeagueState:
 
         # The user's explicitly saved Starting XI is returned VERBATIM — its
         # slot order is the batting order they chose, so we must not re-sort it.
-        starting_xi = [name for name in getattr(team, "saved_starting_xi_names", []) if name in roster_names]
+        saved_xi = list(getattr(team, "saved_starting_xi_names", []))
+        starting_xi = [name for name in saved_xi if name in roster_names]
         has_saved_xi = len(starting_xi) == 11 and len(set(starting_xi)) == 11
-        if not has_saved_xi and roster_ready:
+        if not roster_ready:
+            starting_xi = []
+        elif has_saved_xi:
+            pass  # complete, valid saved XI — keep verbatim.
+        elif saved_xi:
+            # Partial saved XI (roster changed under it): keep the still-valid
+            # picks in their saved slot order and fill only the gaps, rather
+            # than wiping the user's whole lineup back to the autofill default.
+            starting_xi = self.complete_starting_xi(team, saved_xi)
+        else:
             # No saved XI yet: build the smart default and present it in natural
             # batting order (openers first, tail last) so the slot-by-slot
             # editor reads as a sensible lineup rather than raw selection order.
@@ -1566,8 +1604,6 @@ class LeagueState:
             xi_players = [next((p for p in team.roster if p.name == name), None) for name in smart_xi]
             xi_players = [p for p in xi_players if p]
             starting_xi = [p.name for p in self.smart_batting_order(xi_players)] if len(xi_players) == 11 else smart_xi
-        elif not roster_ready:
-            starting_xi = []
 
         impact_sub_name = getattr(team, "saved_impact_sub_name", "")
         if roster_ready and (impact_sub_name not in roster_names or impact_sub_name in starting_xi):

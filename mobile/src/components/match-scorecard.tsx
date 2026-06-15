@@ -10,6 +10,25 @@ import { useTheme } from '@/hooks/use-theme';
 
 import { BattingCardTable, BowlingCardTable } from './live-match-hub';
 
+/**
+ * Build the Player of the Match's match figures from the innings cards:
+ * batting "R (B)" if they batted, bowling "W/R (O)" if they bowled, both
+ * joined with "·" if they did both. Returns "" if no figures are found.
+ */
+function motmFigures(card: MatchCard): string {
+  const name = card.motm;
+  if (!name) return '';
+  let bat: string | null = null;
+  let bowl: string | null = null;
+  for (const inn of card.innings) {
+    const batLine = (inn.full_batting?.length ? inn.full_batting : inn.batting).find((b) => b.name === name);
+    if (batLine && batLine.balls > 0) bat = `${batLine.runs} (${batLine.balls})`;
+    const bowlLine = (inn.full_bowling?.length ? inn.full_bowling : inn.bowling).find((b) => b.name === name);
+    if (bowlLine && (bowlLine.balls ?? 0) > 0) bowl = `${bowlLine.wickets}/${bowlLine.runs} (${bowlLine.overs})`;
+  }
+  return [bat, bowl].filter(Boolean).join(' · ');
+}
+
 export function MatchScorecard({
   card,
   onComplete,
@@ -42,6 +61,7 @@ export function MatchScorecard({
         {card.motm ? (
           <ThemedText style={[styles.scoreboardMessage, { color: scoreboardText }]}>
             Player of the Match: {card.motm}
+            {motmFigures(card) ? ` — ${motmFigures(card)}` : ''}
           </ThemedText>
         ) : null}
         {onComplete && (

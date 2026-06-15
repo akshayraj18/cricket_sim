@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
   },
   triggerText: {
     flex: 1,
-    fontSize: 12.5,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
   triggerValue: {
-    fontWeight: '800',
+    fontWeight: '500',
   },
   chevron: {
     fontSize: 12,

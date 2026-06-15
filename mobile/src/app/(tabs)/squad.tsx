@@ -16,6 +16,7 @@ import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ContentBottomInset, getTeamPlayerAccent, Radius, Spacing } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
+import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
@@ -257,6 +258,7 @@ function BattingXiTab({
   refresh: () => Promise<void>;
 }) {
   const theme = useTheme();
+  const { showError } = useError();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
 
   const initialXi = useMemo(
@@ -292,6 +294,7 @@ function BattingXiTab({
       await refresh();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to autofill Starting XI');
+      showError(err, { onRetry: autofill });
     } finally {
       setSaving(false);
     }
@@ -314,6 +317,7 @@ function BattingXiTab({
       await refresh();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save presets');
+      showError(err, { onRetry: save });
     } finally {
       setSaving(false);
     }
@@ -450,6 +454,7 @@ function BowlingPlanTab({
   setSaveError: (v: string | null) => void;
   refresh: () => Promise<void>;
 }) {
+  const { showError } = useError();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
   const startingXi = useMemo(
     () =>
@@ -492,6 +497,7 @@ function BowlingPlanTab({
       await refresh();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save bowling plan');
+      showError(err, { onRetry: save });
     } finally {
       setSaving(false);
     }
@@ -620,6 +626,7 @@ function LeadershipTab({
   setSaveError: (v: string | null) => void;
   refresh: () => Promise<void>;
 }) {
+  const { showError } = useError();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
   const keepers = useMemo(() => team.roster.filter((p) => p.role === 'Wicketkeeper'), [team]);
 
@@ -655,6 +662,7 @@ function LeadershipTab({
       await refresh();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save leadership');
+      showError(err, { onRetry: saveLeadership });
     } finally {
       setSaving(false);
     }

@@ -8,6 +8,7 @@ import {
   signInWithGoogle as nativeGoogleSignIn,
 } from '@/api/socialAuth';
 import { AuthResponse, UserOut } from '@/api/types';
+import { useError } from '@/context/ErrorContext';
 import { useAnalytics } from '@/observability/analytics';
 import {
   clearGuestRefreshToken,
@@ -66,6 +67,7 @@ function isAuthFailure(err: unknown): boolean {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const analytics = useAnalytics();
+  const { showError } = useError();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserOut | null>(null);
   const [offline, setOffline] = useState(false);
@@ -160,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Apple sign-in failed');
+      showError(err, { onRetry: signInWithApple });
     }
   };
 
@@ -171,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      showError(err, { onRetry: signInWithGoogle });
     }
   };
 
@@ -187,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Linking Apple failed');
+      showError(err, { onRetry: linkApple });
     }
   };
 
@@ -201,6 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof SocialAuthCancelledError) return;
       setError(err instanceof Error ? err.message : 'Linking Google failed');
+      showError(err, { onRetry: linkGoogle });
     }
   };
 
