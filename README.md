@@ -123,7 +123,10 @@ make backend-run       # start the FastAPI dev server at http://localhost:8000
 make backend-down      # stop Postgres + Redis
 ```
 
-Copy `backend/.env.example` to `backend/.env` to override defaults (DB URL, Redis URL, JWT secret).
+Copy `backend/.env.example` to `backend/.env` to override defaults (DB URL, Redis URL, etc.).
+For a real (non-default) JWT secret locally, run `make gen-secret` once — it writes a strong
+`JWT_SECRET` to the gitignored `backend/.env.local`, which takes precedence over `.env`. See
+[Deploying to production](#deploying-to-production) for how secrets work in production.
 
 ## Mobile app (React Native / Expo)
 
@@ -161,3 +164,36 @@ After changing a config plugin or native dependency, re-run `make mobile-ios`.
   portable; the existing guest career carries over.
 - Tokens: short-lived access token + 30-day rotating refresh token, stored in the
   device keychain (`expo-secure-store`).
+
+## Deploying to production
+
+The backend refuses to start in production with insecure defaults (it calls
+`Settings.validate_production_safety()` at boot). Before deploying, set these on your
+host (Railway / Render / Fly.io / a VPS — use the host's **secrets / environment
+variables** panel; do **not** commit them):
+
+| Variable | Production value |
+| --- | --- |
+| `ENVIRONMENT` | `production` (turns on the safety checks below) |
+| `JWT_SECRET` | A strong, random secret (≥ 32 chars). Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`. |
+| `CORS_ALLOW_ORIGINS` | An explicit, comma-separated allowlist of web origins (not `*`). Only matters for browser callers — the native app sends no Origin. |
+| `DATABASE_URL` / `REDIS_URL` | Your managed Postgres / Redis connection strings. |
+| `SENTRY_DSN` | (optional) Your Sentry project DSN for crash reporting. |
+
+**About the JWT secret.** It signs the login tokens — anyone who knows it can forge a
+session for any user, so treat it like a master password.
+
+- **Generate it once and keep it stable.** Changing it invalidates every existing
+  session (all users get logged out). Only rotate deliberately.
+- **Production:** set `JWT_SECRET` in your host's secrets panel. This is what most apps
+  do — the secret lives in the deploy environment, never in the repo. No third-party
+  secrets product (Vault/Doppler/etc.) is required at this scale; your host's built-in
+  env panel is the standard answer.
+- **Local / self-hosted convenience:** `make gen-secret` writes a stable secret to the
+  gitignored `backend/.env.local` (and refuses to overwrite an existing one, so you
+  can't accidentally rotate). Real OS environment variables still override it.
+
+**Rate limiting** (`/auth/*`) is Redis-backed, so production needs a reachable Redis;
+it fails open (allows requests) if Redis is down. This throttles credential/token abuse
+but is **not** DDoS protection — put a CDN/WAF/reverse proxy (e.g. Cloudflare) in front
+for network-layer protection.

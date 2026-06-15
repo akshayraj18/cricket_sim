@@ -10,7 +10,11 @@ DEV_JWT_SECRET = "dev-secret-change-me"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Load `.env` (committed template) then `.env.local` (gitignored, holds real
+    # secrets for local/self-hosted runs) — later files win. Real OS environment
+    # variables always take precedence over both, which is how production should
+    # set JWT_SECRET (via the host's secrets/env panel).
+    model_config = SettingsConfigDict(env_file=(".env", ".env.local"), extra="ignore")
 
     database_url: str = "postgresql+asyncpg://cricket_sim:cricket_sim@localhost:5432/cricket_sim"
     redis_url: str = "redis://localhost:6379/0"
