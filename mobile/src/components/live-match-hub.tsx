@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import {
   ORDER_ZONES,
   OVER_PHASE_ZONES,
@@ -873,9 +874,9 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
         </View>
       ) : null}
 
-      <View style={styles.scoreboardDivider}>
+      <View style={styles.currentOverBlock}>
         <ThemedText style={styles.scoreboardSmall} numberOfLines={1}>
-          {score.active_bowler ?? 'No bowler'}
+          {abbreviateName(score.active_bowler ?? 'No bowler')}
           {bowler ? ` · ${bowler.wickets ?? 0}-${bowler.runs ?? 0} (${bowler.overs})` : ''}
         </ThemedText>
         <View style={styles.overLogBalls}>
@@ -917,7 +918,7 @@ function MiniInningsCards({ innings }: { innings: { full_batting?: { name: strin
         {batters.map((b) => (
           <View key={b.name} style={styles.miniRow}>
             <ThemedText themeColor="textDim" style={styles.miniName} numberOfLines={1}>
-              {b.name}
+              {abbreviateName(b.name)}
             </ThemedText>
             <ThemedText style={styles.miniValue}>
               {b.runs} ({b.balls})
@@ -930,7 +931,7 @@ function MiniInningsCards({ innings }: { innings: { full_batting?: { name: strin
         {bowlers.map((b) => (
           <View key={b.name} style={styles.miniRow}>
             <ThemedText themeColor="textDim" style={styles.miniName} numberOfLines={1}>
-              {b.name}
+              {abbreviateName(b.name)}
             </ThemedText>
             <ThemedText style={styles.miniValue}>
               {b.wickets}/{b.runs}
@@ -990,12 +991,12 @@ export function BattingCardTable({
             <View style={styles.tableNameCol}>
               <ThemedText style={styles.tableName} numberOfLines={1}>
                 {isOnStrike ? '> ' : ''}
-                {b.name}
+                {abbreviateName(b.name)}
                 {isAtCrease ? '*' : ''}
               </ThemedText>
               {b.dismissal ? (
                 <ThemedText themeColor="textFaint" style={styles.tableDismissal} numberOfLines={1}>
-                  {b.dismissal}
+                  {abbreviateDismissal(b.dismissal)}
                 </ThemedText>
               ) : isAtCrease ? (
                 <ThemedText themeColor="green" style={styles.tableDismissal}>
@@ -1055,7 +1056,7 @@ export function BowlingCardTable({
       {bowls.map((b) => (
         <View key={b.name} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
           <ThemedText style={[styles.tableName, styles.tableNameCol]} numberOfLines={1}>
-            {b.name}
+            {abbreviateName(b.name)}
           </ThemedText>
           <ThemedText style={styles.tableCell}>{b.overs}</ThemedText>
           <ThemedText style={styles.tableCell}>{b.maidens ?? 0}</ThemedText>
@@ -1219,6 +1220,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+    paddingTop: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.25)',
+  },
+  // Current-over strip: bowler line stacked above the ball chips so a long
+  // bowler name never squeezes the chips off-screen — they wrap full-width.
+  currentOverBlock: {
+    gap: 4,
     paddingTop: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.25)',
