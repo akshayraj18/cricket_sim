@@ -12,15 +12,7 @@ import { Pill } from '@/components/ui/pill';
 import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
-import {
-  ORDER_ZONES,
-  OVER_PHASE_ZONES,
-  benchNames,
-  bowlingOptions,
-  bowlingPlanError,
-  uniqueXi,
-  xiValidationError,
-} from '@/utils/lineup';
+import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
 
 import { MatchScorecard } from './match-scorecard';
 import { PlayerPickerModal } from './player-picker-modal';
@@ -137,8 +129,8 @@ function TossStage({
       <Card>
         <ThemedText style={styles.panelTitle}>Choose Decision</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
-          Bat first uses your saved Batting First XI. Bowl first uses your saved Bowling First XI and any saved
-          20-over bowling plan.
+          You&apos;ll confirm your Starting XI next. Bowl first starts your Impact Sub in place of a batter; you choose
+          the bowler for each over live in the hub.
         </ThemedText>
         <View style={styles.buttonRow}>
           <Button
@@ -185,20 +177,8 @@ function LineupStage({
     [match.lineup_xi, suggested]
   );
   const [xi, setXi] = useState<string[]>(initialXi);
-  const [plan, setPlan] = useState<string[]>(
-    Array.from({ length: 20 }, (_, i) => match.saved_bowling_order?.[i] ?? '')
-  );
-  const [picker, setPicker] = useState<{ kind: 'xi' | 'plan'; slot: number } | null>(null);
+  const [picker, setPicker] = useState<{ kind: 'xi'; slot: number } | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  const eligibleBowlers = useMemo(() => bowlingOptions(xi, suggested), [xi, suggested]);
-  const overCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    plan.forEach((name) => {
-      if (name) counts[name] = (counts[name] ?? 0) + 1;
-    });
-    return counts;
-  }, [plan]);
 
   const setXiSlot = (slot: number, name: string) => {
     const next = [...xi];
@@ -209,24 +189,19 @@ function LineupStage({
   };
 
   const confirm = async () => {
-    const xiError = xiValidationError(xi, context, suggested);
-    const filledCount = plan.filter(Boolean).length;
-    const planError = isBowling
-      ? filledCount !== 0 && filledCount !== 20
-        ? 'Live bowling plan must contain all 20 overs, or be left completely blank.'
-        : bowlingPlanError(plan.filter(Boolean), 'Live bowling plan')
-      : '';
-    const err = xiError || planError;
+    const err = xiValidationError(xi, context, suggested);
     if (err) {
       setValidationError(err);
       return;
     }
     setValidationError(null);
+    // No live 20-over plan: the user picks the bowler each over in the hub, so
+    // we send an empty bowling order and let the engine fall back per over.
     await wrap(() =>
       liveMatchApi.setLineup(careerId, {
         xi,
         batting_order: isBowling ? [] : xi,
-        bowling_order: isBowling ? plan.filter(Boolean) : [],
+        bowling_order: [],
         intents: {},
         save: false,
         context: isBowling ? 'bowling' : 'batting',
@@ -294,55 +269,6 @@ function LineupStage({
         })}
       </Card>
 
-      {isBowling && (
-        <Card>
-          <ThemedText style={styles.panelTitle}>20-Over Bowling Plan</ThemedText>
-          <ThemedText themeColor="textDim" style={styles.helpText}>
-            Grouped by phase — Powerplay (1-6), Middle (7-15), Death (16-20). Max 4 overs each, never in consecutive
-            overs. Leave fully blank for smart auto-pick.
-          </ThemedText>
-          {plan.map((name, i) => {
-            const overNum = i + 1;
-            const zone = OVER_PHASE_ZONES.find((z) => overNum >= z.range[0] && overNum <= z.range[1]);
-            const prevZone = OVER_PHASE_ZONES.find((z) => overNum - 1 >= z.range[0] && overNum - 1 <= z.range[1]);
-            const player = name ? byName.get(name) : undefined;
-            return (
-              <View key={i}>
-                {(i === 0 || zone !== prevZone) && (
-                  <ThemedText themeColor="textFaint" style={styles.zoneLabel}>
-                    {zone?.label}
-                  </ThemedText>
-                )}
-                {player ? (
-                  <PlayerRow
-                    player={player}
-                    accentColor={accent}
-                    onPress={() => setPicker({ kind: 'plan', slot: i })}
-                    subtitle={`${player.role} · ${overCounts[name]}/4 overs`}
-                    trailing={
-                      <ThemedText themeColor="textFaint" style={styles.slotNum}>
-                        Ov {overNum}
-                      </ThemedText>
-                    }
-                  />
-                ) : (
-                  <PlayerRow
-                    player={{ name: 'Empty', role: '-', ovr: 0, batting_archetype: '', bowling_phase: '' }}
-                    onPress={() => setPicker({ kind: 'plan', slot: i })}
-                    subtitle="Auto-pick if blank"
-                    trailing={
-                      <ThemedText themeColor="textFaint" style={styles.slotNum}>
-                        Ov {overNum}
-                      </ThemedText>
-                    }
-                  />
-                )}
-              </View>
-            );
-          })}
-        </Card>
-      )}
-
       <Button label="Confirm XI" variant="primary" accentColor={accent} onPress={confirm} />
 
       <PlayerPickerModal
@@ -355,26 +281,6 @@ function LineupStage({
         selected={picker ? xi[picker.slot] : undefined}
         onSelect={(name) => {
           if (picker) setXiSlot(picker.slot, name);
-          setPicker(null);
-        }}
-        onClose={() => setPicker(null)}
-      />
-
-      <PlayerPickerModal
-        visible={picker?.kind === 'plan'}
-        title={`Over ${(picker?.slot ?? 0) + 1} Bowler`}
-        allowClear
-        options={eligibleBowlers.map((n) => {
-          const p = byName.get(n);
-          return { name: n, subtitle: p ? `${p.role} · Bowl ${p.bowl} · ${overCounts[n] ?? 0}/4 overs` : undefined };
-        })}
-        selected={picker ? plan[picker.slot] : undefined}
-        onSelect={(name) => {
-          if (picker) {
-            const next = [...plan];
-            next[picker.slot] = name;
-            setPlan(next);
-          }
           setPicker(null);
         }}
         onClose={() => setPicker(null)}
