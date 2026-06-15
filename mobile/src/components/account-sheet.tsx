@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useError } from '@/context/ErrorContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useOnboardingControls } from '@/context/OnboardingContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
@@ -19,13 +20,36 @@ const MODE_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
 export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const theme = useTheme();
   const { mode, setMode } = useAppTheme();
-  const { user, isGuest, linkApple, linkGoogle, signOut } = useAuth();
+  const { user, isGuest, linkApple, linkGoogle, signOut, deleteAccount } = useAuth();
+  const { showError } = useError();
   const { replay: replayTutorial } = useOnboardingControls();
   const { permissionGranted, enabled: remindersEnabled, setEnabled: setRemindersEnabled } = useNotifications();
 
   const handleHowToPlay = () => {
     onClose();
     replayTutorial();
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account and all your careers, stats, and match history. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              onClose();
+            } catch (err) {
+              showError(err, { onRetry: handleDeleteAccount });
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
@@ -150,6 +174,9 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             ]}>
             <ThemedText style={[styles.signOutText, { color: theme.red }]}>Sign Out</ThemedText>
           </Pressable>
+          <Pressable onPress={handleDeleteAccount} style={styles.deleteAccount} hitSlop={8}>
+            <ThemedText style={[styles.deleteAccountText, { color: theme.textDim }]}>Delete Account</ThemedText>
+          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -252,5 +279,15 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  deleteAccount: {
+    marginTop: Spacing.three,
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
+  },
+  deleteAccountText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

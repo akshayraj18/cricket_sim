@@ -46,6 +46,8 @@ interface AuthContextValue {
   /** Retry restoring a stored session (e.g. after the backend comes back). */
   retry: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** Permanently delete the account and all its data. Irreversible. */
+  deleteAccount: () => Promise<void>;
   error: string | null;
 }
 
@@ -224,6 +226,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('signed-out');
   };
 
+  // Permanently delete the account server-side, then clear the local session.
+  // The guest credential is cleared too so we don't try to resume a now-deleted
+  // account. Throws on failure so the caller can surface it (and NOT sign out).
+  const deleteAccount = async () => {
+    await authApi.deleteAccount();
+    await clearGuestRefreshToken();
+    await clearTokens();
+    analytics.capture('account_deleted');
+    analytics.reset();
+    setUser(null);
+    setOffline(false);
+    setStatus('signed-out');
+  };
+
   const value = useMemo(
     () => ({
       status,
@@ -237,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       linkGoogle,
       retry,
       signOut,
+      deleteAccount,
       error,
     }),
     [status, user, offline, retry, error]

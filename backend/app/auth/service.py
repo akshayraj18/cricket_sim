@@ -155,3 +155,17 @@ async def refresh_session(db: AsyncSession, raw_refresh_token: str) -> TokenPair
 
 async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
     return await db.get(User, user_id)
+
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    """Permanently delete a user and everything they own.
+
+    Required by Apple App Store Guideline 5.1.1(v): an app that creates accounts
+    must let the user delete theirs in-app. Every table referencing users.id is
+    declared ON DELETE CASCADE (refresh_tokens, careers — and careers cascade to
+    teams/players/matches/stats — plus subscriptions/entitlements), so removing
+    the User row removes all of their data in one transaction. This is
+    irreversible.
+    """
+    await db.delete(user)
+    await db.commit()

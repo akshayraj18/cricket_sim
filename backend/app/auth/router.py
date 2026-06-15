@@ -101,3 +101,13 @@ async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)) -> T
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(get_current_user)) -> UserOut:
     return _user_out(user)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Permanently delete the authenticated user and all their data (careers,
+    match history, tokens). Required for App Store compliance; irreversible."""
+    await service.delete_user(db, user)
