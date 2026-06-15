@@ -4,6 +4,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AuthProvider } from '@/context/AuthContext';
 import { CareerProvider } from '@/context/CareerContext';
+import { ErrorProvider } from '@/context/ErrorContext';
 import { LeagueProvider } from '@/context/LeagueContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
 import { OnboardingProvider } from '@/context/OnboardingContext';
@@ -31,23 +32,25 @@ function ThemedStack() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
       <AnalyticsProvider>
-        <AuthProvider>
-          <OnboardingProvider>
-            <CareerProvider>
-              <NotificationsProvider>
-                <LeagueProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen
-                      name="new-career"
-                      options={{ presentation: 'modal', headerShown: true, title: 'New Career' }}
-                    />
-                  </Stack>
-                </LeagueProvider>
-              </NotificationsProvider>
-            </CareerProvider>
-          </OnboardingProvider>
-        </AuthProvider>
+        <ErrorProvider>
+          <AuthProvider>
+            <OnboardingProvider>
+              <CareerProvider>
+                <NotificationsProvider>
+                  <LeagueProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen
+                        name="new-career"
+                        options={{ presentation: 'modal', headerShown: true, title: 'New Career' }}
+                      />
+                    </Stack>
+                  </LeagueProvider>
+                </NotificationsProvider>
+              </CareerProvider>
+            </OnboardingProvider>
+          </AuthProvider>
+        </ErrorProvider>
       </AnalyticsProvider>
     </ThemeProvider>
   );

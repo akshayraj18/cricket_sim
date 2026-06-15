@@ -11,6 +11,7 @@ import { Dropdown, type DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Spacing } from '@/constants/theme';
+import { useError } from '@/context/ErrorContext';
 import { useTheme } from '@/hooks/use-theme';
 import { ORDER_ZONES, slotZoneLabel, uniqueXi } from '@/utils/lineup';
 
@@ -53,6 +54,7 @@ export function DraftHub({
   onChange: (payload: LeaguePayload) => void;
 }) {
   const theme = useTheme();
+  const { showError } = useError();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profilePlayer, setProfilePlayer] = useState<PlayerDict | null>(null);
@@ -122,6 +124,7 @@ export function DraftHub({
       onChange(await fn());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed');
+      showError(err, { onRetry: () => wrap(fn) });
     } finally {
       setBusy(false);
     }

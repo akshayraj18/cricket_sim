@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Difficulty, DraftPoolType } from '@/api/types';
 import { Radius, Spacing, TEAM_NAMES, TeamColors, getTeamAccentText } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
+import { useError } from '@/context/ErrorContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useCareers } from '@/hooks/use-careers';
 import { useAnalytics } from '@/observability/analytics';
@@ -49,6 +50,7 @@ export default function NewCareerScreen() {
   const { createCareer } = useCareers();
   const { setActiveCareerId } = useCareer();
   const { promptPermission } = useNotifications();
+  const { showError } = useError();
   const analytics = useAnalytics();
 
   const [name, setName] = useState('');
@@ -75,6 +77,7 @@ export default function NewCareerScreen() {
       router.replace('/(tabs)/season');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create career');
+      showError(err, { onRetry: onCreate });
       setSubmitting(false);
     }
   };

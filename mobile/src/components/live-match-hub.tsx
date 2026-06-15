@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 
 import { liveMatchApi } from '@/api/liveMatch';
 import { LiveMatchPayload, MatchCard, OverEvent, PlayerDict } from '@/api/types';
+import { useError } from '@/context/ErrorContext';
 import { PlayerProfileSheet } from '@/components/player-profile-sheet';
 import { PlayerRow } from '@/components/player-row';
 import { ThemedText } from '@/components/themed-text';
@@ -34,6 +35,7 @@ export function LiveMatchHub({
   onComplete: () => void;
 }) {
   const theme = useTheme();
+  const { showError } = useError();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +47,7 @@ export function LiveMatchHub({
       onChange(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed');
+      showError(err, { onRetry: () => wrap(fn) });
     } finally {
       setBusy(false);
     }
@@ -58,6 +61,7 @@ export function LiveMatchHub({
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete match');
+      showError(err, { onRetry: completeMatch });
       setBusy(false);
     }
   };
