@@ -167,7 +167,6 @@ function LineupStage({
   wrap: (fn: () => Promise<LiveMatchPayload>) => Promise<void>;
   careerId: string;
 }) {
-  const theme = useTheme();
   const isBowling = match.lineup_context === 'bowling';
   const context = 'Starting XI';
   const suggested = match.suggested;
@@ -217,60 +216,67 @@ function LineupStage({
     <View style={styles.stage}>
       <Card>
         <View style={styles.rowBetween}>
-          <ThemedText style={styles.panelTitle}>{context}</ThemedText>
+          <ThemedText style={styles.panelTitle}>{isBowling ? 'Bowl First' : context}</ThemedText>
         </View>
-        <ThemedText themeColor="textDim" style={styles.helpText}>
-          {match.message} Tap a slot to assign or swap a player. Slots are grouped by where each player naturally
-          bats — openers, middle order, death overs, tail.
-        </ThemedText>
-        {match.swap_notice ? (
-          <View style={[styles.noticeBanner, { borderColor: accent ?? theme.green }]}>
-            <ThemedText themeColor="text" style={styles.helpText}>
-              {match.swap_notice}
-            </ThemedText>
-          </View>
-        ) : null}
+        {isBowling ? (
+          // Bowling first: the XI is fixed by the impact-sub swap, so there's
+          // nothing to edit here — just confirm the swap and start bowling.
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            {match.swap_notice || match.message}
+          </ThemedText>
+        ) : (
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            {match.message} Tap a slot to assign or swap a player. Slots are grouped by where each player naturally
+            bats — openers, middle order, death overs, tail.
+          </ThemedText>
+        )}
         {validationError && (
           <ThemedText themeColor="red" style={styles.helpText}>
             {validationError}
           </ThemedText>
         )}
-        {xi.map((name, i) => {
-          const slotNum = i + 1;
-          const zone = ORDER_ZONES.find((z) => slotNum >= z.range[0] && slotNum <= z.range[1]);
-          const prevZone = ORDER_ZONES.find((z) => slotNum - 1 >= z.range[0] && slotNum - 1 <= z.range[1]);
-          const player = byName.get(name);
-          return (
-            <View key={i}>
-              {(i === 0 || zone !== prevZone) && (
-                <ThemedText themeColor="textFaint" style={styles.zoneLabel}>
-                  {zone?.label}
-                </ThemedText>
-              )}
-              {player ? (
-                <PlayerRow
-                  player={player}
-                  accentColor={accent}
-                  onPress={() => setPicker({ kind: 'xi', slot: i })}
-                  trailing={
-                    <ThemedText themeColor="textFaint" style={styles.slotNum}>
-                      #{slotNum}
-                    </ThemedText>
-                  }
-                />
-              ) : (
-                <PlayerRow
-                  player={{ name: 'Empty', role: '-', ovr: 0, batting_archetype: '', bowling_phase: '' }}
-                  onPress={() => setPicker({ kind: 'xi', slot: i })}
-                  subtitle="Tap to assign"
-                />
-              )}
-            </View>
-          );
-        })}
+        {!isBowling &&
+          xi.map((name, i) => {
+            const slotNum = i + 1;
+            const zone = ORDER_ZONES.find((z) => slotNum >= z.range[0] && slotNum <= z.range[1]);
+            const prevZone = ORDER_ZONES.find((z) => slotNum - 1 >= z.range[0] && slotNum - 1 <= z.range[1]);
+            const player = byName.get(name);
+            return (
+              <View key={i}>
+                {(i === 0 || zone !== prevZone) && (
+                  <ThemedText themeColor="textFaint" style={styles.zoneLabel}>
+                    {zone?.label}
+                  </ThemedText>
+                )}
+                {player ? (
+                  <PlayerRow
+                    player={player}
+                    accentColor={accent}
+                    onPress={() => setPicker({ kind: 'xi', slot: i })}
+                    trailing={
+                      <ThemedText themeColor="textFaint" style={styles.slotNum}>
+                        #{slotNum}
+                      </ThemedText>
+                    }
+                  />
+                ) : (
+                  <PlayerRow
+                    player={{ name: 'Empty', role: '-', ovr: 0, batting_archetype: '', bowling_phase: '' }}
+                    onPress={() => setPicker({ kind: 'xi', slot: i })}
+                    subtitle="Tap to assign"
+                  />
+                )}
+              </View>
+            );
+          })}
       </Card>
 
-      <Button label="Confirm XI" variant="primary" accentColor={accent} onPress={confirm} />
+      <Button
+        label={isBowling ? 'Confirm & Start Bowling' : 'Confirm XI'}
+        variant="primary"
+        accentColor={accent}
+        onPress={confirm}
+      />
 
       <PlayerPickerModal
         visible={picker?.kind === 'xi'}
@@ -523,10 +529,6 @@ function NextBatterStage({
     <View style={styles.stage}>
       <Scoreboard match={match} accent={accent} />
       <Card>
-        <ThemedText style={styles.panelTitle}>Batting Card</ThemedText>
-        <BattingCardTable bats={score.bat_stats} score={score} />
-      </Card>
-      <Card>
         <ThemedText style={styles.panelTitle}>{batter || 'Batter'} is out!</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
           {howOut}{'\n'}Choose who comes in next.
@@ -557,10 +559,10 @@ function NextBatterStage({
 type HubSection = 'controls' | 'batting' | 'bowling' | 'overs';
 
 const HUB_SECTIONS: { key: HubSection; label: string }[] = [
-  { key: 'controls', label: 'Game Controls' },
-  { key: 'batting', label: 'Batting Card' },
-  { key: 'bowling', label: 'Bowling Card' },
-  { key: 'overs', label: 'Recent Overs' },
+  { key: 'controls', label: 'Controls' },
+  { key: 'batting', label: 'Batting' },
+  { key: 'bowling', label: 'Bowling' },
+  { key: 'overs', label: 'Overs' },
 ];
 
 function OverHubStage({
@@ -695,10 +697,10 @@ function OverHubStage({
               No overs bowled yet.
             </ThemedText>
           )}
-          {score.over_log.map((o, i) => (
+          {[...score.over_log].reverse().map((o, i) => (
             <View key={i} style={styles.overLogRow}>
               <ThemedText style={styles.overLogTitle}>
-                Over {o.over}: {o.bowler}
+                Over {o.over}: {abbreviateName(o.bowler)}
               </ThemedText>
               <View style={styles.overLogBalls}>
                 {o.events.map((e, j) => (
@@ -838,26 +840,44 @@ function BallChip({ event, accent }: { event: OverEvent; accent?: string }) {
   );
 }
 
-function MiniInningsCards({ innings }: { innings: { full_batting?: { name: string; runs: number; balls: number }[]; batting: { name: string; runs: number; balls: number }[]; full_bowling?: { name: string; wickets: number; runs: number }[]; bowling: { name: string; wickets: number; runs: number }[] } }) {
-  const batters = (innings.full_batting ?? innings.batting).slice(0, 4);
-  const bowlers = (innings.full_bowling ?? innings.bowling).slice(0, 4);
+function MiniInningsCards({
+  innings,
+}: {
+  innings: {
+    full_batting?: { name: string; dismissal?: string; runs: number; balls: number }[];
+    batting: { name: string; dismissal?: string; runs: number; balls: number }[];
+    full_bowling?: { name: string; wickets: number; runs: number }[];
+    bowling: { name: string; wickets: number; runs: number }[];
+  };
+}) {
+  // Top performers, not lineup order: best batters by runs (then fewer balls),
+  // best bowlers by wickets (then fewer runs conceded).
+  const isNotOut = (b: { dismissal?: string; balls: number }) =>
+    b.balls > 0 && (!b.dismissal || b.dismissal === 'not out');
+  const batters = [...(innings.full_batting ?? innings.batting)]
+    .sort((a, b) => b.runs - a.runs || a.balls - b.balls)
+    .slice(0, 4);
+  const bowlers = [...(innings.full_bowling ?? innings.bowling)]
+    .sort((a, b) => b.wickets - a.wickets || a.runs - b.runs)
+    .slice(0, 4);
   return (
     <View style={styles.miniGrid}>
       <View style={styles.flex1}>
-        <Pill label="Batters" />
+        <Pill label="Top Batters" />
         {batters.map((b) => (
           <View key={b.name} style={styles.miniRow}>
             <ThemedText themeColor="textDim" style={styles.miniName} numberOfLines={1}>
               {abbreviateName(b.name)}
             </ThemedText>
             <ThemedText style={styles.miniValue}>
-              {b.runs} ({b.balls})
+              {b.runs}
+              {isNotOut(b) ? '*' : ''} ({b.balls})
             </ThemedText>
           </View>
         ))}
       </View>
       <View style={styles.flex1}>
-        <Pill label="Bowlers" />
+        <Pill label="Top Bowlers" />
         {bowlers.map((b) => (
           <View key={b.name} style={styles.miniRow}>
             <ThemedText themeColor="textDim" style={styles.miniName} numberOfLines={1}>
@@ -1070,12 +1090,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12.5,
-  },
-  noticeBanner: {
-    borderWidth: 2,
-    borderRadius: Radius.md,
-    padding: Spacing.two,
-    marginBottom: Spacing.two,
   },
   scoreboard: {
     borderRadius: Radius.md,

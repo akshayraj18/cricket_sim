@@ -961,7 +961,7 @@ class LiveMatch:
         impact_sub_name = getattr(user_team, "saved_impact_sub_name", "") or self.league.smart_impact_sub(user_team, lineup_xi)
         swap_notice = ""
         if self.lineup_context() == "bowling":
-            swap_notice = f"{swap_out} (impact sub) starts in place of {swap_in} — {swap_in} returns at the innings break."
+            swap_notice = f"{swap_out} (impact sub) starts in place of {swap_in}. {swap_in} returns at the innings break."
         return {
             "status": self.status,
             "stage": self.stage,
@@ -1051,7 +1051,7 @@ class LiveMatch:
             "last_wicket": self.score.get("current_over_events", [])[-1] if self.score.get("current_over_events", []) and self.score.get("current_over_events", [])[-1].get("kind") == "wicket" else None,
             "bat_stats": [{"name": n, "dismissal": self.score.get("dismissals", {}).get(n, ""), **d} for n, d in self.score["bat_stats"].items()],
             "bowl_stats": [{"name": n, **d, "overs": f"{d['balls'] // 6}.{d['balls'] % 6}", "econ": round(d["runs"] / (d["balls"] / 6), 2) if d["balls"] else 0} for n, d in self.score["bowl_stats"].items()],
-            "over_log": self.score["over_log"][-6:],
+            "over_log": list(self.score["over_log"]),
         }
 
     def impact_payload(self):
