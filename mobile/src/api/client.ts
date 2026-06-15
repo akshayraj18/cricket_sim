@@ -37,15 +37,31 @@ const REQUEST_TIMEOUT_MS = 15000;
  */
 async function fetchWithTimeout(input: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
   } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') throw new TimeoutError();
+    // An abort can surface as a DOMException("AbortError") or — on React
+    // Native — a plain Error with a message like "Aborted" / "Fetch request
+    // has been canceled". If it was our timeout firing, report it as such.
+    if (timedOut || isAbortError(err)) throw new TimeoutError();
     throw err;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Detect an abort/cancellation across the shapes RN and the DOM can throw. */
+function isAbortError(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === 'AbortError') return true;
+  if (err instanceof Error) {
+    return err.name === 'AbortError' || /abort|fetch request has been canceled|cancell?ed/i.test(err.message);
+  }
+  return false;
 }
 
 let refreshPromise: Promise<string | null> | null = null;

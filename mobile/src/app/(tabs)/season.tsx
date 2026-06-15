@@ -166,6 +166,7 @@ function SeasonOverview({
   onViewScorecard: (card: MatchCard) => void;
 }) {
   const theme = useTheme();
+  const { showError } = useError();
   const [tab, setTab] = useState<'fixtures' | 'standings' | 'recent'>('fixtures');
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState(false);
@@ -177,6 +178,7 @@ function SeasonOverview({
       onChange(await fn());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed');
+      showError(err, { onRetry: () => wrap(fn) });
     } finally {
       setBusyAction(false);
     }

@@ -22,6 +22,12 @@ describe('getUserFacingError', () => {
     expect(result.retryable).toBe(true);
   });
 
+  it('recognises a canceled/aborted fetch as a connection problem', () => {
+    const result = getUserFacingError(new Error('Fetch request has been canceled'));
+    expect(result.title).toBe('No connection');
+    expect(result.retryable).toBe(true);
+  });
+
   it('maps a session-expiry to a sign-in prompt (not retryable)', () => {
     const result = getUserFacingError(new SessionExpiredError());
     expect(result.title).toBe('Signed out');

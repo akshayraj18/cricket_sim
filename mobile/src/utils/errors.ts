@@ -24,7 +24,7 @@ function isNetworkError(err: unknown): boolean {
   if (err instanceof TimeoutError) return true;
   if (err instanceof DOMException && err.name === 'AbortError') return true;
   if (!(err instanceof Error)) return false;
-  return /network request failed|network connection was lost|fetch failed|failed to fetch|could not connect|network error|timed out|timeout|connection appears to be offline|abort/i.test(
+  return /network request failed|network connection was lost|fetch failed|failed to fetch|could not connect|network error|timed out|timeout|connection appears to be offline|abort|cancell?ed/i.test(
     err.message
   );
 }
