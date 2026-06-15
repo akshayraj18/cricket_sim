@@ -22,7 +22,7 @@ export const TUTORIAL_SLIDES: TutorialSlide[] = [
     key: 'create',
     emoji: '⭐',
     title: 'Start a Career',
-    body: 'Pick a franchise and a difficulty, then choose a draft pool — current 2026 stars, all-time greats, or jump straight in with the real 2026 roster.',
+    body: 'Pick a franchise and a difficulty, then choose how to build your squad — start with the real 2026 rosters, mega-draft from the 2026 player pool, or draft from all-time IPL greats.',
   },
   {
     key: 'squad',

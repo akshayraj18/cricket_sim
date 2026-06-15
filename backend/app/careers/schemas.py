@@ -7,8 +7,8 @@ from pydantic import BaseModel
 class CareerCreateRequest(BaseModel):
     name: str
     user_team_name: str
-    difficulty: str = "hard"
-    draft_pool_type: str = "current"  # "current" | "alltime" | "rosters2026"
+    difficulty: str = "medium"
+    draft_pool_type: str = "rosters2026"  # "rosters2026" | "current" | "alltime"
 
 
 class CareerSummary(BaseModel):

@@ -28,19 +28,19 @@ const DIFFICULTIES: { value: Difficulty; label: string }[] = [
 
 const DRAFT_POOLS: { value: DraftPoolType; label: string; description: string }[] = [
   {
+    value: 'rosters2026',
+    label: '2026 Rosters (No Draft)',
+    description: "Skip the draft and start with your franchise's real 2026 squad.",
+  },
+  {
     value: 'current',
-    label: 'Current 2026 Players (Mega Draft)',
-    description: 'Draft from the current pool of real IPL players.',
+    label: '2026 Rosters (Mega Draft)',
+    description: 'Draft from the pool of real 2026 IPL players.',
   },
   {
     value: 'alltime',
     label: 'All-Time IPL Greats (Mega Draft)',
     description: 'Draft from the greatest players across IPL history.',
-  },
-  {
-    value: 'rosters2026',
-    label: 'Play with 2026 Roster (No Draft)',
-    description: "Skip the draft and start with your franchise's real 2026 squad.",
   },
 ];
 
@@ -55,8 +55,8 @@ export default function NewCareerScreen() {
 
   const [name, setName] = useState('');
   const [team, setTeam] = useState(TEAM_NAMES[0]);
-  const [difficulty, setDifficulty] = useState<Difficulty>('hard');
-  const [draftPoolType, setDraftPoolType] = useState<DraftPoolType>('current');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [draftPoolType, setDraftPoolType] = useState<DraftPoolType>('rosters2026');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
