@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { liveMatchApi } from '@/api/liveMatch';
 import { LiveMatchPayload, MatchCard, OverEvent, PlayerDict } from '@/api/types';

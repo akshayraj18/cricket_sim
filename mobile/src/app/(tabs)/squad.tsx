@@ -300,7 +300,6 @@ function BattingXiTab({
   onPlayerPress: (p: PlayerDict) => void;
   refresh: () => Promise<void>;
 }) {
-  const theme = useTheme();
   const { showError } = useError();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
 
