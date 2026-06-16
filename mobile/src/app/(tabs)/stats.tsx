@@ -12,8 +12,10 @@ import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ContentBottomInset, getLegibleAccentValue, getTeamSwatch, Radius, Spacing } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
+import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { promptRename } from '@/hooks/use-rename';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Display a leaderboard stat value: round floats to one decimal (dropping a
@@ -26,12 +28,13 @@ function formatStat(value: PlayerDict[keyof PlayerDict] | undefined): string {
   return String(value);
 }
 
-type StatsTab = 'batting' | 'bowling' | 'leaders';
+type StatsTab = 'batting' | 'bowling' | 'leaders' | 'names';
 
 const TABS: { key: StatsTab; label: string }[] = [
   { key: 'batting', label: 'Batting' },
   { key: 'bowling', label: 'Bowling' },
-  { key: 'leaders', label: 'Leaderboards' },
+  { key: 'leaders', label: 'Leaders' },
+  { key: 'names', label: 'Names' },
 ];
 
 const BAT_COLUMNS: { key: keyof PlayerDict; label: string }[] = [
@@ -81,7 +84,13 @@ const BOWL_LEADER_DEFS: { title: string; listKey: string; statKey: keyof PlayerD
 export default function StatsScreen() {
   const theme = useTheme();
   const { activeCareerId, activeCareer } = useCareer();
-  const { payload, loading, error } = useLeague();
+  const { payload, loading, error, setPayload } = useLeague();
+  const { showError } = useError();
+
+  const handleRename = (kind: 'team' | 'player', currentName: string) => {
+    if (!activeCareerId) return;
+    promptRename({ careerId: activeCareerId, kind, currentName, onRenamed: setPayload, onError: showError });
+  };
   const [tab, setTab] = useState<StatsTab>('batting');
   const [search, setSearch] = useState('');
   const [teamFilter, setTeamFilter] = useState<string | null>(null);
@@ -236,6 +245,12 @@ export default function StatsScreen() {
                   />
                 ))}
               </View>
+            )}
+            {tab === 'names' && (
+              <NamesEditor
+                teams={payload.teams.filter((t) => !teamFilter || t.name === teamFilter)}
+                onRename={handleRename}
+              />
             )}
           </ScrollView>
         )}
@@ -401,6 +416,51 @@ function LeaderboardCard({
   );
 }
 
+function NamesEditor({
+  teams,
+  onRename,
+}: {
+  teams: NonNullable<ReturnType<typeof useLeague>['payload']>['teams'];
+  onRename: (kind: 'team' | 'player', currentName: string) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={styles.namesWrap}>
+      <ThemedText themeColor="textDim" style={styles.namesHint}>
+        Tap a team or player to rename them. Changes apply across your whole career — use this to set your
+        own names for any club or player.
+      </ThemedText>
+      {teams.map((t) => (
+        <Card key={t.name} style={styles.namesCard}>
+          <Pressable onPress={() => onRename('team', t.name)} style={styles.nameRow}>
+            <ThemedText style={styles.namesTeam} numberOfLines={1}>
+              {t.abbr} · {t.name}
+            </ThemedText>
+            <ThemedText themeColor="green" style={styles.namePencil}>
+              ✎
+            </ThemedText>
+          </Pressable>
+          {[...t.roster]
+            .sort((a, b) => b.ovr - a.ovr)
+            .map((p) => (
+              <Pressable
+                key={p.name}
+                onPress={() => onRename('player', p.name)}
+                style={[styles.nameRow, styles.namePlayerRow, { borderTopColor: theme.border }]}>
+                <ThemedText style={styles.namePlayer} numberOfLines={1}>
+                  {p.name}
+                </ThemedText>
+                <ThemedText themeColor="textDim" style={styles.namePencil}>
+                  ✎
+                </ThemedText>
+              </Pressable>
+            ))}
+        </Card>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -520,6 +580,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.three,
+  },
+  namesWrap: {
+    gap: Spacing.three,
+  },
+  namesHint: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  namesCard: {
+    paddingVertical: Spacing.one,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    gap: Spacing.two,
+  },
+  namePlayerRow: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  namesTeam: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  namePlayer: {
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: '500',
+  },
+  namePencil: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   leaderCard: {
     flexGrow: 1,

@@ -21,7 +21,7 @@ def test_player_round_trip_preserves_fields():
     )
     original.form = 7.5
     original.intent = "Aggressive"
-    original.team_name = "Mumbai Indians"
+    original.team_name = "Mumbai Mavericks"
     original.stats["runs"] = 123
     original.stats["wickets"] = 4
     original.season_start_ovr = 75
@@ -56,7 +56,7 @@ def test_player_to_dict_is_json_safe():
 
 
 def test_team_round_trip_preserves_roster_and_leadership():
-    team = Team("Mumbai Indians")
+    team = Team("Mumbai Mavericks")
     p1 = Player("Captain Player", "Batsman", 85, 85, 20, False, 30)
     p2 = Player("Vice Captain Player", "Bowler (Fast)", 80, 20, 80, True, 28)
     p3 = Player("Bench Player", "All-Rounder", 70, 65, 65, False, 22)
@@ -90,7 +90,7 @@ def test_team_round_trip_preserves_roster_and_leadership():
 
 
 def test_team_round_trip_with_no_leadership():
-    team = Team("Chennai Super Kings")
+    team = Team("Chennai Cholas")
     restored = Team.from_dict(team.to_dict())
     assert restored.captain is None
     assert restored.vice_captain is None

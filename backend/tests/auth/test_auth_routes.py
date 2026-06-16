@@ -80,7 +80,7 @@ async def test_delete_account_cascades_to_careers(client: AsyncClient):
         "/careers",
         json={
             "name": "Doomed Career",
-            "user_team_name": "Mumbai Indians",
+            "user_team_name": "Mumbai Mavericks",
             "difficulty": "medium",
             "draft_pool_type": "rosters2026",
         },

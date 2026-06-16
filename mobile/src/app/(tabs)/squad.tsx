@@ -18,6 +18,7 @@ import { ContentBottomInset, getTeamPlayerAccent, Radius, Spacing } from '@/cons
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
+import { promptRename } from '@/hooks/use-rename';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -47,18 +48,25 @@ export default function SquadScreen() {
   const theme = useTheme();
   const scheme = useColorScheme();
   const { activeCareerId, activeCareer } = useCareer();
-  const { payload, loading, error, refresh } = useLeague();
+  const { payload, loading, error, refresh, setPayload } = useLeague();
   const [tab, setTab] = useState<SquadTab>('roster');
   const [profilePlayer, setProfilePlayer] = useState<PlayerDict | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('ovr');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editNames, setEditNames] = useState(false);
+  const { showError } = useError();
 
   const team = useMemo(
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
   const accent = team ? getTeamPlayerAccent(team.name, scheme) : undefined;
+
+  const handleRename = (kind: 'team' | 'player', currentName: string) => {
+    if (!activeCareerId) return;
+    promptRename({ careerId: activeCareerId, kind, currentName, onRenamed: setPayload, onError: showError });
+  };
 
   const sortedRoster = useMemo(() => {
     if (!team) return [];
@@ -110,6 +118,22 @@ export default function SquadScreen() {
               <SegmentedControl segments={SQUAD_SEGMENTS} value={tab} onChange={setTab} accentColor={team.primary} />
             </View>
 
+            {tab === 'roster' && (
+              <View style={styles.editNamesRow}>
+                <Pressable onPress={() => handleRename('team', team.name)} disabled={!editNames} hitSlop={8}>
+                  <ThemedText style={[styles.teamNameHeading, editNames && { color: theme.green }]} numberOfLines={1}>
+                    {team.name}
+                    {editNames ? '  ✎' : ''}
+                  </ThemedText>
+                </Pressable>
+                <Pressable onPress={() => setEditNames((v) => !v)} hitSlop={8}>
+                  <ThemedText themeColor={editNames ? 'green' : 'textDim'} style={styles.editToggle}>
+                    {editNames ? 'Done' : 'Edit Names'}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            )}
+
             {saveError && (
               <View style={styles.errorBanner}>
                 <ThemedText themeColor="red" style={styles.errorText}>
@@ -125,6 +149,8 @@ export default function SquadScreen() {
                 accent={accent}
                 sortKey={sortKey}
                 onSort={setSortKey}
+                editNames={editNames}
+                onRenamePlayer={(name) => handleRename('player', name)}
                 onPlayerPress={setProfilePlayer}
               />
             )}
@@ -187,10 +213,14 @@ function RosterTab({
   accent,
   sortKey,
   onSort,
+  editNames,
+  onRenamePlayer,
   onPlayerPress,
 }: {
   team: NonNullable<ReturnType<typeof useLeague>['payload']>['teams'][number];
   roster: PlayerDict[];
+  editNames: boolean;
+  onRenamePlayer: (name: string) => void;
   accent?: string;
   sortKey: SortKey;
   onSort: (key: SortKey) => void;
@@ -226,7 +256,10 @@ function RosterTab({
             isCaptain={player.name === team.captain}
             isViceCaptain={player.name === team.vice_captain}
             isWicketkeeper={player.name === team.saved_wicketkeeper}
-            onPress={() => onPlayerPress(player)}
+            onPress={() => (editNames ? onRenamePlayer(player.name) : onPlayerPress(player))}
+            trailing={
+              editNames ? <ThemedText themeColor="green" style={styles.rowPencil}>✎</ThemedText> : undefined
+            }
           />
         ))}
       </Card>
@@ -741,6 +774,27 @@ const styles = StyleSheet.create({
   segmentWrap: {
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.two,
+  },
+  editNamesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.two,
+    gap: Spacing.two,
+  },
+  teamNameHeading: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  editToggle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  rowPencil: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   errorBanner: {
     marginHorizontal: Spacing.three,

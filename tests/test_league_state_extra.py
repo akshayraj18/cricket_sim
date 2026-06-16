@@ -15,27 +15,27 @@ pytestmark = pytest.mark.integration
 
 def test_new_league_alltime_pool_loads_legends():
     league = LeagueState()
-    league.new_league("Mumbai Indians", "medium", "alltime")
+    league.new_league("Mumbai Mavericks", "medium", "alltime")
     assert league.draft_pool_type == "alltime"
     names = {p.name for p in league.player_pool}
-    assert "AB de Villiers" in names
+    assert "AB de Vylliers" in names
 
 
 def test_new_league_unknown_draft_pool_falls_back_to_current():
     league = LeagueState()
-    league.new_league("Mumbai Indians", "medium", "not-a-real-pool")
+    league.new_league("Mumbai Mavericks", "medium", "not-a-real-pool")
     assert league.draft_pool_type == "current"
 
 
 def test_new_league_unknown_difficulty_falls_back_to_hard():
     league = LeagueState()
-    league.new_league("Mumbai Indians", "not-a-real-difficulty")
+    league.new_league("Mumbai Mavericks", "not-a-real-difficulty")
     assert league.difficulty == "hard"
 
 
 def test_new_league_with_rosters_assigns_real_2026_squads_to_all_teams():
     league = LeagueState()
-    league.new_league_with_rosters("Chennai Super Kings", "medium")
+    league.new_league_with_rosters("Chennai Cholas", "medium")
     assert league.phase == "season"
     for team in league.teams:
         assert len(team.roster) >= 18

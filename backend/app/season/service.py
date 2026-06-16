@@ -92,6 +92,29 @@ async def set_presets(
     return await _save_and_payload(db, user_id, career_id, league)
 
 
+async def rename_entity(
+    db: AsyncSession, redis: Redis, user_id: uuid.UUID, career_id: uuid.UUID, body: dict
+) -> dict:
+    """Rename a team or player in this career (the in-app roster editor).
+
+    `body`: {"kind": "team"|"player", "old_name": str, "new_name": str}.
+    """
+    league = await _load_state(db, redis, user_id, career_id)
+    kind = body.get("kind")
+    old_name = body.get("old_name") or ""
+    new_name = body.get("new_name") or ""
+    try:
+        if kind == "team":
+            league.rename_team(old_name, new_name)
+        elif kind == "player":
+            league.rename_player(old_name, new_name)
+        else:
+            raise SeasonError("kind must be 'team' or 'player'.")
+    except ValueError as exc:
+        raise SeasonError(str(exc)) from exc
+    return await _save_and_payload(db, user_id, career_id, league)
+
+
 async def start_playoffs(db: AsyncSession, redis: Redis, user_id: uuid.UUID, career_id: uuid.UUID) -> dict:
     league = await _load_state(db, redis, user_id, career_id)
     try:

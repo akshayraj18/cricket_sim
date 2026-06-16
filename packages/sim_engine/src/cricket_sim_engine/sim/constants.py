@@ -33,15 +33,46 @@ OVERSEAS_LAST_NAMES = [
 ]
 
 
+# Fictional, IP-safe franchises. We keep the real *city* (cities aren't
+# trademarked) but invent the team name, abbreviation, generic mascot, colors,
+# and venue so nothing infringes a real IPL franchise's trademarks. Users can
+# rename any team to whatever they like via the in-app roster editor.
 TEAM_META = {
-    "Chennai Super Kings": {"abbr": "CSK", "home": "MA Chidambaram Stadium", "primary": "#f7c948", "accent": "#22409a"},
-    "Mumbai Indians": {"abbr": "MI", "home": "Wankhede Stadium", "primary": "#045093", "accent": "#d1ab3e"},
-    "Royal Challengers Bengaluru": {"abbr": "RCB", "home": "M. Chinnaswamy Stadium", "primary": "#da1818", "accent": "#111111"},
-    "Kolkata Knight Riders": {"abbr": "KKR", "home": "Eden Gardens", "primary": "#3a225d", "accent": "#c6a76f"},
-    "Sunrisers Hyderabad": {"abbr": "SRH", "home": "Rajiv Gandhi Intl. Stadium", "primary": "#f26522", "accent": "#1f1f1f"},
-    "Rajasthan Royals": {"abbr": "RR", "home": "Sawai Mansingh Stadium", "primary": "#e91e8f", "accent": "#254aa5"},
-    "Delhi Capitals": {"abbr": "DC", "home": "Arun Jaitley Stadium", "primary": "#17479e", "accent": "#ef1b23"},
-    "Gujarat Titans": {"abbr": "GT", "home": "Narendra Modi Stadium", "primary": "#1b2133", "accent": "#b69249"},
-    "Lucknow Super Giants": {"abbr": "LSG", "home": "Ekana Cricket Stadium", "primary": "#00a3e0", "accent": "#f28c28"},
-    "Punjab Kings": {"abbr": "PBKS", "home": "New PCA Stadium", "primary": "#d71920", "accent": "#b7b7b7"},
+    "Chennai Cholas": {"abbr": "CHE", "home": "Chennai Cricket Ground", "primary": "#e8a013", "accent": "#0f2a5c"},
+    "Mumbai Mavericks": {"abbr": "MUM", "home": "Marine Drive Oval", "primary": "#1f6feb", "accent": "#f0c419"},
+    "Bengaluru Bulls": {"abbr": "BLR", "home": "Garden City Stadium", "primary": "#9b1d3a", "accent": "#1c1c24"},
+    "Kolkata Knights": {"abbr": "KOL", "home": "Riverside Gardens", "primary": "#6b3fa0", "accent": "#e0b94a"},
+    "Hyderabad Hawks": {"abbr": "HYD", "home": "Deccan Arena", "primary": "#e8602c", "accent": "#143d59"},
+    "Rajasthan Raptors": {"abbr": "RAJ", "home": "Pink City Stadium", "primary": "#c2185b", "accent": "#0e9aa7"},
+    "Delhi Dynamos": {"abbr": "DEL", "home": "Capital Cricket Ground", "primary": "#0b6e6e", "accent": "#f24236"},
+    "Gujarat Gladiators": {"abbr": "GUJ", "home": "Sabarmati Stadium", "primary": "#1a2238", "accent": "#d4943a"},
+    "Lucknow Lions": {"abbr": "LKO", "home": "Awadh Cricket Ground", "primary": "#0f8a8a", "accent": "#f2a541"},
+    "Punjab Panthers": {"abbr": "PUN", "home": "Five Rivers Stadium", "primary": "#5a3e8e", "accent": "#e8505b"},
 }
+
+# Neutral branding for a team whose name isn't a TEAM_META key (e.g. one the
+# user renamed to something custom and that hasn't kept its original key).
+_DEFAULT_TEAM_META = {
+    "abbr": "",
+    "home": "Cricket Stadium",
+    "primary": "#3a3f4b",
+    "accent": "#9aa0a6",
+}
+
+
+def team_meta(team):
+    """Branding/venue metadata for a Team, robust to user renames.
+
+    A renamed team keeps its original branding via `meta_name`; we look up by
+    that first, then the current name, and finally fall back to neutral
+    defaults (with the abbr derived from the name) so a custom name never
+    raises a KeyError anywhere in the engine.
+    """
+    name = getattr(team, "name", team) if not isinstance(team, str) else team
+    meta_name = getattr(team, "meta_name", None) if not isinstance(team, str) else None
+    meta = TEAM_META.get(meta_name) or TEAM_META.get(name)
+    if meta:
+        return meta
+    fallback = dict(_DEFAULT_TEAM_META)
+    fallback["abbr"] = str(name)[:3].upper()
+    return fallback

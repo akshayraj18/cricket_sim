@@ -9,7 +9,7 @@ pytestmark = pytest.mark.integration
 
 def test_new_league_sets_up_blank_draft(league):
     assert league.phase == "draft"
-    assert league.user_team_name == "Mumbai Indians"
+    assert league.user_team_name == "Mumbai Mavericks"
     assert len(league.teams) == 10
     assert all(len(t.roster) == 0 for t in league.teams)
 
@@ -58,18 +58,18 @@ def test_overseas_limit_not_exceeded_in_any_squad(drafted):
 
 def test_new_league_with_rosters_skips_draft_and_assigns_real_squads():
     state = LeagueState()
-    state.new_league_with_rosters("Mumbai Indians", "medium")
+    state.new_league_with_rosters("Mumbai Mavericks", "medium")
     assert state.phase == "season"
     assert state.draft_pool_type == "rosters2026"
     user = state.user_team()
-    assert "Jasprit Bumrah" in [p.name for p in user.roster]
+    assert "Jesprit Bomrah" in [p.name for p in user.roster]
     assert all(len(t.roster) >= 21 for t in state.teams)
     assert all(t.captain and t.vice_captain for t in state.teams)
 
 
 def test_new_league_with_rosters_has_no_duplicate_or_missing_players():
     state = LeagueState()
-    state.new_league_with_rosters("Mumbai Indians", "medium")
+    state.new_league_with_rosters("Mumbai Mavericks", "medium")
     all_names = [p.name for t in state.teams for p in t.roster] + [p.name for p in state.player_pool]
     assert len(all_names) == len(set(all_names)), "every player should appear at most once across rosters and the pool"
     assert len(all_names) == len(state.player_pool) + sum(len(t.roster) for t in state.teams)

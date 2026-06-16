@@ -122,16 +122,16 @@ export const ContentBottomInset = (
  * (vivid in dark mode, darkened toward body text in light mode).
  */
 export const TeamColors: Record<string, { abbr: string; primary: string; accent: string }> = {
-  'Chennai Super Kings': { abbr: 'CSK', primary: '#f7c948', accent: '#22409a' },
-  'Mumbai Indians': { abbr: 'MI', primary: '#045093', accent: '#d1ab3e' },
-  'Royal Challengers Bengaluru': { abbr: 'RCB', primary: '#da1818', accent: '#111111' },
-  'Kolkata Knight Riders': { abbr: 'KKR', primary: '#3a225d', accent: '#c6a76f' },
-  'Sunrisers Hyderabad': { abbr: 'SRH', primary: '#f26522', accent: '#1f1f1f' },
-  'Rajasthan Royals': { abbr: 'RR', primary: '#e91e8f', accent: '#254aa5' },
-  'Delhi Capitals': { abbr: 'DC', primary: '#17479e', accent: '#ef1b23' },
-  'Gujarat Titans': { abbr: 'GT', primary: '#1b2133', accent: '#b69249' },
-  'Lucknow Super Giants': { abbr: 'LSG', primary: '#00a3e0', accent: '#f28c28' },
-  'Punjab Kings': { abbr: 'PBKS', primary: '#d71920', accent: '#b7b7b7' },
+  'Chennai Cholas': { abbr: 'CHE', primary: '#e8a013', accent: '#0f2a5c' },
+  'Mumbai Mavericks': { abbr: 'MUM', primary: '#1f6feb', accent: '#f0c419' },
+  'Bengaluru Bulls': { abbr: 'BLR', primary: '#9b1d3a', accent: '#1c1c24' },
+  'Kolkata Knights': { abbr: 'KOL', primary: '#6b3fa0', accent: '#e0b94a' },
+  'Hyderabad Hawks': { abbr: 'HYD', primary: '#e8602c', accent: '#143d59' },
+  'Rajasthan Raptors': { abbr: 'RAJ', primary: '#c2185b', accent: '#0e9aa7' },
+  'Delhi Dynamos': { abbr: 'DEL', primary: '#0b6e6e', accent: '#f24236' },
+  'Gujarat Gladiators': { abbr: 'GUJ', primary: '#1a2238', accent: '#d4943a' },
+  'Lucknow Lions': { abbr: 'LKO', primary: '#0f8a8a', accent: '#f2a541' },
+  'Punjab Panthers': { abbr: 'PUN', primary: '#5a3e8e', accent: '#e8505b' },
 };
 
 export const TEAM_NAMES = Object.keys(TeamColors);
@@ -141,23 +141,22 @@ export const TEAM_NAMES = Object.keys(TeamColors);
  * chips. Each entry has a `dark` and `light` color used as the *foreground*
  * (accent text / dot); the surrounding bubble is a low-alpha tint of it.
  *
- * Light mode keeps the official IPL colors (only nudged where they'd be
- * unreadable on a white surface). Dark mode brightens/lightens each so it
- * reads as a light accent on a dark bubble — and swaps a few teams away from
- * a near-black identity color (GT navy, RCB/SRH black accents, PBKS silver)
- * toward their vivid secondary so all ten stay distinct.
+ * `light` is the team's primary (nudged darker where it'd be unreadable on
+ * white); `dark` is a brightened version so it reads as a light accent on a
+ * dark bubble. Teams whose primary is near-black/navy (Bengaluru, Gujarat)
+ * use their vivid accent instead so all ten stay distinct.
  */
 export const TeamSwatches: Record<string, { dark: string; light: string }> = {
-  'Chennai Super Kings': { dark: '#f7d04a', light: '#d9a400' },
-  'Mumbai Indians': { dark: '#4a9fe8', light: '#045093' },
-  'Royal Challengers Bengaluru': { dark: '#ff5a5a', light: '#c41212' },
-  'Kolkata Knight Riders': { dark: '#b18ce0', light: '#4a2d77' },
-  'Sunrisers Hyderabad': { dark: '#ff8a4d', light: '#e0560f' },
-  'Rajasthan Royals': { dark: '#ff5fb0', light: '#d11782' },
-  'Delhi Capitals': { dark: '#5a8ff0', light: '#17479e' },
-  'Gujarat Titans': { dark: '#d4b15f', light: '#9c7a1f' },
-  'Lucknow Super Giants': { dark: '#3cc0f0', light: '#0089bd' },
-  'Punjab Kings': { dark: '#ff5a60', light: '#c41119' },
+  'Chennai Cholas': { dark: '#f4bc3a', light: '#c8870f' },
+  'Mumbai Mavericks': { dark: '#5a9cf5', light: '#1f6feb' },
+  'Bengaluru Bulls': { dark: '#e8466a', light: '#9b1d3a' },
+  'Kolkata Knights': { dark: '#a37fd6', light: '#5a2d91' },
+  'Hyderabad Hawks': { dark: '#f5894f', light: '#d4521f' },
+  'Rajasthan Raptors': { dark: '#f0508f', light: '#c2185b' },
+  'Delhi Dynamos': { dark: '#2bb3b3', light: '#0b6e6e' },
+  'Gujarat Gladiators': { dark: '#e0b665', light: '#a8801f' },
+  'Lucknow Lions': { dark: '#2bc0c0', light: '#0f8a8a' },
+  'Punjab Panthers': { dark: '#9a78d8', light: '#5a3e8e' },
 };
 
 /**
@@ -175,7 +174,7 @@ export function getTeamSwatch(teamName: string, scheme: 'light' | 'dark'): strin
 /** Champagne/trophy gold accent used to highlight playoff and Final UI. */
 export const GOLD = '#f0b429';
 
-/** Short team code (e.g. "Chennai Super Kings" -> "CSK") for compact labels. */
+/** Short team code (e.g. "Chennai Cholas" -> "CHE") for compact labels. */
 export function teamAbbr(teamName: string): string {
   return TeamColors[teamName]?.abbr ?? teamName;
 }
@@ -306,7 +305,7 @@ export function pickPillColors(colorA: string, colorB: string): { background: st
 /**
  * Returns a version of `accentHex` that stays legible as text on a tinted
  * version of itself (as used by Pill's accent style). Very light colors
- * (e.g. Punjab Kings' silver `#b7b7b7`) are blended toward the theme's body
+ * (e.g. Punjab Panthers' silver `#b7b7b7`) are blended toward the theme's body
  * text color so they don't wash out against light/dark card backgrounds.
  */
 export function getReadableAccentText(accentHex: string, scheme: 'light' | 'dark'): string {

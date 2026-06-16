@@ -17,6 +17,7 @@ from app.season.schemas import (
     DraftPickRequest,
     LeadershipRequest,
     PresetsRequest,
+    RenameRequest,
     RetentionRequest,
 )
 
@@ -88,6 +89,18 @@ async def set_presets(
     redis: Redis = Depends(get_redis),
 ) -> dict:
     return await _run(service.set_presets(db, redis, user.id, career_id, body.model_dump()))
+
+
+@router.post("/rename", response_model=dict)
+async def rename_entity(
+    career_id: uuid.UUID,
+    body: RenameRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> dict:
+    """Rename a team or player in this career (the in-app roster editor)."""
+    return await _run(service.rename_entity(db, redis, user.id, career_id, body.model_dump()))
 
 
 @router.post("/season/simulate-round", response_model=dict)
