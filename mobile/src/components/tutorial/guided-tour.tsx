@@ -68,8 +68,9 @@ export function GuidedTour({
   const index = stepIndex;
   const step: TutorialStep | undefined = TUTORIAL_STEPS[index];
 
-  // On open: build the demo career and autodraft it to a full, in-season squad
-  // so every screen the tour visits has real data.
+  // On open: build the demo career and OPEN ITS DRAFT (but don't autodraft yet),
+  // so the draft step can show the real draft board. The squad/season/stats
+  // steps later autodraft the rest (see `fillSquad` in goNext).
   useEffect(() => {
     if (!visible) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -93,10 +94,8 @@ export function GuidedTour({
         if (cancelled) return;
         demoCareerId.current = career.id;
         setActiveCareerId(career.id);
-        await seasonApi.startDraft(career.id);
-        if (cancelled) return;
-        // Autodraft the whole pool so squad / season / stats are populated.
-        setPayload(await seasonApi.autodraft(career.id, 'all'));
+        // Open the draft so the Mega Draft step shows the live draft board.
+        setPayload(await seasonApi.startDraft(career.id));
       } catch {
         // If setup fails the tour still runs as an explainer over empty screens.
       } finally {
@@ -112,6 +111,18 @@ export function GuidedTour({
     // Run once per open; deps are stable within an open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Finish the draft (autodraft all) so the squad/season/stats screens that
+  // follow have a full 25-man roster and an open season. Idempotent.
+  const fillSquad = useCallback(async () => {
+    const careerId = demoCareerId.current;
+    if (!careerId) return;
+    try {
+      setPayload(await seasonApi.autodraft(careerId, 'all'));
+    } catch {
+      // Best-effort; the squad step still renders whatever state exists.
+    }
+  }, [setPayload]);
 
   // Tear down the demo career and restore the user's prior one, then go Home.
   const finish = useCallback(
@@ -167,14 +178,20 @@ export function GuidedTour({
   const isLast = index >= TUTORIAL_STEPS.length - 1;
   const isFirst = index === 0;
 
-  const goNext = useCallback(() => {
+  const goNext = useCallback(async () => {
     if (preparing) return;
     if (isLast) {
       finish('completed');
       return;
     }
+    const next = TUTORIAL_STEPS[index + 1];
+    if (next?.fillSquad) {
+      setPreparing(true);
+      await fillSquad();
+      setPreparing(false);
+    }
     onStepChange(Math.min(index + 1, TUTORIAL_STEPS.length - 1));
-  }, [finish, index, isLast, onStepChange, preparing]);
+  }, [fillSquad, finish, index, isLast, onStepChange, preparing]);
 
   const goBack = useCallback(() => onStepChange(Math.max(0, index - 1)), [index, onStepChange]);
 

@@ -30,6 +30,12 @@ export interface TutorialStep {
    * (the Squad screen reads this from TourContext). 'batting' = Starting XI.
    */
   squadTab?: 'roster' | 'batting' | 'bowling' | 'leadership';
+  /**
+   * If set, advancing INTO this step autodrafts the demo career to completion,
+   * so this and following screens have a full 25-man roster and an open season.
+   * Set on the first post-draft step so the draft board stays live until then.
+   */
+  fillSquad?: boolean;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -72,6 +78,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     tab: 'squad',
     spotlight: 'content',
     squadTab: 'batting',
+    fillSquad: true,
   },
   {
     key: 'season',

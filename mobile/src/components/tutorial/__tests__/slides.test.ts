@@ -47,4 +47,14 @@ describe('TUTORIAL_STEPS', () => {
     expect(squad?.tab).toBe('squad');
     expect(squad?.squadTab).toBe('batting');
   });
+
+  it('keeps the draft live until after the draft step, then fills the squad', () => {
+    const draft = TUTORIAL_STEPS.find((s) => s.key === 'draft')!;
+    const squad = TUTORIAL_STEPS.find((s) => s.key === 'squad')!;
+    // The draft step must not autodraft (so the board stays live); the squad
+    // step — the first one after it — fills the squad.
+    expect(draft.fillSquad).toBeFalsy();
+    expect(squad.fillSquad).toBe(true);
+    expect(TUTORIAL_STEPS.indexOf(squad)).toBe(TUTORIAL_STEPS.indexOf(draft) + 1);
+  });
 });
