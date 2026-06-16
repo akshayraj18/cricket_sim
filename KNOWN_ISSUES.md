@@ -4,6 +4,14 @@ Tracked from the first on-device preview build (iOS, against live Railway API).
 These are non-blocking for the initial App Store submission; address in a
 follow-up pass.
 
+**Status (v1.0 submission):**
+- ✅ #3 in-app branding → "CricSim" — FIXED
+- ✅ #4 "won won" result text — FIXED
+- ⏳ #1 tutorial career-not-found — DEFERRED to v1.1 (first-run-only edge case;
+  needs on-device retest)
+- ⏳ #2 team-color fallbacks (match hub + fixtures) — DEFERRED to v1.1
+- ℹ️ #5 parody player names — kept for v1.0, IP risk noted
+
 ## 1. "How to Play" tutorial errors before a career exists
 
 **Symptom:** Launching the guided "How to Play" tutorial *before* creating a
