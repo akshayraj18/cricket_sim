@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,6 +18,7 @@ import { ContentBottomInset, getTeamPlayerAccent, Radius, Spacing } from '@/cons
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
+import { useTour } from '@/context/TourContext';
 import { promptRename } from '@/hooks/use-rename';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
@@ -50,6 +51,15 @@ export default function SquadScreen() {
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
   const [tab, setTab] = useState<SquadTab>('roster');
+  const { currentStep } = useTour();
+  // While the guided tour is on a squad step that requests a specific sub-tab
+  // (e.g. the Starting XI walkthrough), open it so the tour highlights the right
+  // screen instead of whatever the user last had selected.
+  const tourSquadTab = currentStep?.tab === 'squad' ? currentStep.squadTab : undefined;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (tourSquadTab) setTab(tourSquadTab);
+  }, [tourSquadTab]);
   const [profilePlayer, setProfilePlayer] = useState<PlayerDict | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('ovr');
   const [saving, setSaving] = useState(false);

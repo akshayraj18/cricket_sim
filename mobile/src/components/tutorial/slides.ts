@@ -29,6 +29,23 @@ export interface TutorialStep {
    * - 'screen'  — the whole screen (intro/outro steps, no cut-out)
    */
   spotlight?: 'tabbar' | 'header' | 'content' | 'screen';
+  /**
+   * If set, advancing INTO this step ensures a career exists and its draft is
+   * open: the tour creates a mega-draft career (if the user has none) and starts
+   * the draft, so the draft board shows real franchises + the player pool.
+   */
+  ensureCareer?: boolean;
+  /**
+   * If set, advancing INTO this step finishes the draft (autodraft all) so the
+   * squad/Starting-XI/season screens that follow have a full 25-man roster and
+   * an open season. No-op once the season is already underway.
+   */
+  fillSquad?: boolean;
+  /**
+   * For squad-screen steps, which sub-tab to open while the step is showing
+   * (the Squad screen reads this from TourContext). 'batting' = Starting XI.
+   */
+  squadTab?: 'roster' | 'batting' | 'bowling' | 'leadership';
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -51,25 +68,28 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     key: 'new-career',
     emoji: '⭐',
     title: 'Start a Career',
-    body: 'The Home tab is your dashboard. Use the highlighted area to start a New Career: pick a franchise and difficulty, then build your squad from the real 2026 rosters or a mega-draft. This is step one of every save.',
-    tab: 'index',
+    body: 'Every save begins on the New Career screen: pick a franchise and difficulty, then choose how to build your squad. To show you the rest of the app, we’ll set one up now — tap Next and we’ll create a career with a mega draft.',
+    route: '/new-career',
     spotlight: 'content',
   },
   {
     key: 'draft',
     emoji: '📋',
     title: 'The Mega Draft',
-    body: 'If you choose a draft, you build your 21-player squad here — pick by pick, snake order, every franchise competing. Draft manually, autodraft one pick, or let the CPU finish. Filter by role and nation to find gems.',
+    body: 'Here’s your draft. You build a 25-player squad pick by pick — snake order, every franchise competing, max 9 overseas. Draft manually, autodraft one pick, or let the CPU finish. Filter by role and nation to find gems.',
     tab: 'season',
     spotlight: 'content',
+    ensureCareer: true,
   },
   {
     key: 'squad',
     emoji: '🧢',
-    title: 'Build Your Squad',
-    body: 'The Squad tab is your team HQ. In the highlighted area you set your Starting XI and Impact Sub, name a captain and keeper, and arrange the batting order. There’s a bowling-plan sub-screen too. Tap “Autofill” for smart defaults.',
+    title: 'Build Your Squad: Starting XI',
+    body: 'This is the Squad tab’s Starting XI screen. Tap a slot to swap a player, set your Impact Sub, and arrange the batting order — or tap “Autofill” for smart defaults. The other sub-tabs cover your full roster, the bowling plan, and leadership.',
     tab: 'squad',
     spotlight: 'content',
+    squadTab: 'batting',
+    fillSquad: true,
   },
   {
     key: 'season',

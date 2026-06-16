@@ -42,4 +42,16 @@ describe('TUTORIAL_STEPS', () => {
       expect(validSpots.has(step.spotlight)).toBe(true);
     }
   });
+
+  it('drives a career: ensures one before the draft and fills the squad before Starting XI', () => {
+    const draft = TUTORIAL_STEPS.find((s) => s.key === 'draft');
+    const squad = TUTORIAL_STEPS.find((s) => s.key === 'squad');
+    // The draft step opens a career + draft; the squad step finishes the draft
+    // and opens the Starting XI sub-tab so those screens have real data.
+    expect(draft?.ensureCareer).toBe(true);
+    expect(squad?.fillSquad).toBe(true);
+    expect(squad?.squadTab).toBe('batting');
+    // fillSquad must come after ensureCareer in the flow.
+    expect(TUTORIAL_STEPS.indexOf(squad!)).toBeGreaterThan(TUTORIAL_STEPS.indexOf(draft!));
+  });
 });
