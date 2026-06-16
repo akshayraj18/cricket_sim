@@ -67,10 +67,60 @@ export function GuidedTour({
 
   const index = stepIndex;
   const step: TutorialStep | undefined = TUTORIAL_STEPS[index];
+  const draftStepIndex = TUTORIAL_STEPS.findIndex((s) => s.key === 'draft');
+
+  const createDraftDemo = useCallback(async (): Promise<string | null> => {
+    const career = await createCareer({
+      name: 'Tour Demo',
+      user_team_name: 'Mumbai Mavericks',
+      difficulty: 'medium',
+      draft_pool_type: 'current', // 2026 rosters + mega draft
+    });
+    demoCareerId.current = career.id;
+    setActiveCareerId(career.id);
+    setPayload(await seasonApi.startDraft(career.id)); // board live, user on the clock
+    return career.id;
+  }, [createCareer, setActiveCareerId, setPayload]);
+
+  // The tour walks across the draft -> season boundary, and autodrafting is
+  // one-way on the server. To keep Back/Next idempotent, we drive the demo
+  // career's server state to match the TARGET step every time it changes:
+  //  - steps at/before the draft step want a LIVE draft (draft phase, started),
+  //    re-creating a fresh draft demo if we'd already autodrafted past it;
+  //  - steps after the draft step want an autodrafted, in-season squad.
+  const syncDemoForStep = useCallback(
+    async (targetIndex: number) => {
+      const wantLiveDraft = targetIndex <= draftStepIndex;
+      let careerId = demoCareerId.current;
+      try {
+        if (!careerId) {
+          await createDraftDemo();
+          careerId = demoCareerId.current;
+        }
+        if (!careerId) return;
+        const current = await seasonApi.getPayload(careerId);
+        const isDraft = current.phase === 'draft';
+        if (wantLiveDraft && !isDraft) {
+          // Already autodrafted but the user went BACK to the draft step: throw
+          // this demo away and spin up a fresh live draft to show.
+          const stale = careerId;
+          await createDraftDemo();
+          if (stale) deleteCareer(stale).catch(() => {});
+        } else if (!wantLiveDraft && isDraft) {
+          // Moving past the draft: autodraft to a full, in-season squad.
+          setPayload(await seasonApi.autodraft(careerId, 'all'));
+        } else {
+          setPayload(current); // already in the right phase
+        }
+      } catch {
+        // Best-effort; the step still renders whatever state exists.
+      }
+    },
+    [createDraftDemo, deleteCareer, draftStepIndex, setPayload]
+  );
 
   // On open: build the demo career and OPEN ITS DRAFT (but don't autodraft yet),
-  // so the draft step can show the real draft board. The squad/season/stats
-  // steps later autodraft the rest (see `fillSquad` in goNext).
+  // so the draft step can show the real draft board.
   useEffect(() => {
     if (!visible) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -84,18 +134,8 @@ export function GuidedTour({
       analytics.capture('tutorial_started', { source, kind: 'guided' });
       priorCareerId.current = activeCareerId;
       try {
-        const team = 'Mumbai Mavericks';
-        const career = await createCareer({
-          name: 'Tour Demo',
-          user_team_name: team,
-          difficulty: 'medium',
-          draft_pool_type: 'current', // 2026 rosters + mega draft
-        });
-        if (cancelled) return;
-        demoCareerId.current = career.id;
-        setActiveCareerId(career.id);
-        // Open the draft so the Mega Draft step shows the live draft board.
-        setPayload(await seasonApi.startDraft(career.id));
+        // Open the demo in a live draft so the Mega Draft step shows the board.
+        await createDraftDemo();
       } catch {
         // If setup fails the tour still runs as an explainer over empty screens.
       } finally {
@@ -111,18 +151,6 @@ export function GuidedTour({
     // Run once per open; deps are stable within an open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-
-  // Finish the draft (autodraft all) so the squad/season/stats screens that
-  // follow have a full 25-man roster and an open season. Idempotent.
-  const fillSquad = useCallback(async () => {
-    const careerId = demoCareerId.current;
-    if (!careerId) return;
-    try {
-      setPayload(await seasonApi.autodraft(careerId, 'all'));
-    } catch {
-      // Best-effort; the squad step still renders whatever state exists.
-    }
-  }, [setPayload]);
 
   // Tear down the demo career and restore the user's prior one, then go Home.
   const finish = useCallback(
@@ -178,22 +206,35 @@ export function GuidedTour({
   const isLast = index >= TUTORIAL_STEPS.length - 1;
   const isFirst = index === 0;
 
-  const goNext = useCallback(async () => {
+  // Move to `targetIndex`, syncing the demo career's server state to it first.
+  // Only the draft<->season crossing does real (slow) work, so we show the
+  // spinner just for that.
+  const goTo = useCallback(
+    async (targetIndex: number) => {
+      if (preparing) return;
+      const clamped = Math.max(0, Math.min(targetIndex, TUTORIAL_STEPS.length - 1));
+      const crossesDraftBoundary =
+        index <= draftStepIndex !== clamped <= draftStepIndex;
+      if (crossesDraftBoundary) {
+        setPreparing(true);
+        await syncDemoForStep(clamped);
+        setPreparing(false);
+      }
+      onStepChange(clamped);
+    },
+    [draftStepIndex, index, onStepChange, preparing, syncDemoForStep]
+  );
+
+  const goNext = useCallback(() => {
     if (preparing) return;
     if (isLast) {
       finish('completed');
       return;
     }
-    const next = TUTORIAL_STEPS[index + 1];
-    if (next?.fillSquad) {
-      setPreparing(true);
-      await fillSquad();
-      setPreparing(false);
-    }
-    onStepChange(Math.min(index + 1, TUTORIAL_STEPS.length - 1));
-  }, [fillSquad, finish, index, isLast, onStepChange, preparing]);
+    goTo(index + 1);
+  }, [finish, goTo, index, isLast, preparing]);
 
-  const goBack = useCallback(() => onStepChange(Math.max(0, index - 1)), [index, onStepChange]);
+  const goBack = useCallback(() => goTo(index - 1), [goTo, index]);
 
   if (!visible || !step) return null;
 

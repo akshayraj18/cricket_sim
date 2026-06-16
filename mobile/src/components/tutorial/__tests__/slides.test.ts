@@ -48,13 +48,11 @@ describe('TUTORIAL_STEPS', () => {
     expect(squad?.squadTab).toBe('batting');
   });
 
-  it('keeps the draft live until after the draft step, then fills the squad', () => {
-    const draft = TUTORIAL_STEPS.find((s) => s.key === 'draft')!;
-    const squad = TUTORIAL_STEPS.find((s) => s.key === 'squad')!;
-    // The draft step must not autodraft (so the board stays live); the squad
-    // step — the first one after it — fills the squad.
-    expect(draft.fillSquad).toBeFalsy();
-    expect(squad.fillSquad).toBe(true);
-    expect(TUTORIAL_STEPS.indexOf(squad)).toBe(TUTORIAL_STEPS.indexOf(draft) + 1);
+  it('places the squad step immediately after the draft step', () => {
+    // The tour autodrafts the demo when crossing from the draft step to the
+    // next step, so the squad step must be the one right after draft.
+    const draft = TUTORIAL_STEPS.findIndex((s) => s.key === 'draft');
+    const squad = TUTORIAL_STEPS.findIndex((s) => s.key === 'squad');
+    expect(squad).toBe(draft + 1);
   });
 });
