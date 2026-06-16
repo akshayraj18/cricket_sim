@@ -37,10 +37,15 @@ export default function SeasonScreen() {
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
-  // Use a saturated, dark-enough team color for filled buttons/highlights so
-  // grayscale identity colors (SRH black, PBKS silver) don't render as drab
-  // gray backgrounds; the Button picks legible foreground text via contrast.
-  const accent = team ? getTeamBackground(team.name) : undefined;
+  // Filled surfaces (scoreboard, primary match buttons) take the user team's
+  // color. Route it through getTeamBackground rather than the raw payload
+  // primary: that vets the color for legibility (skipping near-white/gray
+  // identity colors) and guarantees white text stays readable. Fall back to
+  // the user_team name directly so the accent still resolves during the brief
+  // windows where `team` hasn't been matched in the payload yet — only a truly
+  // unknown team lands on the neutral green default. The Button picks legible
+  // foreground text via contrast.
+  const accent = getTeamBackground(team?.name ?? payload?.user_team ?? '');
 
   if (!activeCareerId) {
     return (
@@ -408,7 +413,7 @@ function FixtureCard({
       </ThemedText>
       <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
         {ta?.abbr ?? a} {ta?.wins ?? 0}-{ta?.losses ?? 0} vs {tb?.abbr ?? b} {tb?.wins ?? 0}-{tb?.losses ?? 0} ·{' '}
-        {ta?.home ?? 'IPL venue'}
+        {ta?.home ?? 'Cricket Stadium'}
       </ThemedText>
     </Card>
   );

@@ -27,7 +27,7 @@ export function SignInScreen() {
         <View style={styles.hero}>
           <ThemedText style={styles.mark}>🏏</ThemedText>
           <ThemedText type="title" style={styles.title}>
-            IPL Franchise{'\n'}Universe
+            Cricket Franchise{'\n'}Universe
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.subtitle}>
             Build a 21-player squad, run toss-to-trophy match days, and create a multi-season

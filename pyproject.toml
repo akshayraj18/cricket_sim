@@ -1,7 +1,7 @@
 [project]
 name = "cricket-sim"
 version = "0.1.0"
-description = "IPL franchise career simulation: engine, legacy web UI, and FastAPI backend"
+description = "Cricket franchise career simulation: engine, legacy web UI, and FastAPI backend"
 requires-python = ">=3.12"
 dependencies = [
     "cricket-sim-engine",

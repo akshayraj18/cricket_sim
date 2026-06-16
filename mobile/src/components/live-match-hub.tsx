@@ -766,7 +766,7 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const ballsLeft = Math.max(0, 120 - score.balls);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: getTeamBackground(score.batting_team) }]}>
+    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(score.batting_team) }]}>
       <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
         {score.batting_team}
       </ThemedText>

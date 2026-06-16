@@ -1,6 +1,6 @@
-# IPL Franchise Sim
+# Cricket Franchise Sim
 
-An IPL franchise career simulation. Pick a team, run the mega draft, play or sim every match over-by-over, manage retentions, and build a dynasty across multiple seasons.
+A cricket franchise career simulation. Pick a team, run the mega draft, play or sim every match over-by-over, manage retentions, and build a dynasty across multiple seasons.
 
 Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI + Postgres + Redis** service, with the original browser frontend kept for validation. Accounts are durable: play as a guest and link Sign in with Apple / Google to keep your career across devices.
 
@@ -8,7 +8,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 
 ### Franchise Management
 - **Mega draft** — 10 teams, 21 players each, snake order. Draft manually pick by pick, autodraft one pick at a time, or let the CPU run the whole thing.
-- **Three starting modes** — current-era mega draft, all-time-greats mega draft (500+ historical IPL legends with career-based ratings), or skip the draft entirely and start the season with each franchise's real-world IPL 2026 roster.
+- **Three starting modes** — current-era mega draft, all-time-greats mega draft (500+ historical T20 cricket legends with career-based ratings), or skip the draft entirely and start the season with each franchise's real-world cricket 2026 roster.
 - **Three difficulty levels** — Easy, Medium, Hard (affects CPU squad quality and match engine).
 - **Leadership** — assign captain, vice-captain, and preferred wicketkeeper.
 - **Saved presets ("11+1" model)** — set a Starting XI and one Impact Sub, plus a default batting order and 20-over bowling plan, that auto-apply every match. The captain, vice-captain, and designated wicketkeeper are locked into the Starting XI and can't be subbed out.
@@ -16,7 +16,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 ### Season Structure
 - **14-round league stage** — 5 matches per round across all 10 teams. Simulate any round instantly or play your match live.
 - **Points table and NRR** — live standings updated after every result.
-- **IPL playoff bracket** — top 4 qualify. Qualifier 1, Eliminator, Qualifier 2, Final. Play your matches or quick-sim any you're not in.
+- **Modern playoff bracket** — top 4 qualify. Qualifier 1, Eliminator, Qualifier 2, Final. Play your matches or quick-sim any you're not in.
 - **Season history** — champion, runner-up, season MVP, final standings, and top batting/bowling tables archived every season.
 
 ### Match Engine
@@ -36,7 +36,7 @@ Per player, per season: runs, balls, average, strike rate, highest score, 50s, 1
 Leaderboards: Orange Cap, Purple Cap, sixes, fours, boundaries, highest score, strike rate, economy, best figures, fielding, MVP.
 
 ### Multi-season Career
-- **Retention window** — alternates between a 6-player and 3-player keep limit (mirrors IPL's periodic mega-auction cycle). CPU teams retain their best players by MVP score; you choose yours.
+- **Retention window** — alternates between a 11-player and 5-player keep limit. CPU teams retain their best players by MVP score; you choose yours.
 - **Post-retention draft** — reverse-standings order (no snake), giving last-placed teams first pick of the released pool.
 - **Player progression** — ratings, form, and age update each off-season. Young players develop; veterans decline.
 - **Regen prospects** — ~30 young domestic/overseas players are generated and added to the pool before each new draft.

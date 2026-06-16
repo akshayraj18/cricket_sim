@@ -1,7 +1,7 @@
 [project]
 name = "cricket-sim-backend"
 version = "0.1.0"
-description = "FastAPI backend for the IPL franchise sim: auth, careers, live match, subscriptions"
+description = "FastAPI backend for the Cricket franchise sim: auth, careers, live match, subscriptions"
 requires-python = ">=3.12"
 dependencies = [
     "cricket-sim-engine",

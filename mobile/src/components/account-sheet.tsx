@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
@@ -66,7 +66,12 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: theme.bgCard }]} onPress={(e) => e.stopPropagation()}>
+        <View style={[styles.sheet, { backgroundColor: theme.bgCard }]} onStartShouldSetResponder={() => true}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <ThemedText style={styles.name}>{user?.display_name || 'Guest'}</ThemedText>
             <Pressable onPress={onClose} hitSlop={12}>
@@ -177,7 +182,8 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
           <Pressable onPress={handleDeleteAccount} style={styles.deleteAccount} hitSlop={8}>
             <ThemedText style={[styles.deleteAccountText, { color: theme.textDim }]}>Delete Account</ThemedText>
           </Pressable>
-        </Pressable>
+          </ScrollView>
+        </View>
       </Pressable>
     </Modal>
   );
@@ -192,10 +198,20 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   sheet: {
-    width: 260,
+    width: 280,
     borderRadius: Radius.lg,
-    padding: Spacing.four,
     marginTop: 56,
+    overflow: 'hidden',
+    // Cap the sheet so a tall menu (guest links + appearance + reminders +
+    // help + legal + account) scrolls instead of clipping Sign Out / the
+    // legal links off the bottom of the screen.
+    maxHeight: '80%',
+  },
+  scroll: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    padding: Spacing.four,
   },
   header: {
     flexDirection: 'row',

@@ -108,9 +108,20 @@ class LiveMatch:
                     xi = self.league.smart_cpu_xi(team)
                 self.xis[team.name] = xi
                 saved_order = getattr(team, "saved_batting_order_names", []) if team.name == self.league.user_team_name else []
-                order = [p for p in xi if p.name in saved_order]
-                order.sort(key=lambda p: saved_order.index(p.name))
-                order += [p for p in xi if p not in order]
+                if saved_order:
+                    # Honour the user's saved batting order, appending any XI
+                    # member not covered by it (e.g. after a roster change).
+                    order = [p for p in xi if p.name in saved_order]
+                    order.sort(key=lambda p: saved_order.index(p.name))
+                    order += [p for p in xi if p not in order]
+                else:
+                    # No saved order: use the same smart batting order the squad
+                    # screen displays, so a quick-sim plays the lineup the user
+                    # sees rather than the raw XI-selection order. (Previously
+                    # this fell through to resolve-order because `order` already
+                    # had 11 players, which is why presets only "took" after one
+                    # manual Save.)
+                    order = self.league.smart_batting_order(xi)
                 self.batting_orders[team.name] = order if len(order) == 11 else self.league.smart_batting_order(xi)
                 self.bowling_pools[team.name] = [p for p in xi if is_bowling_role(p)] or xi
                 self.wicketkeepers.setdefault(team.name, self.default_keeper(team, xi))
@@ -951,6 +962,22 @@ class LiveMatch:
         if self.status == "batting_order" and user_team.name in self.xis:
             suggested_players = self.xis[user_team.name]
         lineup_xi, swap_out, swap_in = self.league.resolve_match_xi(user_team, user_team == self.inn1_bat)
+        # Present the XI in the user's saved batting order if they have one,
+        # otherwise the smart batting order — the SAME order the squad screen
+        # shows and a quick-sim plays. resolve_match_xi returns raw selection
+        # order (keeper, then batters by rating, then bowlers), so without this
+        # the match hub's lineup editor showed a different order than the squad
+        # screen until the user saved presets once.
+        saved_order = list(getattr(user_team, "saved_batting_order_names", []))
+        if saved_order:
+            ordered = [n for n in saved_order if n in lineup_xi]
+            ordered += [n for n in lineup_xi if n not in ordered]
+            lineup_xi = ordered
+        else:
+            xi_players = [next((p for p in user_team.roster if p.name == n), None) for n in lineup_xi]
+            xi_players = [p for p in xi_players if p]
+            if len(xi_players) == len(lineup_xi):
+                lineup_xi = [p.name for p in self.league.smart_batting_order(xi_players)]
         # At the chase (batting_order) stage the impact sub has already been
         # applied, so the engine's computed batting order is authoritative —
         # the original resolve_match_xi order would put a returning batter at
@@ -1035,6 +1062,8 @@ class LiveMatch:
             "target": self.target,
             "batting_team": self.score["batting_team"].name,
             "bowling_team": self.score["bowling_team"].name,
+            "batting_team_color": team_meta(self.score["batting_team"])["primary"],
+            "bowling_team_color": team_meta(self.score["bowling_team"])["primary"],
             "user_bowling": self.score["bowling_team"].name == self.league.user_team_name,
             "user_batting": self.score["batting_team"].name == self.league.user_team_name,
             "striker": striker_name,

@@ -43,7 +43,7 @@ from cricket_sim_engine.sim.live_match import LiveMatch
 
 
 class LeagueState:
-    """Top-level state for an entire IPL franchise career: drives the game's overall flow.
+    """Top-level state for an entire Cricket franchise career: drives the game's overall flow.
 
     `phase` is the master state machine ("title" -> "draft" -> "season" ->
     "playoffs" -> "offseason" -> ...), and this class owns everything that
@@ -78,7 +78,7 @@ class LeagueState:
         self.playoff_results = []
         self.pending_playoff_top_four = []
         self.season_history = []
-        self.status_message = "Create a league or load your saved IPL universe."
+        self.status_message = "Create a league or load your saved cricket universe."
         self.live_match = None
         self.retention_limit = RETAIN_NORMAL
         self.last_standings = []
@@ -335,10 +335,10 @@ class LeagueState:
         """Reset to a brand-new career: fresh player pool and ten empty franchises, the user assigned to `user_team_name`, and a shuffled mega-draft order ready to start.
 
         `draft_pool` can be "current" (2026 players only) or "alltime" (500+ all-time IPL greats).
-        Raises `ValueError` if `user_team_name` isn't a real IPL franchise.
+        Raises `ValueError` if `user_team_name` isn't a real cricket franchise.
         """
         if user_team_name not in IPL_TEAMS_LIST:
-            raise ValueError("Choose a valid IPL franchise.")
+            raise ValueError("Choose a valid cricket franchise.")
         self.__init__()
         self.season_year = 2026
         self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
@@ -367,7 +367,7 @@ class LeagueState:
         isn't a real IPL franchise.
         """
         if user_team_name not in IPL_TEAMS_LIST:
-            raise ValueError("Choose a valid IPL franchise.")
+            raise ValueError("Choose a valid cricket franchise.")
         self.__init__()
         self.season_year = 2026
         self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
@@ -384,22 +384,52 @@ class LeagueState:
         self.draft_order = list(self.teams)
         self.draft_started = True
         self.start_regular_season()
-        self.status_message = f"{user_team_name} take charge of their real IPL 2026 squad. League stage is ready."
+        self.status_message = f"{user_team_name} take charge of their 2026 squad. League stage is ready."
 
     def build_schedule(self):
-        """Build a 14-round league-stage schedule by randomly shuffling and pairing all ten teams each round.
+        """Build a 14-round league-stage schedule for 10 teams.
 
-        This guarantees every team plays exactly once per round (no byes) and
-        14 games across the season, though — unlike a true round-robin — it
-        doesn't guarantee each pair of teams meets an even number of times.
-        That's an intentional simplification that keeps scheduling simple
-        while still producing a full, balanced-in-aggregate season.
+        Guarantees:
+        - every team plays exactly once per round (no byes), so each round is a
+          perfect matching of all 10 teams and every team plays 14 games;
+        - every pair of teams meets *at least once* — the first 9 rounds are a
+          full single round-robin (the circle method) covering all 45 pairs;
+        - the remaining 5 rounds add a second meeting for 25 of those pairs
+          (5 of the round-robin rounds, replayed), so each team gets exactly
+          5 repeat fixtures (9 + 5 = 14);
+        - **no pair meets 3+ times** — the 5 replayed rounds are distinct
+          round-robin rounds, so no pair is ever scheduled more than twice.
+
+        The schedule is randomised by shuffling which teams occupy the circle
+        positions and which 5 rounds are replayed, so seasons differ while the
+        guarantees above always hold.
         """
-        schedule = []
-        for _ in range(14):
-            teams = list(self.teams)
-            random.shuffle(teams)
-            schedule.append([(teams[i].name, teams[i + 1].name) for i in range(0, len(teams), 2)])
+        names = [t.name for t in self.teams]
+        # The circle method needs an even number of teams; with 10 it produces
+        # 9 rounds, each a perfect matching, covering all 45 pairs exactly once.
+        assert len(names) % 2 == 0, "schedule builder assumes an even team count"
+        random.shuffle(names)
+
+        # Single round-robin via the circle method: fix one team, rotate the
+        # rest. Round r pairs position 0 with the last, then folds inward.
+        n = len(names)
+        rotation = list(names)
+        single_rr = []
+        for _ in range(n - 1):
+            pairs = [
+                (rotation[i], rotation[n - 1 - i])
+                for i in range(n // 2)
+            ]
+            single_rr.append(pairs)
+            # Rotate all but the first team one step (standard circle method).
+            rotation = [rotation[0]] + [rotation[-1]] + rotation[1:-1]
+
+        # Pick 5 distinct round-robin rounds to replay for the second meetings.
+        # Distinct rounds => no pair appears more than twice across the season.
+        extra_rounds = random.sample(single_rr, 14 - (n - 1))
+
+        schedule = single_rr + extra_rounds
+        random.shuffle(schedule)
         return schedule
 
     def user_team(self):
@@ -602,7 +632,7 @@ class LeagueState:
             if not team.captain or team.captain not in team.roster:
                 team.auto_assign_cpu_leadership()
         self.capture_season_baselines()
-        self.status_message = f"IPL {self.season_year} league stage is ready."
+        self.status_message = f"Season {self.season_year} league stage is ready."
 
     def set_leadership(self, captain_name, vice_name, wicketkeeper_name=""):
         """Assign the user's captain, vice-captain, and (optionally) preferred wicketkeeper from their squad.
@@ -1261,7 +1291,7 @@ class LeagueState:
         if self.playoff_index >= len(self.playoff_matches):
             self.archive_season(winner, loser)
             self.phase = "season_end"
-            self.status_message = f"{winner} are IPL {self.season_year} champions. Retention window is next."
+            self.status_message = f"{winner} are Season {self.season_year} champions. Retention window is next."
         else:
             self.unlock_playoff_match()
             self.status_message = f"{match['name']}: {winner} beat {loser}. Next playoff match unlocked."

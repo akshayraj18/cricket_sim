@@ -377,6 +377,8 @@ export interface LiveScorePayload {
   target: number | null;
   batting_team: string;
   bowling_team: string;
+  batting_team_color?: string;
+  bowling_team_color?: string;
   user_bowling: boolean;
   user_batting: boolean;
   striker: string;

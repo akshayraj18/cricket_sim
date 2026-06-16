@@ -1,4 +1,4 @@
-"""Local HTTP server for the IPL franchise sim's web UI.
+"""Local HTTP server for the Cricket franchise sim's web UI.
 
 A small stdlib `http.server` that does two jobs: serves the static frontend
 (`webapp/index.html`, `app.js`, `styles.css`) and exposes a JSON action API
@@ -178,5 +178,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"IPL UI running at http://localhost:{PORT}")
+    print(f"Cricket UI running at http://localhost:{PORT}")
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

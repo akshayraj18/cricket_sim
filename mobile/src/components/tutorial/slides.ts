@@ -16,13 +16,13 @@ export const TUTORIAL_SLIDES: TutorialSlide[] = [
     key: 'welcome',
     emoji: '🏏',
     title: 'Welcome to Cric Sim',
-    body: 'Take charge of an IPL franchise — draft your squad, set your tactics, and play out a full season. Here’s a 30-second tour.',
+    body: 'Take charge of a cricket franchise — draft your squad, set your tactics, and play out a full season. Here’s a 30-second tour.',
   },
   {
     key: 'create',
     emoji: '⭐',
     title: 'Start a Career',
-    body: 'Pick a franchise and a difficulty, then choose how to build your squad — start with the real 2026 rosters, mega-draft from the 2026 player pool, or draft from all-time IPL greats.',
+    body: 'Pick a franchise and a difficulty, then choose how to build your squad — start with the 2026 rosters or mega-draft from the full 2026 player pool.',
   },
   {
     key: 'squad',

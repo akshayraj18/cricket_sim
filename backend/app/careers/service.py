@@ -42,7 +42,7 @@ class CareerNotFoundError(CareerError):
 
 def build_league_state(user_team_name: str, difficulty: str, draft_pool_type: str) -> LeagueState:
     if user_team_name not in IPL_TEAMS_LIST:
-        raise CareerError("Choose a valid IPL franchise.")
+        raise CareerError("Choose a valid cricket franchise.")
     if difficulty not in VALID_DIFFICULTIES:
         raise CareerError(f"Difficulty must be one of {VALID_DIFFICULTIES}.")
     if draft_pool_type not in VALID_DRAFT_POOL_TYPES:
