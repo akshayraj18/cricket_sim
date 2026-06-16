@@ -46,7 +46,7 @@ Leaderboards: Orange Cap, Purple Cap, sixes, fours, boundaries, highest score, s
 - **Guided spotlight tour** — a first-run walkthrough that drives the real app: it moves tab to tab, dims the screen, and spotlights the area each step describes (Home → Squad → Season → Match Centre → Stats → History). Replayable any time from the account menu's "How to Play".
 
 ### Legal
-- **Hosted Terms of Service & Privacy Policy** — served by the backend at `/legal/terms` and `/legal/privacy` (standalone HTML), and linked in-app from the sign-in screen and account sheet. These double as the public policy URLs required by the App Store / Play Store.
+- **Hosted Terms of Service & Privacy Policy** — published via GitHub Pages from `docs/legal/`, and linked in-app from the sign-in screen and account sheet. These double as the public policy URLs required by the App Store / Play Store.
 
 ## Requirements
 
@@ -108,7 +108,6 @@ backend/                      — FastAPI service (Postgres + Redis) — see bac
     main.py                   — FastAPI app entrypoint
     db/                        — SQLAlchemy models, session
     auth/, careers/, live_match/, season/  — route modules
-    legal/                     — public Terms / Privacy HTML pages (/legal/*)
   alembic/                    — DB migrations
   docker-compose.yml          — local Postgres + Redis
 
@@ -194,13 +193,13 @@ variables** panel; do **not** commit them):
 | `DATABASE_URL` / `REDIS_URL` | Your managed Postgres / Redis connection strings. |
 | `SENTRY_DSN` | (optional) Your Sentry project DSN for crash reporting. |
 
-**Legal pages.** The Terms of Service and Privacy Policy are served by the backend at
-`/legal/terms` and `/legal/privacy`; edit their text in `backend/app/legal/content.py`
-(the `APP_NAME` / `CONTACT_EMAIL` / `GOVERNING_LAW` constants and the section lists).
-The mobile app links to `${API_URL}/legal/*` by default; to host the policies on a
-separate marketing domain instead, set `EXPO_PUBLIC_TERMS_URL` / `EXPO_PUBLIC_PRIVACY_URL`
-in the app build. App Store / Play Store submissions need both to resolve on a stable
-public URL.
+**Legal pages.** The Terms of Service and Privacy Policy live in `docs/legal/`
+(Markdown sources + publish-ready HTML) and are published via GitHub Pages (Pages
+source = `/docs` on `main`), e.g.
+`https://akshayraj18.github.io/cricket_sim/legal/terms.html`. The mobile app links to
+those URLs by default; override per-build with `EXPO_PUBLIC_TERMS_URL` /
+`EXPO_PUBLIC_PRIVACY_POLICY_URL` (e.g. a custom marketing domain). App Store / Play
+Store submissions need both to resolve on a stable public URL.
 
 **About the JWT secret.** It signs the login tokens — anyone who knows it can forge a
 session for any user, so treat it like a master password.

@@ -56,14 +56,14 @@ export const POSTHOG_API_KEY =
 export const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
 
 /**
- * Hosted Terms of Service / Privacy Policy URLs, linked from the account sheet
- * and the sign-in screen (App Store / Play Store require both to be reachable
- * in-app and as public URLs).
- *
- * These default to the backend's own /legal pages (served as standalone HTML),
- * so they always point at the same host the app talks to. Override with
- * EXPO_PUBLIC_TERMS_URL / EXPO_PUBLIC_PRIVACY_URL if you host the policies on a
- * dedicated marketing domain instead.
+ * Public URLs for the legal documents, shown in the sign-in screen and the
+ * account sheet and required by the app stores. These point at the GitHub Pages
+ * site published from docs/ (Pages source = /docs), so the paths include the
+ * legal/ folder and the .html extension. Override at deploy time via the
+ * EXPO_PUBLIC_*_URL env vars (e.g. a marketing-site page).
  */
-export const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL ?? `${API_URL}/legal/terms`;
-export const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL ?? `${API_URL}/legal/privacy`;
+export const PRIVACY_POLICY_URL =
+  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ??
+  'https://akshayraj18.github.io/cricket_sim/legal/privacy-policy.html';
+export const TERMS_URL =
+  process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://akshayraj18.github.io/cricket_sim/legal/terms.html';

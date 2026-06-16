@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
+import * as WebBrowser from 'expo-web-browser';
+
 import { ThemedText } from '@/components/themed-text';
+import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +12,6 @@ import { useError } from '@/context/ErrorContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useOnboardingControls } from '@/context/OnboardingContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
-import { TERMS_URL, PRIVACY_URL } from '@/api/config';
 import { useTheme } from '@/hooks/use-theme';
 
 const MODE_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
@@ -62,10 +64,6 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
   const handleSignOut = async () => {
     onClose();
     await signOut();
-  };
-
-  const openLegal = (url: string) => {
-    Linking.openURL(url).catch((err) => showError(err));
   };
 
   return (
@@ -182,12 +180,12 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             Legal
           </ThemedText>
           <Pressable
-            onPress={() => openLegal(TERMS_URL)}
+            onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>Terms of Service</ThemedText>
           </Pressable>
           <Pressable
-            onPress={() => openLegal(PRIVACY_URL)}
+            onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>Privacy Policy</ThemedText>
           </Pressable>

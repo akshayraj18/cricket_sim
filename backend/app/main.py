@@ -7,7 +7,6 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.middleware import install_observability
 from app.core.observability import init_sentry
-from app.legal.router import router as legal_router
 from app.live_match.router import router as live_match_router
 from app.season.router import router as season_router
 
@@ -38,7 +37,6 @@ app.include_router(auth_router)
 app.include_router(careers_router)
 app.include_router(live_match_router)
 app.include_router(season_router)
-app.include_router(legal_router)
 
 
 @app.get("/health")

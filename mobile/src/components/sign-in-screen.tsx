@@ -1,11 +1,12 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
-import { TERMS_URL, PRIVACY_URL } from '@/api/config';
 import { GOLD, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -155,14 +156,14 @@ export function SignInScreen() {
                 <ThemedText
                   themeColor="textDim"
                   style={styles.legalLink}
-                  onPress={() => Linking.openURL(TERMS_URL)}>
+                  onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}>
                   Terms of Service
                 </ThemedText>{' '}
                 and{' '}
                 <ThemedText
                   themeColor="textDim"
                   style={styles.legalLink}
-                  onPress={() => Linking.openURL(PRIVACY_URL)}>
+                  onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}>
                   Privacy Policy
                 </ThemedText>
                 .
