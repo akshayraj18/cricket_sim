@@ -1,0 +1,44 @@
+# The backend image only needs the workspace root, the engine package, and
+# backend/. Everything else just bloats the build context.
+
+# Frontend / mobile
+mobile/
+webapp/
+docs/
+
+# Legacy server + its tests (not part of the deployed API)
+legacy/
+
+# Tests + tooling not needed at runtime
+tests/
+backend/tests/
+packages/*/tests/
+
+# Python / build caches
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+.venv/
+**/.venv/
+*.egg-info/
+dist/
+build/
+
+# Local env + secrets (NEVER ship these)
+**/.env
+**/.env.local
+backend/.env
+backend/.env.local
+
+# VCS / editor / OS
+.git/
+.github/
+.gitignore
+**/.DS_Store
+.idea/
+.vscode/
+
+# Local save files
+saves/
