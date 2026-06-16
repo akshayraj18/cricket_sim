@@ -15,6 +15,7 @@ from cricket_sim_engine.sim.constants import (
     SAVE_FILE,
     SAVES_DIR,
     SQUAD_SIZE,
+    MAX_OVERSEAS_SQUAD,
     RETAIN_NORMAL,
     RETAIN_RESET,
     INDIAN_FIRST_NAMES,
@@ -461,11 +462,11 @@ class LeagueState:
         if self.phase != "draft":
             raise ValueError("Draft room is closed.")
         self.draft_started = True
-        self.status_message = "Mega draft live. Squads are 21 players."
+        self.status_message = "Mega draft live. Squads are 25 players."
         self.cpu_until_user()
 
     def roster_needs(self, team):
-        """How many more players of each kind (`wk`, `bat`, `bowl`, `ar`, `fast`, `spin`) this team should target to reach a balanced 21-player squad, based on simple minimum-count targets."""
+        """How many more players of each kind (`wk`, `bat`, `bowl`, `ar`, `fast`, `spin`) this team should target to reach a balanced 25-player squad, based on simple minimum-count targets."""
         return {
             "wk": max(0, 2 - sum(1 for p in team.roster if is_wicketkeeper_option(p))),
             "bat": max(0, 9 - sum(1 for p in team.roster if batting_slot_player(p))),
@@ -481,7 +482,7 @@ class LeagueState:
         Blends overall rating and youth with role-fit bonuses scaled by
         `roster_needs` (e.g. a wicketkeeper is worth more to a team that
         still needs one), penalises over-stacking a role or overseas slots
-        (hard cutoffs near the 8/10 limits), and penalises picks that don't
+        (steering away as it nears the squad overseas cap), and penalises picks that don't
         address any remaining need once roster spots are running out. A small
         random jitter keeps CPU drafts from being perfectly deterministic.
         """
@@ -516,9 +517,11 @@ class LeagueState:
         if player.role == "Bowler (Spin)":
             score += needs["spin"] * 5
         overseas = sum(1 for p in team.roster if p.is_overseas)
-        if player.is_overseas and overseas >= 8:
+        # Steer the CPU off overseas players as it nears the squad cap; the cap
+        # itself is enforced hard in draft_player, so this is just preference.
+        if player.is_overseas and overseas >= MAX_OVERSEAS_SQUAD - 2:
             score -= 70
-        if player.is_overseas and overseas >= 10:
+        if player.is_overseas and overseas >= MAX_OVERSEAS_SQUAD:
             score -= 999
         if picks_left <= sum(needs.values()) and not self.player_matches_need(player, needs):
             score -= 65
@@ -535,9 +538,23 @@ class LeagueState:
             (player.role == "Bowler (Spin)" and needs["spin"])
         )
 
+    def _overseas_count(self, team):
+        """Number of overseas players currently on `team`'s roster."""
+        return sum(1 for p in team.roster if p.is_overseas)
+
     def cpu_pick(self, team):
-        """Have the CPU draft its single best-scoring available player for `team` (see `draft_score`)."""
-        candidates = sorted(self.player_pool, key=lambda p: self.draft_score(team, p), reverse=True)
+        """Have the CPU draft its single best-scoring available player for `team` (see `draft_score`).
+
+        Respects the hard squad overseas cap: once `team` is at the limit, only
+        domestic players are eligible (the scoring already steers away from
+        overseas, but this guarantees the cap is never exceeded).
+        """
+        pool = self.player_pool
+        if self._overseas_count(team) >= MAX_OVERSEAS_SQUAD:
+            domestic = [p for p in pool if not p.is_overseas]
+            if domestic:
+                pool = domestic
+        candidates = sorted(pool, key=lambda p: self.draft_score(team, p), reverse=True)
         self.draft_player(team, candidates[0])
 
     def draft_player(self, team, player):
@@ -591,7 +608,13 @@ class LeagueState:
         player = next((p for p in self.player_pool if p.name == player_name), None)
         if not player:
             raise ValueError("Player is no longer available.")
-        self.draft_player(self.current_draft_team(), player)
+        team = self.current_draft_team()
+        if player.is_overseas and self._overseas_count(team) >= MAX_OVERSEAS_SQUAD:
+            raise ValueError(
+                f"Squad already has {MAX_OVERSEAS_SQUAD} overseas players (the limit). "
+                "Draft a domestic player."
+            )
+        self.draft_player(team, player)
         self.cpu_until_user()
 
     def autodraft_user_pick(self):

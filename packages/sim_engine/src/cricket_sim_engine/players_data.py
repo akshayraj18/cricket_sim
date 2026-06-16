@@ -103,7 +103,7 @@ def get_initial_player_pool():
     180 players were loaded — fills the remainder with randomly generated
     "Domestic_Prospect" players (young, role-appropriate ratings and a
     generic archetype/strengths profile) so the mega draft always has enough
-    players for ten 21-player squads.
+    players for ten 25-player squads.
 
     Raises `FileNotFoundError` if `players.csv` is missing.
     """

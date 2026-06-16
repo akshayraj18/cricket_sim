@@ -7,7 +7,11 @@ location, squad sizing, and the retention-window cycle.
 
 SAVE_FILE = "ui_save_state.pkl"
 SAVES_DIR = "saves"
-SQUAD_SIZE = 21
+SQUAD_SIZE = 25
+# Max overseas players allowed in a full squad (IPL rule is 8; we allow 9). This
+# is the SQUAD cap enforced during the mega draft — distinct from the on-field
+# limit of 4 overseas in any playing XI (see live_match / set_user_xi).
+MAX_OVERSEAS_SQUAD = 9
 RETAIN_NORMAL = 11
 RETAIN_RESET = 5
 

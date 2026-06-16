@@ -7,7 +7,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 ## Features
 
 ### Franchise Management
-- **Mega draft** — 10 teams, 21 players each, snake order. Draft manually pick by pick, autodraft one pick at a time, or let the CPU run the whole thing.
+- **Mega draft** — 10 teams, 25 players each, snake order, max 9 overseas per squad. Draft manually pick by pick, autodraft one pick at a time, or let the CPU run the whole thing.
 - **Three starting modes** — current-era mega draft, all-time-greats mega draft (500+ historical T20 cricket legends with career-based ratings), or skip the draft entirely and start the season with each franchise's real-world cricket 2026 roster.
 - **Three difficulty levels** — Easy, Medium, Hard (affects CPU squad quality and match engine).
 - **Leadership** — assign captain, vice-captain, and preferred wicketkeeper.
@@ -22,7 +22,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 ### Match Engine
 - **Over-by-over interactive play** — play a full over, a single ball, or play until a wicket falls.
 - **Toss** — if you win the toss, choose bat or bowl; otherwise the CPU decides.
-- **Lineup selection** — pick your XI from your 21-player squad (max 4 overseas), set batting order, assign a bowler per over or use your saved plan.
+- **Lineup selection** — pick your XI from your 25-player squad (max 4 overseas in the XI), set batting order, assign a bowler per over or use your saved plan.
 - **Smart batting order** — XIs are auto-arranged by best fit per slot (factoring in each player's natural batting position and phase rating, with tail-enders seated last), grouped into Openers / Middle Order / Death Overs / Tail zones across the draft, squad, and lineup screens. The same smart order the squad screen shows is what a quick-sim plays and the match-hub lineup pre-fills — no need to save presets first.
 - **Aggression sliders** — set per-batter and per-bowler aggression (1–5) live during the match.
 - **Impact Player rule** — one substitution per innings, any time before the 15th over of the second innings. Swap in a specialist bowler when defending or an extra hitter when chasing.
