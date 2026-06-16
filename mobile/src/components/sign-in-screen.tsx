@@ -42,9 +42,9 @@ export function SignInScreen() {
             YOUR FRANCHISE. YOUR DYNASTY.
           </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            Cricket Franchise{'\n'}
+            Cric
             <ThemedText type="title" style={[styles.title, { color: GOLD }]}>
-              Universe
+              Sim
             </ThemedText>
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.subtitle}>
