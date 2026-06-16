@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -318,6 +318,16 @@ function BattingXiTab({
   const [picker, setPicker] = useState<{ slot: number } | null>(null);
   const [impactPickerOpen, setImpactPickerOpen] = useState(false);
 
+  // Always start this tab scrolled to the top (showing the openers / top order),
+  // not wherever a previous mount or a layout shift left it — the guided tour
+  // opens this tab programmatically and it could otherwise land near the bottom
+  // (Impact Sub / Autofill / Save).
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: 0, animated: false }));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const setSlot = (slot: number, name: string) => {
     const next = [...xi];
     // Swap if the picked player is already in the XI elsewhere.
@@ -373,7 +383,7 @@ function BattingXiTab({
   });
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View>
         <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
           Starting XI
