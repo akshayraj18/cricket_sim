@@ -1,14 +1,23 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
-import { Radius, Spacing } from '@/constants/theme';
+import { TERMS_URL, PRIVACY_URL } from '@/api/config';
+import { GOLD, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
+
+// Three quick selling points shown as pills under the hero — each names a core
+// fantasy of the game (build, compete, dominate over time) to entice sign-up.
+const HIGHLIGHTS: { emoji: string; label: string }[] = [
+  { emoji: '⭐', label: 'Mega draft' },
+  { emoji: '🏟️', label: 'Live match days' },
+  { emoji: '🏆', label: 'Multi-season dynasty' },
+];
 
 export function SignInScreen() {
   const theme = useTheme();
@@ -25,14 +34,33 @@ export function SignInScreen() {
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.hero}>
-          <ThemedText style={styles.mark}>🏏</ThemedText>
+          <View style={[styles.markBadge, { backgroundColor: theme.badgeBg, borderColor: theme.border }]}>
+            <ThemedText style={styles.mark}>🏏</ThemedText>
+          </View>
+          <ThemedText themeColor="textFaint" style={styles.eyebrow}>
+            YOUR FRANCHISE. YOUR DYNASTY.
+          </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            Cricket Franchise{'\n'}Universe
+            Cricket Franchise{'\n'}
+            <ThemedText type="title" style={[styles.title, { color: GOLD }]}>
+              Universe
+            </ThemedText>
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.subtitle}>
-            Build a 21-player squad, run toss-to-trophy match days, and create a multi-season
-            league history.
+            Draft a champion squad, outsmart rivals on match day, and build a dynasty across
+            season after season. The trophy is yours to win.
           </ThemedText>
+
+          <View style={styles.highlights}>
+            {HIGHLIGHTS.map((h) => (
+              <View key={h.label} style={[styles.highlightPill, { backgroundColor: theme.badgeBg, borderColor: theme.border }]}>
+                <ThemedText style={styles.highlightEmoji}>{h.emoji}</ThemedText>
+                <ThemedText themeColor="textDim" style={styles.highlightLabel}>
+                  {h.label}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
         </View>
 
         <View style={styles.actions}>
@@ -119,7 +147,25 @@ export function SignInScreen() {
               </Pressable>
 
               <ThemedText themeColor="textFaint" style={styles.fineprint}>
-                Guest play is saved on this device — sign in with Apple or Google to keep your career across devices.
+                Jump in free as a guest — sign in with Apple or Google to back up your dynasty and play across all your devices.
+              </ThemedText>
+
+              <ThemedText themeColor="textFaint" style={styles.fineprint}>
+                By continuing, you agree to our{' '}
+                <ThemedText
+                  themeColor="textDim"
+                  style={styles.legalLink}
+                  onPress={() => Linking.openURL(TERMS_URL)}>
+                  Terms of Service
+                </ThemedText>{' '}
+                and{' '}
+                <ThemedText
+                  themeColor="textDim"
+                  style={styles.legalLink}
+                  onPress={() => Linking.openURL(PRIVACY_URL)}>
+                  Privacy Policy
+                </ThemedText>
+                .
               </ThemedText>
             </>
           )}
@@ -142,19 +188,55 @@ const styles = StyleSheet.create({
   hero: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.three,
+    gap: Spacing.two,
+  },
+  markBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.one,
   },
   mark: {
-    fontSize: 48,
-    lineHeight: 56,
+    fontSize: 40,
+    lineHeight: 48,
+  },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   title: {
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 40,
+    lineHeight: 46,
   },
   subtitle: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  highlights: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
+    marginTop: Spacing.two,
+  },
+  highlightPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  highlightEmoji: {
+    fontSize: 13,
+  },
+  highlightLabel: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   actions: {
     gap: Spacing.two,
@@ -223,5 +305,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  legalLink: {
+    fontSize: 12,
+    lineHeight: 18,
+    textDecorationLine: 'underline',
   },
 });

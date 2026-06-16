@@ -54,3 +54,16 @@ export const GOOGLE_IOS_CLIENT_ID =
 export const POSTHOG_API_KEY =
   process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? 'phc_mUVAzBYQqHVXXdApccNhYQMjGJQukhUmaJDviG9o53Rp';
 export const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
+
+/**
+ * Hosted Terms of Service / Privacy Policy URLs, linked from the account sheet
+ * and the sign-in screen (App Store / Play Store require both to be reachable
+ * in-app and as public URLs).
+ *
+ * These default to the backend's own /legal pages (served as standalone HTML),
+ * so they always point at the same host the app talks to. Override with
+ * EXPO_PUBLIC_TERMS_URL / EXPO_PUBLIC_PRIVACY_URL if you host the policies on a
+ * dedicated marketing domain instead.
+ */
+export const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL ?? `${API_URL}/legal/terms`;
+export const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL ?? `${API_URL}/legal/privacy`;

@@ -9,6 +9,7 @@ import { useError } from '@/context/ErrorContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useOnboardingControls } from '@/context/OnboardingContext';
 import { ThemeMode, useAppTheme } from '@/context/ThemeContext';
+import { TERMS_URL, PRIVACY_URL } from '@/api/config';
 import { useTheme } from '@/hooks/use-theme';
 
 const MODE_OPTIONS: { key: ThemeMode; label: string; icon: string }[] = [
@@ -63,10 +64,19 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
     await signOut();
   };
 
+  const openLegal = (url: string) => {
+    Linking.openURL(url).catch((err) => showError(err));
+  };
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.sheet, { backgroundColor: theme.bgCard }]} onStartShouldSetResponder={() => true}>
+      <View style={styles.root}>
+        {/* Full-screen dismiss layer behind the sheet. Kept as a sibling (not a
+            parent) of the sheet so it never competes with the ScrollView's pan
+            responder — that competition was why scrolling only worked in one
+            narrow strip. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: theme.bgCard }]}>
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -169,6 +179,20 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
           </Pressable>
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Legal
+          </ThemedText>
+          <Pressable
+            onPress={() => openLegal(TERMS_URL)}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>Terms of Service</ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => openLegal(PRIVACY_URL)}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>Privacy Policy</ThemedText>
+          </Pressable>
+
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Account
           </ThemedText>
           <Pressable
@@ -184,13 +208,13 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
           </Pressable>
           </ScrollView>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  root: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'flex-end',
