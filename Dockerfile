@@ -19,20 +19,20 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
-# 1) Install dependencies first (cached unless the lockfile/manifests change).
-#    We need every workspace member's pyproject for `uv sync` to resolve the
-#    `cricket-sim-engine = { workspace = true }` source.
+# 1) Install dependencies first (Docker-layer cached unless the lockfile/
+#    manifests change). We need every workspace member's pyproject for
+#    `uv sync` to resolve the `cricket-sim-engine = { workspace = true }` source.
+#    (No BuildKit `--mount=type=cache` here: Railway's builder rejects its
+#    syntax, and Docker layer caching already covers the common case.)
 COPY pyproject.toml uv.lock ./
 COPY packages/sim_engine/pyproject.toml packages/sim_engine/pyproject.toml
 COPY backend/pyproject.toml backend/pyproject.toml
-RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-workspace --package cricket-sim-backend
+RUN uv sync --frozen --no-install-workspace --package cricket-sim-backend
 
 # 2) Copy the source and install the workspace packages themselves.
 COPY packages/sim_engine ./packages/sim_engine
 COPY backend ./backend
-RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
-    uv sync --frozen --package cricket-sim-backend
+RUN uv sync --frozen --package cricket-sim-backend
 
 # Run migrations + start the server from the backend dir (where alembic.ini lives).
 WORKDIR /app/backend
