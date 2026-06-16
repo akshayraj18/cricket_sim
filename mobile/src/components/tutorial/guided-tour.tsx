@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { seasonApi } from '@/api/season';
@@ -14,28 +14,27 @@ import { useAnalytics } from '@/observability/analytics';
 import { TUTORIAL_STEPS, type TutorialStep } from './slides';
 
 const SCRIM = 'rgba(4,8,16,0.74)';
-const TAB_BAR_BAND = 92; // approx native tab bar height + a little breathing room
-const HEADER_BAND = 104; // approx status bar + screen header
+const TAB_BAR_BAND = 92; // approx native tab bar height + breathing room
+const HEADER_BAND = 150; // status bar + screen header + segmented-control row
 
-/** A rectangle (in screen coords) to leave un-dimmed — the "spotlight". */
+/** A rectangle (screen coords) to leave un-dimmed — the "spotlight". */
 interface SpotRect {
   top: number;
   height: number;
 }
 
 /**
- * Guided product tour with a moving spotlight. The real app stays live behind a
- * dim scrim; for each step a REGION of the screen (the tab bar, the header, or
- * the main content panel) is cut out of the dim so it shows through brightly,
- * and an instruction card is placed in the opposite half of the screen.
+ * Fully-guided, read-only product tour. The app is frozen behind a tap blocker
+ * (the user can only press Back/Next/Skip on the tour card) while the tour
+ * drives everything itself: it creates a throwaway demo career (2026 mega
+ * draft, autodrafted to a full season) so every screen has real data, then
+ * walks tab to tab, dimming the app and spotlighting the relevant region.
  *
- * The tour drives the app: it navigates to each screen, and — so the draft,
- * squad, and Starting XI screens have real data to walk through — it creates a
- * career (2026 mega draft) when it reaches the draft step, if the user doesn't
- * already have one. Region-based spotlighting keeps it robust on any state.
+ * The demo career is disposable: on Skip OR Finish it's deleted and the user's
+ * previously-active career (if any) is restored, then we return to Home. The
+ * user's own saves are never touched.
  *
- * Controlled: the step index lives in OnboardingProvider (and is published to
- * the real screens via TourContext), passed in as `stepIndex`/`onStepChange`.
+ * Controlled: step index lives in OnboardingProvider and is passed in.
  */
 export function GuidedTour({
   visible,
@@ -56,120 +55,133 @@ export function GuidedTour({
   const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
   const { activeCareerId, setActiveCareerId } = useCareer();
-  const { createCareer } = useCareers();
-  const { payload, setPayload, refresh } = useLeague();
-  const [busy, setBusy] = useState(false);
+  const { createCareer, deleteCareer } = useCareers();
+  const { setPayload } = useLeague();
+
+  // Demo career lifecycle. `priorCareerId` is the user's active career before
+  // the tour, restored on exit; `demoCareerId` is the throwaway we delete.
+  const priorCareerId = useRef<string | null>(null);
+  const demoCareerId = useRef<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const index = stepIndex;
   const step: TutorialStep | undefined = TUTORIAL_STEPS[index];
 
+  // On open: build the demo career and autodraft it to a full, in-season squad
+  // so every screen the tour visits has real data.
+  useEffect(() => {
+    if (!visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReady(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setPreparing(true);
+      onStepChange(0);
+      analytics.capture('tutorial_started', { source, kind: 'guided' });
+      priorCareerId.current = activeCareerId;
+      try {
+        const team = 'Mumbai Mavericks';
+        const career = await createCareer({
+          name: 'Tour Demo',
+          user_team_name: team,
+          difficulty: 'medium',
+          draft_pool_type: 'current', // 2026 rosters + mega draft
+        });
+        if (cancelled) return;
+        demoCareerId.current = career.id;
+        setActiveCareerId(career.id);
+        await seasonApi.startDraft(career.id);
+        if (cancelled) return;
+        // Autodraft the whole pool so squad / season / stats are populated.
+        setPayload(await seasonApi.autodraft(career.id, 'all'));
+      } catch {
+        // If setup fails the tour still runs as an explainer over empty screens.
+      } finally {
+        if (!cancelled) {
+          setPreparing(false);
+          setReady(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Run once per open; deps are stable within an open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  // Tear down the demo career and restore the user's prior one, then go Home.
+  const finish = useCallback(
+    async (reason: 'completed' | 'skipped') => {
+      analytics.capture(reason === 'completed' ? 'tutorial_completed' : 'tutorial_skipped', {
+        kind: 'guided',
+        step: index,
+      });
+      const demo = demoCareerId.current;
+      const prior = priorCareerId.current;
+      // Restore the prior active career first so the UI doesn't flash the demo.
+      setActiveCareerId(prior);
+      demoCareerId.current = null;
+      try {
+        router.navigate('/(tabs)' as never);
+      } catch {
+        // ignore navigation hiccups
+      }
+      onDone();
+      if (demo && demo !== prior) {
+        try {
+          await deleteCareer(demo);
+        } catch {
+          // Best-effort cleanup; a leftover demo can be deleted from the saves list.
+        }
+      }
+    },
+    [analytics, deleteCareer, index, onDone, router, setActiveCareerId]
+  );
+
   const navigateForStep = useCallback(
     (s: TutorialStep) => {
       try {
-        if (s.route) {
-          router.navigate(s.route as never);
-        } else if (s.tab) {
-          // Dismiss the New Career modal (or any pushed screen) before switching
-          // tabs, so a tab step never shows underneath a leftover modal.
-          if (router.canDismiss?.()) router.dismissAll();
+        if (s.tab) {
           router.navigate(`/(tabs)/${s.tab === 'index' ? '' : s.tab}` as never);
         }
       } catch {
-        // Best-effort: if a target isn't reachable yet, the step's explanation
-        // still shows over the current screen.
+        // Best-effort; the step still explains over the current screen.
       }
     },
     [router]
   );
 
-  // Reset to the first step + fire analytics once per open.
-  useEffect(() => {
-    if (visible) {
-      onStepChange(0);
-      analytics.capture('tutorial_started', { source, kind: 'guided' });
-    }
-    // `source`/`onStepChange` are stable within an open.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  // Drive navigation whenever the visible step changes.
+  // Drive navigation when the visible step changes (after setup completes).
   const lastNavigated = useRef<string | null>(null);
   useEffect(() => {
-    if (!visible || !step) return;
+    if (!visible || !ready || !step) return;
     if (lastNavigated.current === step.key) return;
     lastNavigated.current = step.key;
     navigateForStep(step);
-  }, [visible, step, navigateForStep]);
+  }, [visible, ready, step, navigateForStep]);
 
   const isLast = index >= TUTORIAL_STEPS.length - 1;
   const isFirst = index === 0;
 
-  // Create a demo career (2026 mega draft) and open its draft so the draft
-  // board shows real franchises + the player pool. No-op if a career exists.
-  const ensureCareer = useCallback(async () => {
-    let careerId = activeCareerId;
-    if (!careerId) {
-      const team = 'Mumbai Mavericks';
-      const career = await createCareer({
-        name: `${team} Career`,
-        user_team_name: team,
-        difficulty: 'medium',
-        draft_pool_type: 'current', // 2026 rosters + mega draft
-      });
-      careerId = career.id;
-      setActiveCareerId(career.id);
-    }
-    try {
-      if (careerId) setPayload(await seasonApi.startDraft(careerId));
-    } catch {
-      // Draft may already be started/finished — fine, the board still renders.
-    }
-  }, [activeCareerId, createCareer, setActiveCareerId, setPayload]);
-
-  // Finish the draft so the Squad / Starting XI / Season screens that follow
-  // have a full 25-man roster and an open season. No-op once past the draft.
-  const inDraft = payload?.phase === 'draft';
-  const fillSquad = useCallback(async () => {
-    const careerId = activeCareerId;
-    if (!careerId) return;
-    try {
-      if (inDraft) {
-        setPayload(await seasonApi.autodraft(careerId, 'all'));
-      } else {
-        await refresh();
-      }
-    } catch {
-      // Best-effort; the squad step still renders whatever state exists.
-    }
-  }, [activeCareerId, inDraft, refresh, setPayload]);
-
-  const goNext = useCallback(async () => {
-    if (busy) return;
+  const goNext = useCallback(() => {
+    if (preparing) return;
     if (isLast) {
-      analytics.capture('tutorial_completed', { steps: TUTORIAL_STEPS.length, kind: 'guided' });
-      onDone();
+      finish('completed');
       return;
     }
-    const next = TUTORIAL_STEPS[index + 1];
-    if (next?.ensureCareer || next?.fillSquad) {
-      setBusy(true);
-      if (next.ensureCareer) await ensureCareer();
-      if (next.fillSquad) await fillSquad();
-      setBusy(false);
-    }
     onStepChange(Math.min(index + 1, TUTORIAL_STEPS.length - 1));
-  }, [analytics, busy, ensureCareer, fillSquad, index, isLast, onDone, onStepChange]);
+  }, [finish, index, isLast, onStepChange, preparing]);
 
   const goBack = useCallback(() => onStepChange(Math.max(0, index - 1)), [index, onStepChange]);
 
-  const skip = useCallback(() => {
-    analytics.capture('tutorial_skipped', { step: index, kind: 'guided' });
-    onDone();
-  }, [analytics, index, onDone]);
-
   if (!visible || !step) return null;
 
-  // Compute the spotlight rectangle (a horizontal band) for this step.
+  // Compute the spotlight band. Content steps include the header so screen
+  // titles + sub-tab buttons are visible inside the highlight.
   const spotlight = step.spotlight ?? 'content';
   const tabTop = screenH - insets.bottom - TAB_BAR_BAND;
 
@@ -179,35 +191,47 @@ export function GuidedTour({
     spot = null;
     cardSide = 'bottom';
   } else if (spotlight === 'tabbar') {
-    // The whole tab bar, full height to the bottom edge.
     spot = { top: tabTop, height: screenH - tabTop };
     cardSide = 'top';
   } else if (spotlight === 'header') {
-    spot = { top: insets.top, height: HEADER_BAND };
+    spot = { top: 0, height: insets.top + HEADER_BAND };
     cardSide = 'bottom';
   } else {
-    // content: the ENTIRE main panel band between the header and the tab bar,
-    // so the highlighted area covers the full working area the step describes.
-    const top = insets.top + HEADER_BAND;
-    spot = { top, height: Math.max(160, tabTop - top) };
+    // content: from the very top (so the title + sub-tab row show) down to the
+    // tab bar — the full working area of the screen.
+    spot = { top: 0, height: tabTop };
     cardSide = 'bottom';
   }
 
+  // While preparing the demo career, show a centered spinner over the dim.
+  if (preparing || !ready) {
+    return (
+      <View style={[StyleSheet.absoluteFill, styles.prep, { backgroundColor: SCRIM }]} pointerEvents="auto">
+        <ActivityIndicator color={GOLD} size="large" />
+        <ThemedText style={styles.prepText}>Setting up your tour…</ThemedText>
+      </View>
+    );
+  }
+
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    // pointerEvents="auto" + full-bleed blockers = the app underneath is frozen;
+    // only the tour card's buttons are interactive.
+    <View style={StyleSheet.absoluteFill} pointerEvents="auto">
       {spot ? (
         <>
-          {/* Dim panels above and below the spotlight band. */}
-          <Pressable style={[styles.dim, { top: 0, height: spot.top }]} onPress={goNext} />
-          <Pressable style={[styles.dim, { top: spot.top + spot.height, bottom: 0 }]} onPress={goNext} />
-          {/* Bright ring around the spotlight so it reads as "look here". */}
+          <View style={[styles.dim, { top: 0, height: spot.top }]} />
+          <View style={[styles.dim, { top: spot.top + spot.height, bottom: 0 }]} />
+          {/* Side rails so taps beside a narrow spotlight are still blocked. */}
           <View
             pointerEvents="none"
             style={[styles.ring, { top: spot.top, height: spot.height, borderColor: GOLD }]}
           />
+          {/* Transparent blocker over the spotlight itself so the real buttons
+              under the highlight can't be tapped — the tour is read-only. */}
+          <Pressable style={[styles.block, { top: spot.top, height: spot.height }]} />
         </>
       ) : (
-        <Pressable style={[StyleSheet.absoluteFill, styles.dim]} onPress={goNext} />
+        <View style={[StyleSheet.absoluteFill, styles.dim]} />
       )}
 
       <View
@@ -224,7 +248,7 @@ export function GuidedTour({
             <ThemedText themeColor="textFaint" style={styles.counter}>
               {index + 1} / {TUTORIAL_STEPS.length}
             </ThemedText>
-            <Pressable onPress={skip} hitSlop={12}>
+            <Pressable onPress={() => finish('skipped')} hitSlop={12}>
               <ThemedText themeColor="textDim" style={styles.skip}>
                 Skip
               </ThemedText>
@@ -252,7 +276,7 @@ export function GuidedTour({
           <View style={styles.actions}>
             <Pressable
               onPress={goBack}
-              disabled={isFirst || busy}
+              disabled={isFirst}
               hitSlop={8}
               style={[styles.backBtn, isFirst && styles.backBtnHidden]}>
               <ThemedText themeColor="textDim" style={styles.backText}>
@@ -261,14 +285,8 @@ export function GuidedTour({
             </Pressable>
             <Pressable
               onPress={goNext}
-              disabled={busy}
-              style={({ pressed }) => [
-                styles.cta,
-                { backgroundColor: theme.green, opacity: pressed || busy ? 0.85 : 1 },
-              ]}>
-              <ThemedText style={styles.ctaText}>
-                {busy ? 'Setting up…' : isLast ? 'Finish' : 'Next'}
-              </ThemedText>
+              style={({ pressed }) => [styles.cta, { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 }]}>
+              <ThemedText style={styles.ctaText}>{isLast ? 'Finish' : 'Next'}</ThemedText>
             </Pressable>
           </View>
         </View>
@@ -278,11 +296,26 @@ export function GuidedTour({
 }
 
 const styles = StyleSheet.create({
+  prep: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+  },
+  prepText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
   dim: {
     position: 'absolute',
     left: 0,
     right: 0,
     backgroundColor: SCRIM,
+  },
+  block: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    // Transparent: lets the highlighted UI show but swallows taps.
   },
   ring: {
     position: 'absolute',
