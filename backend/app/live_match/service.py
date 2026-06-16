@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import pickle
 import uuid
 
@@ -8,8 +10,22 @@ from cricket_sim_engine.sim.league_state import LeagueState
 
 from app.careers import service as careers_service
 from app.careers.service import CareerNotFoundError
+from app.core.config import settings
 
 LIVE_STATE_TTL_SECONDS = 24 * 60 * 60
+
+# The live-match cache holds an in-progress LiveMatch, whose full ball-by-ball
+# state LeagueState.to_dict() intentionally omits, so we serialise it with
+# pickle. To make unpickling safe even if the Redis store is tampered with, each
+# blob is prefixed with an HMAC-SHA256 signature keyed on JWT_SECRET; we refuse
+# to unpickle any blob whose signature doesn't verify. This closes the
+# "deserialization of untrusted data" risk: only blobs this process wrote (with
+# the secret) are ever loaded.
+_SIG_LEN = 32  # HMAC-SHA256 digest size in bytes
+
+
+def _sign(blob: bytes) -> bytes:
+    return hmac.new(settings.jwt_secret.encode(), blob, hashlib.sha256).digest()
 
 
 class LiveMatchError(Exception):
@@ -25,14 +41,20 @@ def _redis_key(career_id: uuid.UUID) -> str:
 
 
 async def load_cached_state(redis: Redis, career_id: uuid.UUID) -> LeagueState | None:
-    blob = await redis.get(_redis_key(career_id))
-    if blob is None:
+    signed = await redis.get(_redis_key(career_id))
+    if signed is None:
         return None
-    return pickle.loads(blob)
+    signature, blob = signed[:_SIG_LEN], signed[_SIG_LEN:]
+    # Only unpickle blobs we wrote (signature verifies against JWT_SECRET).
+    # A tampered/forged blob is treated as no cached state, not deserialised.
+    if not hmac.compare_digest(signature, _sign(blob)):
+        return None
+    return pickle.loads(blob)  # nosec B301 - integrity verified by HMAC above
 
 
 async def _save_live_state(redis: Redis, career_id: uuid.UUID, league: LeagueState) -> None:
-    await redis.set(_redis_key(career_id), pickle.dumps(league), ex=LIVE_STATE_TTL_SECONDS)
+    blob = pickle.dumps(league)
+    await redis.set(_redis_key(career_id), _sign(blob) + blob, ex=LIVE_STATE_TTL_SECONDS)
 
 
 async def _clear_live_state(redis: Redis, career_id: uuid.UUID) -> None:

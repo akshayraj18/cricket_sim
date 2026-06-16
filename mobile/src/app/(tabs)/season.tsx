@@ -170,7 +170,6 @@ function SeasonOverview({
   onBeginMatch: () => Promise<void>;
   onViewScorecard: (card: MatchCard) => void;
 }) {
-  const theme = useTheme();
   const { showError } = useError();
   const [tab, setTab] = useState<'fixtures' | 'standings' | 'recent'>('fixtures');
   const [error, setError] = useState<string | null>(null);
@@ -285,7 +284,6 @@ function FixturesPanel({
   payload: LeaguePayload;
   onViewScorecard: (card: MatchCard) => void;
 }) {
-  const theme = useTheme();
   const scheme = useColorScheme();
   const [week, setWeek] = useState(payload.round || 1);
   const [teamFilter, setTeamFilter] = useState('All Teams');
@@ -374,7 +372,6 @@ function FixtureCard({
   pair: ScheduleFixture;
   onViewScorecard: (card: MatchCard) => void;
 }) {
-  const theme = useTheme();
   const [a, b] = pair;
   const ta = payload.teams.find((t) => t.name === a);
   const tb = payload.teams.find((t) => t.name === b);

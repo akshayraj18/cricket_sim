@@ -25,13 +25,13 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY packages/sim_engine/pyproject.toml packages/sim_engine/pyproject.toml
 COPY backend/pyproject.toml backend/pyproject.toml
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-workspace --package cricket-sim-backend
 
 # 2) Copy the source and install the workspace packages themselves.
 COPY packages/sim_engine ./packages/sim_engine
 COPY backend ./backend
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --package cricket-sim-backend
 
 # Run migrations + start the server from the backend dir (where alembic.ini lives).

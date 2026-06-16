@@ -6,8 +6,8 @@ its signature against Apple's published JWKS and check standard claims
 (issuer, audience, expiry). The verified `sub` claim is Apple's stable,
 per-user-per-app identifier — used as `users.apple_sub`.
 """
-from jose import jwt
-from jose.exceptions import JWTError
+import jwt
+from jwt import PyJWK, PyJWTError
 
 from app.auth.jwks import find_key, get_jwks
 from app.core.config import settings
@@ -26,7 +26,7 @@ class AppleIdentity:
 async def verify_apple_identity_token(identity_token: str) -> AppleIdentity:
     try:
         header = jwt.get_unverified_header(identity_token)
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise AppleTokenError("Malformed identity token") from exc
 
     jwks = await get_jwks(settings.apple_jwks_url)
@@ -37,7 +37,7 @@ async def verify_apple_identity_token(identity_token: str) -> AppleIdentity:
     try:
         claims = jwt.decode(
             identity_token,
-            key,
+            PyJWK.from_dict(key).key,
             # Pin the algorithm instead of trusting the token's `alg` header,
             # which otherwise allows "none"/HMAC downgrade forgery. Apple signs
             # identity tokens with RS256.
@@ -45,7 +45,7 @@ async def verify_apple_identity_token(identity_token: str) -> AppleIdentity:
             issuer=settings.apple_issuer,
             options={"verify_aud": False},
         )
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise AppleTokenError(f"Apple identity token verification failed: {exc}") from exc
 
     aud = claims.get("aud")

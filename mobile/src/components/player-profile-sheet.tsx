@@ -6,7 +6,6 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 function Stat({ label, value }: { label: string; value: string | number }) {
-  const theme = useTheme();
   return (
     <View style={styles.stat}>
       <ThemedText themeColor="textDim" style={styles.statLabel}>

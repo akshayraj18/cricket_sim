@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { getContrastText, Radius, Spacing } from '@/constants/theme';
+import { getContrastText, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export function SegmentedControl<T extends string>({

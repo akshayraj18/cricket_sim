@@ -6,8 +6,8 @@ verify its signature against Google's published JWKS and check standard
 claims. The verified `sub` claim is Google's stable per-user identifier —
 used as `users.google_sub`.
 """
-from jose import jwt
-from jose.exceptions import JWTError
+import jwt
+from jwt import PyJWK, PyJWTError
 
 from app.auth.jwks import find_key, get_jwks
 from app.core.config import settings
@@ -26,7 +26,7 @@ class GoogleIdentity:
 async def verify_google_id_token(id_token: str) -> GoogleIdentity:
     try:
         header = jwt.get_unverified_header(id_token)
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise GoogleTokenError("Malformed identity token") from exc
 
     jwks = await get_jwks(settings.google_jwks_url)
@@ -37,18 +37,16 @@ async def verify_google_id_token(id_token: str) -> GoogleIdentity:
     try:
         claims = jwt.decode(
             id_token,
-            key,
+            PyJWK.from_dict(key).key,
             # Pin the accepted algorithms instead of trusting the token's own
             # `alg` header — otherwise an attacker could downgrade to "none" or
             # an HMAC alg and forge a token. Google signs ID tokens with RS256.
             algorithms=["RS256"],
-            # We verify aud/iss ourselves below. `at_hash` binds the ID token to
-            # an OAuth access_token we don't receive (the app sends only the ID
-            # token), so skip it — the RS256 signature already guarantees the
-            # token's integrity.
-            options={"verify_aud": False, "verify_at_hash": False},
+            # We verify aud/iss ourselves below. (PyJWT doesn't check at_hash; the
+            # RS256 signature already guarantees the token's integrity.)
+            options={"verify_aud": False},
         )
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise GoogleTokenError(f"Google identity token verification failed: {exc}") from exc
 
     if claims.get("iss") not in settings.google_issuers:
