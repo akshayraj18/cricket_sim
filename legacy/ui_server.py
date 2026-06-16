@@ -62,6 +62,10 @@ class Handler(BaseHTTPRequestHandler):
         with open(full_path, "rb") as handle:
             data = handle.read()
         content_type = mimetypes.guess_type(full_path)[0] or "application/octet-stream"
+        # `content_type` is derived from the file extension, but guard against
+        # any CRLF sneaking into a response header (HTTP response splitting).
+        if "\r" in content_type or "\n" in content_type:
+            content_type = "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
