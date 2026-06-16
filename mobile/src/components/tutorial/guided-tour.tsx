@@ -77,8 +77,13 @@ export function GuidedTour({
       draft_pool_type: 'current', // 2026 rosters + mega draft
     });
     demoCareerId.current = career.id;
+    // Start the draft on the server BEFORE making this the active career, so the
+    // LeagueProvider's activeCareerId-change refetch sees started=true. (If we
+    // set active first, that refetch can race ahead and clobber our payload with
+    // the pre-start setup state — which showed the "Start Draft" screen.)
+    const started = await seasonApi.startDraft(career.id); // board live, user on the clock
     setActiveCareerId(career.id);
-    setPayload(await seasonApi.startDraft(career.id)); // board live, user on the clock
+    setPayload(started);
     return career.id;
   }, [createCareer, setActiveCareerId, setPayload]);
 
