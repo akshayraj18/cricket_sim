@@ -9,7 +9,6 @@
     "scheme": "cric-sim",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.akshraj.cric",
       "usesAppleSignIn": true,
       "infoPlist": {

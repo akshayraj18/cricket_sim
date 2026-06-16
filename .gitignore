@@ -33,3 +33,6 @@ GoogleService-Info.plist
 
 # Local secrets (JWT secret, OAuth IDs) — never commit
 secrets/
+
+# App Store marketing screenshots (raw device captures — not source)
+cricsimpics/
