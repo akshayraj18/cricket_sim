@@ -14,7 +14,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 - **Saved presets ("11+1" model)** — set a Starting XI and one Impact Sub, plus a default batting order and 20-over bowling plan, that auto-apply every match. The captain, vice-captain, and designated wicketkeeper are locked into the Starting XI and can't be subbed out.
 
 ### Season Structure
-- **14-round league stage** — 5 matches per round across all 10 teams. Simulate any round instantly or play your match live.
+- **14-round league stage** — 5 matches per round across all 10 teams. The schedule guarantees every team plays each of the other 9 at least once, with 5 repeat fixtures, and no pair ever meets more than twice. Simulate any round instantly or play your match live.
 - **Points table and NRR** — live standings updated after every result.
 - **Modern playoff bracket** — top 4 qualify. Qualifier 1, Eliminator, Qualifier 2, Final. Play your matches or quick-sim any you're not in.
 - **Season history** — champion, runner-up, season MVP, final standings, and top batting/bowling tables archived every season.
@@ -23,7 +23,7 @@ Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI
 - **Over-by-over interactive play** — play a full over, a single ball, or play until a wicket falls.
 - **Toss** — if you win the toss, choose bat or bowl; otherwise the CPU decides.
 - **Lineup selection** — pick your XI from your 21-player squad (max 4 overseas), set batting order, assign a bowler per over or use your saved plan.
-- **Smart batting order** — XIs are auto-arranged by best fit per slot (factoring in each player's natural batting position and phase rating, with tail-enders seated last), grouped into Openers / Middle Order / Death Overs / Tail zones across the draft, squad, and lineup screens.
+- **Smart batting order** — XIs are auto-arranged by best fit per slot (factoring in each player's natural batting position and phase rating, with tail-enders seated last), grouped into Openers / Middle Order / Death Overs / Tail zones across the draft, squad, and lineup screens. The same smart order the squad screen shows is what a quick-sim plays and the match-hub lineup pre-fills — no need to save presets first.
 - **Aggression sliders** — set per-batter and per-bowler aggression (1–5) live during the match.
 - **Impact Player rule** — one substitution per innings, any time before the 15th over of the second innings. Swap in a specialist bowler when defending or an extra hitter when chasing.
 - **Next-batter selection** — after a wicket, choose who comes in next.
@@ -42,19 +42,32 @@ Leaderboards: Orange Cap, Purple Cap, sixes, fours, boundaries, highest score, s
 - **Regen prospects** — ~30 young domestic/overseas players are generated and added to the pool before each new draft.
 - **Save/load** — full career state (including in-progress matches) is saved to named slots under `saves/`.
 
+### Onboarding
+- **Guided spotlight tour** — a first-run walkthrough that drives the real app: it moves tab to tab, dims the screen, and spotlights the area each step describes (Home → Squad → Season → Match Centre → Stats → History). Replayable any time from the account menu's "How to Play".
+
+### Legal
+- **Hosted Terms of Service & Privacy Policy** — served by the backend at `/legal/terms` and `/legal/privacy` (standalone HTML), and linked in-app from the sign-in screen and account sheet. These double as the public policy URLs required by the App Store / Play Store.
+
 ## Requirements
 
 - Python 3.12+
 - [uv](https://github.com/astral-sh/uv) (package manager)
+- Node ≥ 20.19.4 (for the mobile app)
 
 ## Setup
 
-```bash
-# Install dependencies
-make install
+The primary stack is the **Expo mobile app + FastAPI backend**. To run it locally:
 
-# Start the legacy web server
-make run
+```bash
+make install                                                  # Python deps
+make backend-up && make backend-migrate && make backend-run   # Postgres + Redis + API on :8000
+make mobile-install && make mobile                            # Metro + dev client on :8081
+```
+
+The original browser frontend is kept for quick validation without the mobile toolchain:
+
+```bash
+make run   # legacy stdlib web server
 ```
 
 Then open [http://localhost:8765](http://localhost:8765) in your browser.
@@ -87,14 +100,15 @@ packages/sim_engine/         — cricket_sim_engine: the core simulation engine 
       constants.py            — seed data, squad sizes, team branding
     engine.py                 — per-ball outcome sampler (batting/bowling matchup model)
     models.py                 — Player and Team data classes, progression logic
-    players_data.py           — loads players.csv / players_alltime.csv into Player objects, IPL 2026 rosters
+    players_data.py           — loads players.csv / players_alltime.csv into Player objects, T20 2026 rosters
     players.csv, players_alltime.csv
 
 backend/                      — FastAPI service (Postgres + Redis) — see backend section below
   app/
     main.py                   — FastAPI app entrypoint
     db/                        — SQLAlchemy models, session
-    auth/, careers/, live_match/, subscriptions/  — route modules (in progress)
+    auth/, careers/, live_match/, season/  — route modules
+    legal/                     — public Terms / Privacy HTML pages (/legal/*)
   alembic/                    — DB migrations
   docker-compose.yml          — local Postgres + Redis
 
@@ -179,6 +193,14 @@ variables** panel; do **not** commit them):
 | `CORS_ALLOW_ORIGINS` | An explicit, comma-separated allowlist of web origins (not `*`). Only matters for browser callers — the native app sends no Origin. |
 | `DATABASE_URL` / `REDIS_URL` | Your managed Postgres / Redis connection strings. |
 | `SENTRY_DSN` | (optional) Your Sentry project DSN for crash reporting. |
+
+**Legal pages.** The Terms of Service and Privacy Policy are served by the backend at
+`/legal/terms` and `/legal/privacy`; edit their text in `backend/app/legal/content.py`
+(the `APP_NAME` / `CONTACT_EMAIL` / `GOVERNING_LAW` constants and the section lists).
+The mobile app links to `${API_URL}/legal/*` by default; to host the policies on a
+separate marketing domain instead, set `EXPO_PUBLIC_TERMS_URL` / `EXPO_PUBLIC_PRIVACY_URL`
+in the app build. App Store / Play Store submissions need both to resolve on a stable
+public URL.
 
 **About the JWT secret.** It signs the login tokens — anyone who knows it can forge a
 session for any user, so treat it like a master password.

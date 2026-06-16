@@ -1,5 +1,5 @@
 # models.py
-"""Domain model for the IPL franchise sim: individual players and teams.
+"""Domain model for the Cricket franchise sim: individual players and teams.
 
 `Player` tracks a cricketer's static attributes (role, ratings, batting/
 bowling profile) plus dynamic state (form, current-match intent, season
@@ -68,7 +68,7 @@ DEFAULT_BATTING_POSITION_BY_ROLE = {
 
 
 def derive_preferred_position(role, batting_archetype, batting_ovr=None, bowling_ovr=None):
-    """Estimate where a player naturally bats (1-11), from real-world IPL position tendencies for their role/archetype.
+    """Estimate where a player naturally bats (1-11), from real-world Cricket position tendencies for their role/archetype.
 
     Looks up the (role, archetype) pair in `ARCHETYPE_BATTING_POSITION` (built
     from 2021-2025 ball-by-ball IPL data) and rounds its mean position to the
@@ -263,7 +263,7 @@ class Player:
 
 
 class Team:
-    """An IPL franchise: roster, leadership, season results, and saved UI preferences.
+    """A Cricket franchise: roster, leadership, season results, and saved UI preferences.
 
     The `saved_*` fields cache the user's last lineup, batting/bowling order,
     keeper choice, and impact-sub plan so the web UI can offer to carry them

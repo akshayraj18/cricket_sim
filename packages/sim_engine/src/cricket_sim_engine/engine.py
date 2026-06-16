@@ -1,5 +1,5 @@
 # engine.py
-"""Ball-by-ball outcome simulation for the IPL franchise sim.
+"""Ball-by-ball outcome simulation for the Cricket franchise sim.
 
 `MatchEngine` is a stateless-per-ball probability model: given a batter and
 a bowler, it adjusts a baseline outcome distribution by skill gap, match

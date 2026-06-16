@@ -18,10 +18,10 @@ IPL_TEAMS_LIST = [
     "Delhi Dynamos", "Gujarat Gladiators", "Lucknow Lions", "Punjab Panthers"
 ]
 
-# Real-world IPL 2026 squads (post-auction), keyed by franchise name and
+# Real-world Cricket 2026 squads (post-auction), keyed by franchise name and
 # listing each squad's retained players plus 2026-auction signings, by the
 # exact `name` used in players.csv. Any player in players.csv NOT listed on
-# one of these rosters is considered off an IPL roster for 2026 and is
+# one of these rosters is considered off a 2026 roster and is
 # carried over into the free-agent pool for the next draft.
 IPL_2026_ROSTERS = {
     "Bengaluru Bulls": [
