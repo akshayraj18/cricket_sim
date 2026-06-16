@@ -30,3 +30,6 @@ GoogleService-Info.plist
 .claude/
 **/.vscode/
 **/.claude/
+
+# Local secrets (JWT secret, OAuth IDs) — never commit
+secrets/

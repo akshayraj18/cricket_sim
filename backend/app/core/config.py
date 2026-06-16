@@ -61,6 +61,23 @@ class Settings(BaseSettings):
     environment: str = "development"
     sentry_traces_sample_rate: float = 0.0
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalize_async_dsn(cls, v):
+        """Force the async psycopg/asyncpg driver on the DSN.
+
+        Managed hosts (Railway, Render, Heroku) expose the Postgres URL as
+        `postgres://` or `postgresql://`, but SQLAlchemy's async engine needs the
+        `postgresql+asyncpg://` driver prefix. Rewrite it so the deploy can use
+        the host-provided DATABASE_URL verbatim.
+        """
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                v = "postgresql+asyncpg://" + v[len("postgres://"):]
+            elif v.startswith("postgresql://"):
+                v = "postgresql+asyncpg://" + v[len("postgresql://"):]
+        return v
+
     @field_validator("cors_allow_origins", mode="before")
     @classmethod
     def _split_csv(cls, v):
