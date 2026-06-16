@@ -81,4 +81,4 @@ We may update these Terms from time to time. We will update the "Last updated" d
 ## 15. Contact
 
 Questions about these Terms:
-**Email: aksh.raj@gmail.com**
+**Email: cricketfranchisesim@gmail.com**

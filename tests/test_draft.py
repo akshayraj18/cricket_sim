@@ -61,7 +61,7 @@ def test_no_player_drafted_twice(drafted):
 def test_overseas_limit_not_exceeded_in_any_squad(drafted):
     for team in drafted.teams:
         overseas = sum(1 for p in team.roster if p.is_overseas)
-        assert overseas <= 8, f"{team.name} drafted an unrealistic {overseas} overseas players"
+        assert overseas <= MAX_OVERSEAS_SQUAD, f"{team.name} drafted {overseas} overseas (cap {MAX_OVERSEAS_SQUAD})"
 
 
 def test_new_league_with_rosters_skips_draft_and_assigns_real_squads():

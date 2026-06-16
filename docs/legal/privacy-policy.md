@@ -6,7 +6,7 @@ This Privacy Policy explains how the Cric Sim mobile game ("Cric Sim," the "App,
 
 Cric Sim is a fictional cricket-management simulation game. It is **not affiliated with, endorsed by, or associated with** the BCCI, the IPL, the ICC, any cricket franchise, or any professional cricketer. All team names, player names, logos, and colors in the App are fictional.
 
-**Contact:** For any privacy questions or requests, email **aksh.raj@gmail.com**.
+**Contact:** For any privacy questions or requests, email **cricketfranchisesim@gmail.com**.
 
 ---
 
@@ -67,7 +67,7 @@ We keep your account and game data for as long as your account exists. If you de
 
 ## 7. Your rights
 
-Depending on where you live, you may have the right to access, correct, export, or delete your personal data, and to object to or restrict certain processing. To exercise these rights, contact **aksh.raj@gmail.com**. Note that much of your account can be managed directly in the App.
+Depending on where you live, you may have the right to access, correct, export, or delete your personal data, and to object to or restrict certain processing. To exercise these rights, contact **cricketfranchisesim@gmail.com**. Note that much of your account can be managed directly in the App.
 
 ## 8. Deleting your account and data
 
@@ -92,4 +92,4 @@ We may update this Privacy Policy from time to time. We will update the "Last up
 ## 13. Contact us
 
 Questions or requests about this policy or your data:
-**Email: aksh.raj@gmail.com**
+**Email: cricketfranchisesim@gmail.com**

@@ -14,6 +14,7 @@ from http.server import ThreadingHTTPServer
 
 import pytest
 
+from cricket_sim_engine.sim.constants import SQUAD_SIZE
 from legacy import ui_server
 
 from .conftest import USER_TEAM, drafted_league, fresh_league
@@ -168,7 +169,7 @@ def test_post_start_draft_then_autodraft_all_completes_draft(server):
     assert status == 200
     assert data["phase"] == "season"
     user_team = next(t for t in data["teams"] if t["name"] == USER_TEAM)
-    assert len(user_team["roster"]) == 21
+    assert len(user_team["roster"]) == SQUAD_SIZE
 
 
 def test_post_draft_user_pick(server):
