@@ -52,7 +52,7 @@ export default function HomeScreen() {
         <View style={styles.appbar}>
           <View style={styles.wordmark}>
             <ThemedText style={styles.mark}>🏏</ThemedText>
-            <ThemedText style={styles.wordmarkText}>Franchise Sim</ThemedText>
+            <ThemedText style={styles.wordmarkText}>CricSim</ThemedText>
           </View>
           <Pressable
             onPress={() => setAccountVisible(true)}

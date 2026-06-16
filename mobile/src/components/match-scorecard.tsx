@@ -56,7 +56,7 @@ export function MatchScorecard({
           {card.venue ? `${card.venue} · ` : ''}Toss: {card.toss}
         </ThemedText>
         <ThemedText style={[styles.scoreboardLine, { color: scoreboardText }]}>
-          {teamAbbr(card.winner)} won {card.margin}
+          {teamAbbr(card.winner)} {card.margin}
         </ThemedText>
         {card.motm ? (
           <ThemedText style={[styles.scoreboardMessage, { color: scoreboardText }]}>
