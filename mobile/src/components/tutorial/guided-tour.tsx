@@ -62,12 +62,21 @@ export function GuidedTour({
   // the tour, restored on exit; `demoCareerId` is the throwaway we delete.
   const priorCareerId = useRef<string | null>(null);
   const demoCareerId = useRef<string | null>(null);
+  // Once the demo is autodrafted, the draft step is "consumed": we skip it in
+  // both directions (Back from squad -> the pre-draft step; Next toward squad
+  // -> straight to squad), since the one-way autodraft can't show a live board
+  // again.
+  const draftConsumed = useRef(false);
   const [preparing, setPreparing] = useState(false);
   const [ready, setReady] = useState(false);
 
   const index = stepIndex;
   const step: TutorialStep | undefined = TUTORIAL_STEPS[index];
   const draftStepIndex = TUTORIAL_STEPS.findIndex((s) => s.key === 'draft');
+  const squadStepIndex = TUTORIAL_STEPS.findIndex((s) => s.key === 'squad');
+  // Step the squad step's Back jumps to: the last step before the draft (so we
+  // never try to reverse the one-way autodraft back into a live draft board).
+  const preDraftStepIndex = Math.max(0, draftStepIndex - 1);
 
   const createDraftDemo = useCallback(async (): Promise<string | null> => {
     const career = await createCareer({
@@ -87,42 +96,24 @@ export function GuidedTour({
     return career.id;
   }, [createCareer, setActiveCareerId, setPayload]);
 
-  // The tour walks across the draft -> season boundary, and autodrafting is
-  // one-way on the server. To keep Back/Next idempotent, we drive the demo
-  // career's server state to match the TARGET step every time it changes:
-  //  - steps at/before the draft step want a LIVE draft (draft phase, started),
-  //    re-creating a fresh draft demo if we'd already autodrafted past it;
-  //  - steps after the draft step want an autodrafted, in-season squad.
-  const syncDemoForStep = useCallback(
-    async (targetIndex: number) => {
-      const wantLiveDraft = targetIndex <= draftStepIndex;
-      let careerId = demoCareerId.current;
-      try {
-        if (!careerId) {
-          await createDraftDemo();
-          careerId = demoCareerId.current;
-        }
-        if (!careerId) return;
-        const current = await seasonApi.getPayload(careerId);
-        const isDraft = current.phase === 'draft';
-        if (wantLiveDraft && !isDraft) {
-          // Already autodrafted but the user went BACK to the draft step: throw
-          // this demo away and spin up a fresh live draft to show.
-          const stale = careerId;
-          await createDraftDemo();
-          if (stale) deleteCareer(stale).catch(() => {});
-        } else if (!wantLiveDraft && isDraft) {
-          // Moving past the draft: autodraft to a full, in-season squad.
-          setPayload(await seasonApi.autodraft(careerId, 'all'));
-        } else {
-          setPayload(current); // already in the right phase
-        }
-      } catch {
-        // Best-effort; the step still renders whatever state exists.
+  // Autodraft the demo to a full, in-season squad so the squad/season/stats
+  // steps have real data. One-way: once drafted we don't go back to the board
+  // (the squad step's Back skips over the draft step — see goBack).
+  const fillSquad = useCallback(async () => {
+    const careerId = demoCareerId.current;
+    if (!careerId) return;
+    try {
+      const current = await seasonApi.getPayload(careerId);
+      if (current.phase === 'draft') {
+        setPayload(await seasonApi.autodraft(careerId, 'all'));
+      } else {
+        setPayload(current);
       }
-    },
-    [createDraftDemo, deleteCareer, draftStepIndex, setPayload]
-  );
+      draftConsumed.current = true;
+    } catch {
+      // Best-effort; the squad step still renders whatever state exists.
+    }
+  }, [setPayload]);
 
   // On open: build the demo career and OPEN ITS DRAFT (but don't autodraft yet),
   // so the draft step can show the real draft board.
@@ -138,6 +129,7 @@ export function GuidedTour({
       onStepChange(0);
       analytics.capture('tutorial_started', { source, kind: 'guided' });
       priorCareerId.current = activeCareerId;
+      draftConsumed.current = false;
       try {
         // Open the demo in a live draft so the Mega Draft step shows the board.
         await createDraftDemo();
@@ -211,35 +203,39 @@ export function GuidedTour({
   const isLast = index >= TUTORIAL_STEPS.length - 1;
   const isFirst = index === 0;
 
-  // Move to `targetIndex`, syncing the demo career's server state to it first.
-  // Only the draft<->season crossing does real (slow) work, so we show the
-  // spinner just for that.
-  const goTo = useCallback(
-    async (targetIndex: number) => {
-      if (preparing) return;
-      const clamped = Math.max(0, Math.min(targetIndex, TUTORIAL_STEPS.length - 1));
-      const crossesDraftBoundary =
-        index <= draftStepIndex !== clamped <= draftStepIndex;
-      if (crossesDraftBoundary) {
-        setPreparing(true);
-        await syncDemoForStep(clamped);
-        setPreparing(false);
-      }
-      onStepChange(clamped);
-    },
-    [draftStepIndex, index, onStepChange, preparing, syncDemoForStep]
-  );
-
-  const goNext = useCallback(() => {
+  const goNext = useCallback(async () => {
     if (preparing) return;
     if (isLast) {
       finish('completed');
       return;
     }
-    goTo(index + 1);
-  }, [finish, goTo, index, isLast, preparing]);
+    let target = index + 1;
+    // The draft is one-way: once autodrafted, the draft step can't show a live
+    // board again, so skip it. Moving onto the (now-consumed) draft step jumps
+    // straight to the squad step instead.
+    if (target === draftStepIndex && draftConsumed.current) {
+      target = squadStepIndex;
+    }
+    if (target === squadStepIndex && !draftConsumed.current) {
+      // First time onto the squad step: autodraft so it has a full roster.
+      setPreparing(true);
+      await fillSquad();
+      setPreparing(false);
+    }
+    onStepChange(target);
+  }, [draftStepIndex, fillSquad, finish, index, isLast, onStepChange, preparing, squadStepIndex]);
 
-  const goBack = useCallback(() => goTo(index - 1), [goTo, index]);
+  const goBack = useCallback(() => {
+    if (preparing) return;
+    let target = index - 1;
+    // Once the draft is consumed it can't be shown live again, so Back across it
+    // skips the draft step — e.g. Back from the squad step lands on the
+    // pre-draft "Getting Around" step.
+    if (target === draftStepIndex && draftConsumed.current) {
+      target = preDraftStepIndex;
+    }
+    onStepChange(Math.max(0, target));
+  }, [draftStepIndex, index, onStepChange, preDraftStepIndex, preparing]);
 
   if (!visible || !step) return null;
 
