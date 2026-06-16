@@ -21,7 +21,7 @@ from cricket_sim_engine.sim.constants import (
     INDIAN_LAST_NAMES,
     OVERSEAS_FIRST_NAMES,
     OVERSEAS_LAST_NAMES,
-    TEAM_META,
+    team_meta,
 )
 from cricket_sim_engine.sim.helpers import (
     batting_slot_player,
@@ -1577,13 +1577,8 @@ class LeagueState:
     def team_dict(self, team):
         """Serialise a franchise into the JSON dict the frontend uses for standings, squad, and lineup-planning views: branding, season record/NRR, leadership, saved/suggested lineups and orders, the Starting XI + Impact Sub, and the full roster (best-rated first)."""
         # A user-renamed team keeps its original branding (abbr/colors) via
-        # `meta_name`; fall back to a neutral default for an unknown name.
-        meta_key = getattr(team, "meta_name", team.name)
-        meta = TEAM_META.get(meta_key) or TEAM_META.get(team.name) or {
-            "abbr": team.name[:3].upper(),
-            "primary": "#3a3f4b",
-            "accent": "#9aa0a6",
-        }
+        # `meta_name`; team_meta falls back to neutral defaults for a custom name.
+        meta = team_meta(team)
         saved_batting = list(getattr(team, "saved_batting_order_names", []))
         saved_bowling = list(getattr(team, "saved_bowling_over_names", []))
         roster_ready = len(team.roster) >= 11

@@ -8,7 +8,7 @@ super overs, impact substitutions, and the final scorecard payload.
 import random
 
 from cricket_sim_engine.engine import MatchEngine
-from cricket_sim_engine.sim.constants import TEAM_META
+from cricket_sim_engine.sim.constants import team_meta
 from cricket_sim_engine.sim.helpers import (
     ensure_stat_fields,
     innings_phase,
@@ -917,7 +917,7 @@ class LiveMatch:
             "stage": self.stage,
             "team1": self.team1.name,
             "team2": self.team2.name,
-            "venue": TEAM_META[self.team1.name]["home"],
+            "venue": team_meta(self.team1)["home"],
             "toss": f"{self.toss_winner.name} chose to {self.decision}",
             "winner": winner.name,
             "margin": margin,

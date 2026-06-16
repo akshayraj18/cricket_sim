@@ -49,3 +49,30 @@ TEAM_META = {
     "Lucknow Lions": {"abbr": "LKO", "home": "Awadh Cricket Ground", "primary": "#0f8a8a", "accent": "#f2a541"},
     "Punjab Panthers": {"abbr": "PUN", "home": "Five Rivers Stadium", "primary": "#5a3e8e", "accent": "#e8505b"},
 }
+
+# Neutral branding for a team whose name isn't a TEAM_META key (e.g. one the
+# user renamed to something custom and that hasn't kept its original key).
+_DEFAULT_TEAM_META = {
+    "abbr": "",
+    "home": "Cricket Stadium",
+    "primary": "#3a3f4b",
+    "accent": "#9aa0a6",
+}
+
+
+def team_meta(team):
+    """Branding/venue metadata for a Team, robust to user renames.
+
+    A renamed team keeps its original branding via `meta_name`; we look up by
+    that first, then the current name, and finally fall back to neutral
+    defaults (with the abbr derived from the name) so a custom name never
+    raises a KeyError anywhere in the engine.
+    """
+    name = getattr(team, "name", team) if not isinstance(team, str) else team
+    meta_name = getattr(team, "meta_name", None) if not isinstance(team, str) else None
+    meta = TEAM_META.get(meta_name) or TEAM_META.get(name)
+    if meta:
+        return meta
+    fallback = dict(_DEFAULT_TEAM_META)
+    fallback["abbr"] = str(name)[:3].upper()
+    return fallback

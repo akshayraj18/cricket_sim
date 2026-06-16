@@ -68,6 +68,27 @@ def test_rename_team_updates_pointer_and_objects():
     assert not any(t.name == "Mumbai Mavericks" for t in league.teams)
 
 
+def test_rename_team_keeps_branding_and_can_simulate():
+    """Regression: renaming a team to a name that isn't a TEAM_META key (e.g.
+    'Sunrisers Hyderabad') must keep its original branding and must NOT crash
+    when building the match card's venue (team_meta fallback, not TEAM_META[])."""
+    league = _drafted()
+    team = league.user_team()
+    original_meta = league.team_dict(team)["abbr"]
+
+    league.rename_team("Mumbai Mavericks", "Sunrisers Hyderabad")
+
+    team = league.user_team()
+    d = league.team_dict(team)
+    assert d["abbr"] == original_meta  # branding preserved via meta_name
+    assert d["primary"]  # colors present, no KeyError
+
+    # Simulating a round used to KeyError on TEAM_META[team.name] for the venue.
+    league.set_leadership(team.captain.name, team.vice_captain.name)
+    apply_smart_presets(league)
+    league.simulate_current_round()  # must not raise
+
+
 def test_rename_team_rejects_blank_and_duplicate():
     league = _drafted()
     other = next(t.name for t in league.teams if t.name != "Mumbai Mavericks")
