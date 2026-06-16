@@ -36,3 +36,7 @@ secrets/
 
 # App Store marketing screenshots (raw device captures — not source)
 cricsimpics/
+
+# Local planning / prep docs — keep out of git
+KNOWN_ISSUES.md
+APP_STORE_LISTING.md
