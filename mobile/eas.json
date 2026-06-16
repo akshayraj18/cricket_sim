@@ -15,14 +15,16 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://cricketsim-production.up.railway.app",
-        "EXPO_PUBLIC_SENTRY_DSN": "https://13ecce3d8a677ab5a9d4b8a3c4aafa7d@o4511559169146880.ingest.us.sentry.io/4511559175176192"
+        "EXPO_PUBLIC_SENTRY_DSN": "https://13ecce3d8a677ab5a9d4b8a3c4aafa7d@o4511559169146880.ingest.us.sentry.io/4511559175176192",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://cricketsim-production.up.railway.app",
-        "EXPO_PUBLIC_SENTRY_DSN": "https://13ecce3d8a677ab5a9d4b8a3c4aafa7d@o4511559169146880.ingest.us.sentry.io/4511559175176192"
+        "EXPO_PUBLIC_SENTRY_DSN": "https://13ecce3d8a677ab5a9d4b8a3c4aafa7d@o4511559169146880.ingest.us.sentry.io/4511559175176192",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
