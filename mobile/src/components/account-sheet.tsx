@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
 
+import * as WebBrowser from 'expo-web-browser';
+
 import { ThemedText } from '@/components/themed-text';
+import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -161,6 +164,16 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             onPress={handleHowToPlay}
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>How to Play</ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>Privacy Policy</ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>Terms &amp; Conditions</ThemedText>
           </Pressable>
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>

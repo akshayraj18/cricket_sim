@@ -54,3 +54,13 @@ export const GOOGLE_IOS_CLIENT_ID =
 export const POSTHOG_API_KEY =
   process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? 'phc_mUVAzBYQqHVXXdApccNhYQMjGJQukhUmaJDviG9o53Rp';
 export const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
+
+/**
+ * Public URLs for the legal documents, shown in the account sheet and required
+ * by the app stores. Set the real hosted URLs at deploy time via the
+ * EXPO_PUBLIC_*_URL env vars (e.g. a GitHub Pages or marketing-site page).
+ */
+export const PRIVACY_POLICY_URL =
+  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? 'https://akshayraj18.github.io/cricket_sim/privacy-policy';
+export const TERMS_URL =
+  process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://akshayraj18.github.io/cricket_sim/terms';

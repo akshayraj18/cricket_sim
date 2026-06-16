@@ -1,9 +1,11 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -121,6 +123,24 @@ export function SignInScreen() {
               <ThemedText themeColor="textFaint" style={styles.fineprint}>
                 Guest play is saved on this device — sign in with Apple or Google to keep your career across devices.
               </ThemedText>
+
+              <ThemedText themeColor="textFaint" style={styles.consent}>
+                By continuing you agree to our{' '}
+                <ThemedText
+                  themeColor="textDim"
+                  style={styles.consentLink}
+                  onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}>
+                  Terms
+                </ThemedText>{' '}
+                and{' '}
+                <ThemedText
+                  themeColor="textDim"
+                  style={styles.consentLink}
+                  onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}>
+                  Privacy Policy
+                </ThemedText>
+                .
+              </ThemedText>
             </>
           )}
         </View>
@@ -223,5 +243,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  consent: {
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginTop: Spacing.two,
+  },
+  consentLink: {
+    fontSize: 11,
+    textDecorationLine: 'underline',
   },
 });
