@@ -25,6 +25,47 @@ def test_simulating_all_14_rounds_reaches_league_complete(drafted):
         assert team.games_played == 14, f"{team.name} played {team.games_played} games"
 
 
+def test_schedule_meets_pairing_constraints(drafted):
+    """The 14-round schedule must: play every round as a perfect matching of
+    all 10 teams (so each team plays 14 games and appears once per round),
+    have every pair of teams meet at least once, and never schedule any pair
+    3+ times. Re-built many times since the schedule is randomised."""
+    from collections import Counter
+
+    league = drafted
+    team_names = {t.name for t in league.teams}
+    assert len(team_names) == 10
+
+    for _ in range(50):
+        schedule = league.build_schedule()
+        assert len(schedule) == 14
+
+        games = Counter()
+        pair_counts = Counter()
+        for round_ in schedule:
+            # perfect matching: 5 disjoint pairs covering all 10 teams
+            assert len(round_) == 5
+            in_round = [name for pair in round_ for name in pair]
+            assert sorted(in_round) == sorted(team_names), "round is not a perfect matching"
+            for a, b in round_:
+                games[a] += 1
+                games[b] += 1
+                pair_counts[frozenset((a, b))] += 1
+
+        assert all(v == 14 for v in games.values()), f"a team did not play 14 games: {games}"
+
+        all_pairs = {
+            frozenset((a, b))
+            for a in team_names
+            for b in team_names
+            if a < b
+        }
+        assert set(pair_counts) == all_pairs, "not every pair of teams meets"
+        assert max(pair_counts.values()) <= 2, "a pair was scheduled 3+ times"
+        # 9 single-RR rounds + 5 replayed rounds => exactly 25 second meetings.
+        assert sum(1 for v in pair_counts.values() if v == 2) == 25
+
+
 def test_standings_are_internally_consistent_after_a_season(drafted):
     league = drafted
     league.set_leadership(league.user_team().captain.name, league.user_team().vice_captain.name)

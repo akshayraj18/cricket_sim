@@ -666,7 +666,7 @@ async function refreshSavesPanel() {
       <div class="save-row">
         <div class="save-row-info">
           <strong>${esc(s.name)}</strong>
-          <small>${esc(s.team || "Unassigned")} · IPL ${esc(s.season)} · ${esc((s.phase || "").replace(/_/g, " "))} · ${new Date(s.updated_at * 1000).toLocaleString()}</small>
+          <small>${esc(s.team || "Unassigned")} · Season ${esc(s.season)} · ${esc((s.phase || "").replace(/_/g, " "))} · ${new Date(s.updated_at * 1000).toLocaleString()}</small>
         </div>
         <div class="save-row-actions">
           <button data-load="${esc(s.name)}">Load</button>
@@ -721,8 +721,8 @@ function render() {
     savesLoaded = false;
   }
   const displayYear = state?.season || 2026;
-  document.title = `IPL ${displayYear} Cricket Sim`;
-  if ($("titleHeading")) $("titleHeading").textContent = "IPL Franchise Universe";
+  document.title = `Cricket Franchise Sim ${displayYear}`;
+  if ($("titleHeading")) $("titleHeading").textContent = "Cricket Franchise Universe";
   if (!state || state.phase === "title") return;
   applyTeamTheme();
 
@@ -734,7 +734,7 @@ function render() {
   if (node) node.classList.remove("hidden");
 
   $("pageTitle").textContent = pageTitle();
-  $("controlRoomLabel").textContent = `IPL ${state.season} Control Room`;
+  $("controlRoomLabel").textContent = `Season ${state.season} Control Room`;
   $("statusText").textContent = state.status;
   renderSummary();
   renderGuide();
@@ -754,9 +754,9 @@ function pageTitle() {
   if (state.phase === "retention") return "Retention Window";
   if (state.live_match) return "Live Match Hub";
   if (state.phase === "league_complete") return "League Stage Complete";
-  if (state.phase === "playoffs") return "IPL Playoffs";
+  if (state.phase === "playoffs") return "Playoffs";
   if (state.phase === "season_end") return "Season Review";
-  return `IPL ${state.season}`;
+  return `Season ${state.season}`;
 }
 
 function renderSummary() {
@@ -840,7 +840,7 @@ function renderDraft() {
   const overseas = user.roster.filter(p => p.overseas).length;
   const indian = user.roster.length - overseas;
   $("draftStatus").innerHTML = state.phase === "draft" && !draftStarted
-    ? `<b>Mega Draft Setup</b><p>You selected ${esc(state.user_team)} as a blank franchise. The draft order is set, and you are drafting ${ordinalText(state.draft.user_pick_position || 0)} in a snake draft with premier IPL players.</p><button class="primary" onclick="startDraft()">Start Draft</button><small>Nothing has been picked yet. Once you start, CPU teams will draft until your first pick.</small>`
+    ? `<b>Mega Draft Setup</b><p>You selected ${esc(state.user_team)} as a blank franchise. The draft order is set, and you are drafting ${ordinalText(state.draft.user_pick_position || 0)} in a snake draft with premier cricket players.</p><button class="primary" onclick="startDraft()">Start Draft</button><small>Nothing has been picked yet. Once you start, CPU teams will draft until your first pick.</small>`
     : state.phase === "draft"
     ? `<b>${state.draft_type === "mega" ? "Mega Snake Draft" : "Reverse-Standings Draft"}</b><br>Round ${state.draft.round}, Pick ${state.draft.pick}<br>On the clock: ${esc(state.draft.current_team)}<div class="draft-clock ${draftTimer.paused ? "paused" : ""}"><span>${draftTimer.paused ? "Timer Paused" : formatClock(draftTimer.seconds)}</span><button onclick="toggleDraftTimer()">${draftTimer.paused ? "Start Timer" : "Pause Timer"}</button></div><div class="toolbar"><button onclick="autodraft('one')">Autodraft Pick</button><button class="danger" onclick="autodraft('all')">Autodraft Draft</button></div><small>Mode: ${(state.difficulty || "hard").toUpperCase()} · Roster: ${indian} Indian · ${overseas} Overseas. XI targets: batting XI minimum 7 batting options, bowling XI minimum 6 bowling options.</small>`
     : esc(state.status);
@@ -998,7 +998,7 @@ function fixtureCard(week, a, b) {
   if (result) {
     return `<button class="card scorecard-link" onclick='viewScorecard(${JSON.stringify(result)})'><span class="pill">Week ${week}</span><h2>${esc(a)} vs ${esc(b)}</h2><small>${esc(record)}</small><p>${result.innings.map(i => `${esc(i.team)} ${esc(i.score)}`).join(" · ")}</p><small>🏆 ${esc(result.motm)} · ${esc(result.winner)} ${esc(result.margin)}</small></button>`;
   }
-  return `<div class="card"><span class="pill">Week ${week}</span><h2>${esc(a)} vs ${esc(b)}</h2><small>${esc(record)} · ${esc(team(a)?.home || "IPL venue")}</small></div>`;
+  return `<div class="card"><span class="pill">Week ${week}</span><h2>${esc(a)} vs ${esc(b)}</h2><small>${esc(record)} · ${esc(team(a)?.home || "home venue")}</small></div>`;
 }
 
 async function openRetention() {
@@ -1156,7 +1156,7 @@ function renderImpactHub(match) {
       <div class="scoreboard"><small>Innings Break</small><div class="scoreline">Impact Sub</div><p>${esc(match.message)}</p></div>
       <div class="panel">
         <h2>Substitution Desk</h2>
-        <div class="notice">Pick one player from the current XI to remove and one bench player to bring in for the second innings. The usual IPL approach: defending, bring on an extra specialist bowler for your weakest batting option in the XI; chasing, bring on an extra hitter (often a finisher around #5-8) for your most expendable bowler. Your saved impact preset is preselected when available.</div>
+        <div class="notice">Pick one player from the current XI to remove and one bench player to bring in for the second innings. The usual approach: defending, bring on an extra specialist bowler for your weakest batting option in the XI; chasing, bring on an extra hitter (often a finisher around #5-8) for your most expendable bowler. Your saved impact preset is preselected when available.</div>
         <div class="toolbar">
           <label>Out <select id="subOut">${impact.xi.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · ${slotZoneLabel(p.preferred_position)} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
           <label>In <select id="subIn">${impact.bench.map(p => `<option value="${esc(p.name)}">${esc(p.name)} · ${esc(p.role)} · ${slotZoneLabel(p.preferred_position)} · Bat ${p.bat}/Bowl ${p.bowl}</option>`).join("")}</select></label>
@@ -1456,7 +1456,7 @@ function renderSquadTable() {
 }
 
 function renderHistory() {
-  $("historyPanel").innerHTML = state.history.slice().reverse().map(h => `<div class="card"><h2>IPL ${h.season}</h2><p><b>Champion:</b> ${esc(h.champion)} · <b>Runner-up:</b> ${esc(h.runner_up)} · <b>MVP:</b> ${esc(h.mvp.name)} (${h.mvp.mvp})</p><div class="table-wrap short"><table>${table(["Pos","Team","Pts","NRR"], h.points_table.map((t,i)=>[i+1,t.name,t.points,Number(t.nrr).toFixed(3)]))}</table></div></div>`).join("") || `<div class="notice">Finish a season to build league history.</div>`;
+  $("historyPanel").innerHTML = state.history.slice().reverse().map(h => `<div class="card"><h2>Season ${h.season}</h2><p><b>Champion:</b> ${esc(h.champion)} · <b>Runner-up:</b> ${esc(h.runner_up)} · <b>MVP:</b> ${esc(h.mvp.name)} (${h.mvp.mvp})</p><div class="table-wrap short"><table>${table(["Pos","Team","Pts","NRR"], h.points_table.map((t,i)=>[i+1,t.name,t.points,Number(t.nrr).toFixed(3)]))}</table></div></div>`).join("") || `<div class="notice">Finish a season to build league history.</div>`;
 }
 
 $("newLeagueBtn").onclick = newLeague;

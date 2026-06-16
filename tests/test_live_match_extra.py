@@ -466,7 +466,8 @@ def test_impact_payload_lists_xi_and_bench_at_innings_break():
     payload = match.impact_payload()
     assert payload is not None
     assert len(payload["xi"]) == 11
-    assert len(payload["bench"]) == 10  # 21-player roster - 11 in XI
+    # Bench is everyone in the squad not in the XI.
+    assert len(payload["bench"]) == len(match.league.user_team().roster) - 11
 
 
 def test_super_over_payload_returns_card_when_no_super_over():

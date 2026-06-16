@@ -1,4 +1,4 @@
-"""Application/state layer for the IPL franchise sim's web UI.
+"""Application/state layer for the Cricket franchise sim's web UI.
 
 This package is the bridge between `ui_server`'s HTTP handler and the domain
 model in `models`/`engine`/`players_data`. Two classes do almost all the work:

@@ -2,7 +2,7 @@
 
 **Last updated: June 15, 2026**
 
-These Terms and Conditions ("Terms") govern your use of the Cric Sim mobile game ("Cric Sim," the "App," "we," "us," or "our"), provided by Akshay Raj ("the Developer"). By downloading, accessing, or using the App, you agree to these Terms. If you do not agree, do not use the App.
+These Terms and Conditions ("Terms") govern your use of the Cric Sim mobile game ("Cric Sim," the "App," "we," "us," or "our"), provided by Cric Sim Group ("the Developer"). By downloading, accessing, or using the App, you agree to these Terms. If you do not agree, do not use the App.
 
 ---
 
@@ -81,4 +81,4 @@ We may update these Terms from time to time. We will update the "Last updated" d
 ## 15. Contact
 
 Questions about these Terms:
-**Email: aksh.raj@gmail.com**
+**Email: cricketfranchisesim@gmail.com**

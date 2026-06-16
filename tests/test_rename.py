@@ -98,3 +98,52 @@ def test_rename_team_rejects_blank_and_duplicate():
         league.rename_team("Mumbai Mavericks", other)
     with pytest.raises(ValueError):
         league.rename_team("No Such Team", "Anything")
+
+
+def test_full_season_after_renaming_team_and_player():
+    """End-to-end: rename the user's team AND one of its players, then play a
+    whole season through playoffs. The renamed team must keep playing 14 games,
+    appear correctly in the schedule/standings/playoffs, and the renamed player
+    must still accrue stats — i.e. no stale old-name reference is left anywhere
+    that the season machinery reads."""
+    import random
+
+    random.seed(4242)
+    league = _drafted()
+    user = league.user_team()
+    old_player = user.captain.name
+
+    league.rename_team("Mumbai Mavericks", "Sunrisers Hyderabad")
+    league.rename_player(old_player, "Star Player")
+
+    team = league.user_team()
+    assert team.name == "Sunrisers Hyderabad"
+    assert any(p.name == "Star Player" for p in team.roster)
+    assert not any(p.name == old_player for p in team.roster)
+
+    league.set_leadership(team.captain.name, team.vice_captain.name)
+    apply_smart_presets(league)
+
+    # No round of the schedule should still reference the old team name.
+    for round_ in league.schedule:
+        for pair in round_:
+            assert "Mumbai Mavericks" not in pair
+
+    while league.phase == "season":
+        league.simulate_current_round()
+    assert league.phase == "league_complete"
+
+    table = league.standings()
+    assert len(table) == 10
+    renamed = next(t for t in table if t.name == "Sunrisers Hyderabad")
+    assert renamed.games_played == 14
+    assert not any(t.name == "Mumbai Mavericks" for t in table)
+
+    # Playoffs reference the renamed team by its new name without crashing.
+    league.start_playoffs()
+    guard = 0
+    while league.phase == "playoffs":
+        league.simulate_current_round()
+        guard += 1
+        assert guard <= 10
+    assert league.phase == "season_end"

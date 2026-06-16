@@ -104,7 +104,7 @@ small { color: var(--muted); }
   justify-content: flex-end;
   gap: 6px;
 }
-.ipl-mark {
+.brand-mark {
   width: 64px;
   height: 64px;
   border-radius: 20px;

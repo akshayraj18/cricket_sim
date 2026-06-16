@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import * as WebBrowser from 'expo-web-browser';
 
@@ -68,8 +68,18 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: theme.bgCard }]} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.root}>
+        {/* Full-screen dismiss layer behind the sheet. Kept as a sibling (not a
+            parent) of the sheet so it never competes with the ScrollView's pan
+            responder — that competition was why scrolling only worked in one
+            narrow strip. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: theme.bgCard }]}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <ThemedText style={styles.name}>{user?.display_name || 'Guest'}</ThemedText>
             <Pressable onPress={onClose} hitSlop={12}>
@@ -165,15 +175,19 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>How to Play</ThemedText>
           </Pressable>
+
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Legal
+          </ThemedText>
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}
+            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+            <ThemedText style={styles.linkButtonText}>Terms of Service</ThemedText>
+          </Pressable>
           <Pressable
             onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>Privacy Policy</ThemedText>
-          </Pressable>
-          <Pressable
-            onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}
-            style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
-            <ThemedText style={styles.linkButtonText}>Terms &amp; Conditions</ThemedText>
           </Pressable>
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
@@ -190,14 +204,15 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
           <Pressable onPress={handleDeleteAccount} style={styles.deleteAccount} hitSlop={8}>
             <ThemedText style={[styles.deleteAccountText, { color: theme.textDim }]}>Delete Account</ThemedText>
           </Pressable>
-        </Pressable>
-      </Pressable>
+          </ScrollView>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  root: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'flex-end',
@@ -205,10 +220,20 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   sheet: {
-    width: 260,
+    width: 280,
     borderRadius: Radius.lg,
-    padding: Spacing.four,
     marginTop: 56,
+    overflow: 'hidden',
+    // Cap the sheet so a tall menu (guest links + appearance + reminders +
+    // help + legal + account) scrolls instead of clipping Sign Out / the
+    // legal links off the bottom of the screen.
+    maxHeight: '80%',
+  },
+  scroll: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    padding: Spacing.four,
   },
   header: {
     flexDirection: 'row',

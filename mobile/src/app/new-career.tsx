@@ -30,18 +30,16 @@ const DRAFT_POOLS: { value: DraftPoolType; label: string; description: string }[
   {
     value: 'rosters2026',
     label: '2026 Rosters (No Draft)',
-    description: "Skip the draft and start with your franchise's real 2026 squad.",
+    description: "Skip the draft and start with your franchise's 2026 squad.",
   },
   {
     value: 'current',
     label: '2026 Rosters (Mega Draft)',
-    description: 'Draft from the pool of real 2026 IPL players.',
+    description: 'Draft from the full pool of 2026 players.',
   },
-  {
-    value: 'alltime',
-    label: 'All-Time IPL Greats (Mega Draft)',
-    description: 'Draft from the greatest players across IPL history.',
-  },
+  // All-Time Greats is reserved for a future monetized release — hidden for now.
+  // (The 'alltime' value stays supported in types/backend so existing careers
+  // that used it still load.)
 ];
 
 export default function NewCareerScreen() {

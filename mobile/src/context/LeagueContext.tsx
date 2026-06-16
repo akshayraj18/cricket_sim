@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { seasonApi } from '@/api/season';
 import { LeaguePayload } from '@/api/types';
 import { useCareer } from '@/context/CareerContext';
+import { useTour } from '@/context/TourContext';
 
 interface LeagueContextValue {
   payload: LeaguePayload | null;
@@ -19,6 +20,7 @@ const LeagueContext = createContext<LeagueContextValue | null>(null);
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
   const { activeCareerId } = useCareer();
+  const { active: tourActive } = useTour();
   const [payload, setPayload] = useState<LeaguePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,15 +44,21 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
   }, [activeCareerId]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    // During the tour, the tour owns the demo career's payload (it calls
+    // setPayload after each state change), so skip the auto-refetch to avoid
+    // racing it. Outside the tour, refetch on mount / active-career change.
+    if (!tourActive) refresh();
+  }, [refresh, tourActive]);
 
   // Re-sync whenever any tab regains focus, so actions taken on one screen
   // (draft picks, lineup saves, match results) are reflected everywhere else.
+  // EXCEPT during the guided tour: the tour drives the demo career's state and
+  // sets the payload itself, so a focus refetch here would race and clobber it
+  // (e.g. overwriting the just-started draft board with the setup screen).
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh])
+      if (!tourActive) refresh();
+    }, [refresh, tourActive])
   );
 
   const value = useMemo(

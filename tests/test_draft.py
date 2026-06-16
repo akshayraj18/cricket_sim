@@ -1,6 +1,7 @@
 """Draft flow: starting a league, drafting a squad, and validating roster composition."""
 import pytest
 
+from cricket_sim_engine.sim.constants import MAX_OVERSEAS_SQUAD, SQUAD_SIZE
 from cricket_sim_engine.sim.helpers import is_batting_role, is_bowling_role, is_wicketkeeper_option
 from cricket_sim_engine.sim.league_state import LeagueState
 
@@ -20,10 +21,17 @@ def test_new_league_rejects_unknown_franchise():
         state.new_league("Made Up Franchise XI", "medium")
 
 
-def test_autodraft_fills_every_squad_to_21(drafted):
+def test_autodraft_fills_every_squad_to_squad_size(drafted):
     for team in drafted.teams:
-        assert len(team.roster) == 21, f"{team.name} has {len(team.roster)} players"
+        assert len(team.roster) == SQUAD_SIZE, f"{team.name} has {len(team.roster)} players"
     assert drafted.phase == "season"
+
+
+def test_autodraft_respects_overseas_squad_cap(drafted):
+    """No drafted squad may exceed the overseas cap (IPL rule, raised to 9)."""
+    for team in drafted.teams:
+        overseas = sum(1 for p in team.roster if p.is_overseas)
+        assert overseas <= MAX_OVERSEAS_SQUAD, f"{team.name} has {overseas} overseas"
 
 
 def test_drafted_squad_has_balanced_roles(drafted):
@@ -53,7 +61,7 @@ def test_no_player_drafted_twice(drafted):
 def test_overseas_limit_not_exceeded_in_any_squad(drafted):
     for team in drafted.teams:
         overseas = sum(1 for p in team.roster if p.is_overseas)
-        assert overseas <= 8, f"{team.name} drafted an unrealistic {overseas} overseas players"
+        assert overseas <= MAX_OVERSEAS_SQUAD, f"{team.name} drafted {overseas} overseas (cap {MAX_OVERSEAS_SQUAD})"
 
 
 def test_new_league_with_rosters_skips_draft_and_assigns_real_squads():
@@ -63,7 +71,8 @@ def test_new_league_with_rosters_skips_draft_and_assigns_real_squads():
     assert state.draft_pool_type == "rosters2026"
     user = state.user_team()
     assert "Jesprit Bomrah" in [p.name for p in user.roster]
-    assert all(len(t.roster) >= 21 for t in state.teams)
+    # 2026 mode loads the real squads as-is (24-25 players), not a fixed size.
+    assert all(20 <= len(t.roster) <= SQUAD_SIZE for t in state.teams)
     assert all(t.captain and t.vice_captain for t in state.teams)
 
 

@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { GuidedTourHost } from '@/components/tutorial/guided-tour-host';
 import { AuthProvider } from '@/context/AuthContext';
 import { CareerProvider } from '@/context/CareerContext';
 import { ErrorProvider } from '@/context/ErrorContext';
@@ -45,6 +46,9 @@ function ThemedStack() {
                         options={{ presentation: 'modal', headerShown: true, title: 'New Career' }}
                       />
                     </Stack>
+                    {/* Guided tour overlay — mounted here (inside Career +
+                        League providers) so it can create/read career data. */}
+                    <GuidedTourHost />
                   </LeagueProvider>
                 </NotificationsProvider>
               </CareerProvider>

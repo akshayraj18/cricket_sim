@@ -627,7 +627,7 @@ function SeasonHistoryCard({
   const theme = useTheme();
   return (
     <Card style={styles.seasonCard}>
-      <ThemedText style={styles.seasonTitle}>IPL {entry.season}</ThemedText>
+      <ThemedText style={styles.seasonTitle}>Season {entry.season}</ThemedText>
       <View style={styles.seasonResultRow}>
         <View style={styles.flex1}>
           <ThemedText themeColor="textFaint" style={styles.seasonLabel}>

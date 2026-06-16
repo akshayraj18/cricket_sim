@@ -2,6 +2,7 @@ import uuid
 
 from httpx import AsyncClient
 
+from cricket_sim_engine.sim.constants import SQUAD_SIZE
 from cricket_sim_engine.sim.league_state import LeagueState
 
 USER_TEAM = "Mumbai Mavericks"
@@ -116,7 +117,7 @@ async def test_save_career_state_round_trip(client: AsyncClient, auth_headers: d
 
     assert body["phase"] == "season"
     assert body["state"]["phase"] == "season"
-    assert all(len(t["roster"]) == 21 for t in body["state"]["teams"])
+    assert all(len(t["roster"]) == SQUAD_SIZE for t in body["state"]["teams"])
 
     # Reload from a fresh GET to confirm it persisted.
     resp = await client.get(f"/careers/{created['id']}", headers=auth_headers)

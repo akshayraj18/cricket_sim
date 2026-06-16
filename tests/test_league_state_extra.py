@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from cricket_sim_engine.sim.constants import SQUAD_SIZE
 from cricket_sim_engine.sim.league_state import LeagueState
 
 pytestmark = pytest.mark.integration
@@ -69,7 +70,7 @@ def test_team_dict_includes_branding_and_roster(drafted):
     team_dict = drafted.team_dict(team)
     assert team_dict["name"] == team.name
     assert "abbr" in team_dict and "primary" in team_dict
-    assert len(team_dict["roster"]) == 21
+    assert len(team_dict["roster"]) == SQUAD_SIZE
     # roster sorted best-rated first
     ovrs = [p["ovr"] for p in team_dict["roster"]]
     assert ovrs == sorted(ovrs, reverse=True)
@@ -297,7 +298,7 @@ def test_user_team_resolves_correct_franchise(drafted):
 def test_roster_needs_all_zero_for_full_balanced_squad(drafted):
     team = drafted.user_team()
     needs = drafted.roster_needs(team)
-    # A fully-drafted 21-player squad should have no outstanding minimums.
+    # A fully-drafted squad should have no outstanding minimums.
     assert all(v == 0 for v in needs.values())
 
 
