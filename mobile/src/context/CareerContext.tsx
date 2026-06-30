@@ -32,6 +32,7 @@ const CareerContext = createContext<CareerContextValue | null>(null);
 
 export function CareerProvider({ children }: { children: ReactNode }) {
   const { status, user } = useAuth();
+  const userId = user?.id ?? null;
   const [activeCareerId, setActiveCareerIdState] = useState<string | null>(null);
   const [activeCareer, setActiveCareer] = useState<CareerSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,11 +56,11 @@ export function CareerProvider({ children }: { children: ReactNode }) {
     }
 
     (async () => {
-      if (!user?.id) {
+      if (!userId) {
         setLoading(false);
         return;
       }
-      const key = careerKey(user.id);
+      const key = careerKey(userId);
       let stored = await AsyncStorage.getItem(key);
 
       // One-time migration: on the first sign-in after this update, move any
@@ -76,20 +77,20 @@ export function CareerProvider({ children }: { children: ReactNode }) {
       if (stored) setActiveCareerIdState(stored);
       setLoading(false);
     })();
-  }, [status, user?.id]);
+  }, [status, userId]);
 
   const setActiveCareerId = useCallback(
     (careerId: string | null) => {
       setActiveCareerIdState(careerId);
-      if (!user?.id) return;
-      const key = careerKey(user.id);
+      if (!userId) return;
+      const key = careerKey(userId);
       if (careerId) {
         AsyncStorage.setItem(key, careerId);
       } else {
         AsyncStorage.removeItem(key);
       }
     },
-    [user?.id]
+    [userId]
   );
 
   const refreshActiveCareer = useCallback(async () => {
