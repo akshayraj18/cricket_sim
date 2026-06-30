@@ -107,7 +107,7 @@ export default function NewCareerScreen() {
             {TEAM_NAMES.map((teamName) => {
               const meta = TeamColors[teamName];
               const selected = teamName === team;
-              const accentText = getTeamAccentText(teamName, scheme === 'dark' ? 'dark' : 'light');
+              const accentText = getTeamAccentText(meta, scheme === 'dark' ? 'dark' : 'light');
               return (
                 <Pressable
                   key={teamName}

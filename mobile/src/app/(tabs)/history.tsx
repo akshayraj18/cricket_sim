@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { MatchCard, PlayerDict, SeasonHistoryEntry } from '@/api/types';
 import { NoActiveCareer } from '@/components/empty-state';
 import { MatchScorecard } from '@/components/match-scorecard';
@@ -11,7 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -181,6 +183,7 @@ function parseBestBowling(label: string | undefined): [number, number] {
 
 export default function HistoryScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error } = useLeague();
   const [tab, setTab] = useState<HistoryTab>('log');
@@ -319,8 +322,10 @@ export default function HistoryScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <ScreenHeader title="League History" />
-          <NoActiveCareer />
+          <View style={[styles.body, contentContainerStyle]}>
+            <ScreenHeader title="League History" />
+            <NoActiveCareer />
+          </View>
         </SafeAreaView>
       </View>
     );
@@ -329,6 +334,7 @@ export default function HistoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.body, contentContainerStyle]}>
         <ScreenHeader eyebrow={activeCareer?.name} title="League History" />
         {loading && (
           <View style={styles.center}>
@@ -360,7 +366,13 @@ export default function HistoryScreen() {
                     nestedScrollEnabled
                     showsVerticalScrollIndicator={false}>
                     {matchLog.map((card, i) => (
-                      <MatchLogRow key={i} card={card} accent={accent} onPress={() => setViewedScorecard(card)} />
+                      <MatchLogRow
+                        key={i}
+                        card={card}
+                        teams={payload.teams}
+                        accent={accent}
+                        onPress={() => setViewedScorecard(card)}
+                      />
                     ))}
                     {matchLog.length === 0 && (
                       <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -503,6 +515,7 @@ export default function HistoryScreen() {
           </ScrollView>
         )}
         <PlayerProfileSheet player={profilePlayer} onClose={() => setProfilePlayer(null)} accentColor={accent} />
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -585,9 +598,19 @@ function AllTimeLeaderCard({
   );
 }
 
-function MatchLogRow({ card, accent, onPress }: { card: MatchCard; accent?: string; onPress: () => void }) {
+function MatchLogRow({
+  card,
+  teams,
+  accent,
+  onPress,
+}: {
+  card: MatchCard;
+  teams: { name: string; primary: string }[];
+  accent?: string;
+  onPress: () => void;
+}) {
   const theme = useTheme();
-  const winnerColor = TeamColors[card.winner]?.primary ?? accent ?? theme.green;
+  const winnerColor = teams.find((t) => t.name === card.winner)?.primary ?? accent ?? theme.green;
   return (
     <Pressable onPress={onPress}>
       <Card style={[styles.logCard, { borderLeftWidth: 3, borderLeftColor: winnerColor }]}>
@@ -728,6 +751,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  body: {
     flex: 1,
   },
   center: {

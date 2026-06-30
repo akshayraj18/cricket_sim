@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
+import { getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
@@ -96,7 +96,7 @@ export function LiveMatchHub({
       )}
 
       {match.status === 'complete' && (
-        <FinalScorecardStage match={match} onComplete={completeMatch} canComplete />
+        <FinalScorecardStage match={match} onComplete={completeMatch} canComplete accent={accent} />
       )}
 
       {!['toss', 'lineup', 'batting_order', 'impact', 'super_over_setup', 'next_batter', 'complete'].includes(
@@ -766,7 +766,7 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const ballsLeft = Math.max(0, 120 - score.balls);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(score.batting_team) }]}>
+    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team) }]}>
       <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
         {score.batting_team}
       </ThemedText>
@@ -932,7 +932,7 @@ export function BattingCardTable({
         <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
           6s
         </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
+        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableHeaderCellWide]}>
           SR
         </ThemedText>
       </View>
@@ -962,7 +962,7 @@ export function BattingCardTable({
             <ThemedText style={styles.tableCell}>{b.balls}</ThemedText>
             <ThemedText style={styles.tableCell}>{b.fours}</ThemedText>
             <ThemedText style={styles.tableCell}>{b.sixes}</ThemedText>
-            <ThemedText style={styles.tableCell}>{sr}</ThemedText>
+            <ThemedText style={[styles.tableCell, styles.tableCellWide]}>{sr}</ThemedText>
           </View>
         );
       })}
@@ -1003,7 +1003,7 @@ export function BowlingCardTable({
         <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
           W
         </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
+        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableHeaderCellWide]}>
           Econ
         </ThemedText>
       </View>
@@ -1016,7 +1016,7 @@ export function BowlingCardTable({
           <ThemedText style={styles.tableCell}>{b.maidens ?? 0}</ThemedText>
           <ThemedText style={styles.tableCell}>{b.runs}</ThemedText>
           <ThemedText style={styles.tableCell}>{b.wickets}</ThemedText>
-          <ThemedText style={styles.tableCell}>{b.econ}</ThemedText>
+          <ThemedText style={[styles.tableCell, styles.tableCellWide]}>{b.econ}</ThemedText>
         </View>
       ))}
     </View>
@@ -1319,11 +1319,15 @@ const styles = StyleSheet.create({
   },
   tableHeaderCell: {
     flex: 1,
+    minWidth: 28,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'right',
+  },
+  tableHeaderCellWide: {
+    minWidth: 38,
   },
   tableRow: {
     flexDirection: 'row',
@@ -1345,8 +1349,12 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     flex: 1,
+    minWidth: 28,
     fontSize: 12.5,
     textAlign: 'right',
+  },
+  tableCellWide: {
+    minWidth: 38,
   },
   aggWrap: {
     marginBottom: Spacing.two,

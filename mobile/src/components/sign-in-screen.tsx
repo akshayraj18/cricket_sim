@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { ThemedText } from '@/components/themed-text';
 import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
@@ -22,6 +24,7 @@ const HIGHLIGHTS: { emoji: string; label: string }[] = [
 
 export function SignInScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const scheme = useColorScheme();
   const { continueAsGuest, signInWithApple, signInWithGoogle, retry, offline, error, status } = useAuth();
   const isLoading = status === 'loading';
@@ -34,6 +37,7 @@ export function SignInScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.inner, contentContainerStyle]}>
         <View style={styles.hero}>
           <View style={[styles.markBadge, { backgroundColor: theme.badgeBg, borderColor: theme.border }]}>
             <ThemedText style={styles.mark}>🏏</ThemedText>
@@ -171,6 +175,7 @@ export function SignInScreen() {
             </>
           )}
         </View>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -182,6 +187,11 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    alignItems: 'center',
+  },
+  inner: {
+    flex: 1,
+    width: '100%',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.four,

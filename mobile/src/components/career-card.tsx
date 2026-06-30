@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { CareerSummary } from '@/api/types';
-import { Radius, Spacing, TeamColors, getTeamAccentText } from '@/constants/theme';
+import { Radius, Spacing, getTeamAccentText, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -30,8 +30,8 @@ export function CareerCard({
 }) {
   const theme = useTheme();
   const scheme = useColorScheme();
-  const team = TeamColors[career.user_team_name];
-  const accentText = getTeamAccentText(career.user_team_name, scheme === 'dark' ? 'dark' : 'light');
+  const team = teamMetaByName(career.user_team_name);
+  const accentText = getTeamAccentText(team, scheme === 'dark' ? 'dark' : 'light');
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
@@ -42,7 +42,7 @@ export function CareerCard({
         ]}>
         <View style={[styles.crest, { backgroundColor: theme.bg, borderColor: theme.border }]}>
           <ThemedText style={[styles.crestText, { color: accentText }]}>
-            {team?.abbr ?? career.user_team_name.slice(0, 3).toUpperCase()}
+            {team.abbr || career.user_team_name.slice(0, 3).toUpperCase()}
           </ThemedText>
         </View>
         <View style={styles.meta}>

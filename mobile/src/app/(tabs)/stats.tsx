@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { PlayerDict } from '@/api/types';
 import { NoActiveCareer } from '@/components/empty-state';
 import { PlayerProfileSheet } from '@/components/player-profile-sheet';
@@ -83,6 +85,7 @@ const BOWL_LEADER_DEFS: { title: string; listKey: string; statKey: keyof PlayerD
 
 export default function StatsScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, setPayload } = useLeague();
   const { showError } = useError();
@@ -99,7 +102,8 @@ export default function StatsScreen() {
   const [bowlSort, setBowlSort] = useState<{ key: keyof PlayerDict; dir: 1 | -1 }>({ key: 'wickets', dir: -1 });
 
   const scheme = useColorScheme();
-  const accent = payload ? getTeamSwatch(payload.user_team ?? '', scheme) : undefined;
+  const userTeam = payload?.teams.find((t) => t.name === payload.user_team);
+  const accent = userTeam ? getTeamSwatch(userTeam, userTeam.name, scheme) : undefined;
 
   const teamOptions: DropdownOption[] = useMemo(
     () => [
@@ -107,7 +111,7 @@ export default function StatsScreen() {
       ...(payload?.teams ?? []).map((t) => ({
         value: t.name,
         label: `${t.abbr} · ${t.name}`,
-        color: getTeamSwatch(t.name, scheme),
+        color: getTeamSwatch(t, t.name, scheme),
       })),
     ],
     [payload?.teams, scheme]
@@ -137,8 +141,10 @@ export default function StatsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <ScreenHeader title="Stats" />
-          <NoActiveCareer />
+          <View style={[styles.body, contentContainerStyle]}>
+            <ScreenHeader title="Stats" />
+            <NoActiveCareer />
+          </View>
         </SafeAreaView>
       </View>
     );
@@ -147,6 +153,7 @@ export default function StatsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.body, contentContainerStyle]}>
         <ScreenHeader eyebrow={activeCareer?.name} title="Stats" />
         {loading && (
           <View style={styles.center}>
@@ -256,6 +263,7 @@ export default function StatsScreen() {
         )}
 
         <PlayerProfileSheet player={profilePlayer} onClose={() => setProfilePlayer(null)} accentColor={accent} />
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -466,6 +474,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  body: {
     flex: 1,
   },
   center: {

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { seasonApi } from '@/api/season';
 import { PlayerDict } from '@/api/types';
 import { NoActiveCareer } from '@/components/empty-state';
@@ -47,6 +49,7 @@ type SortKey = 'ovr' | 'name' | 'role' | 'mvp';
 
 export default function SquadScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const scheme = useColorScheme();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
@@ -71,7 +74,7 @@ export default function SquadScreen() {
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
-  const accent = team ? getTeamPlayerAccent(team.name, scheme) : undefined;
+  const accent = team ? getTeamPlayerAccent(team, scheme) : undefined;
 
   const handleRename = (kind: 'team' | 'player', currentName: string) => {
     if (!activeCareerId) return;
@@ -101,8 +104,10 @@ export default function SquadScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <ScreenHeader title="Squad" />
-          <NoActiveCareer />
+          <View style={[styles.body, contentContainerStyle]}>
+            <ScreenHeader title="Squad" />
+            <NoActiveCareer />
+          </View>
         </SafeAreaView>
       </View>
     );
@@ -111,6 +116,7 @@ export default function SquadScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.body, contentContainerStyle]}>
         <ScreenHeader eyebrow={activeCareer?.name} title="Squad" />
         {loading && (
           <View style={styles.center}>
@@ -208,6 +214,7 @@ export default function SquadScreen() {
         )}
 
         <PlayerProfileSheet player={profilePlayer} onClose={() => setProfilePlayer(null)} accentColor={accent} />
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -783,6 +790,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  body: {
     flex: 1,
   },
   center: {
