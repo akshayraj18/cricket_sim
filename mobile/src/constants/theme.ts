@@ -137,6 +137,32 @@ export const TeamColors: Record<string, { abbr: string; primary: string; accent:
 export const TEAM_NAMES = Object.keys(TeamColors);
 
 /**
+ * Minimal team branding shape needed by the color helpers below. Pass the
+ * actual `TeamDict` from the API payload (or any subset of these fields)
+ * rather than a team name — names can be changed via the rename flow, so a
+ * static name -> color lookup silently falls back to a neutral default the
+ * moment a team's display name no longer matches a TeamColors key. The
+ * backend already resolves these fields in a rename-safe way (via
+ * `meta_name`) and ships them on every team object.
+ */
+export interface TeamMeta {
+  abbr?: string;
+  primary: string;
+  accent: string;
+}
+
+/**
+ * Resolves a `TeamMeta` for a team name via the static `TeamColors` table.
+ * Only use this where no team/payload object is available (e.g. the
+ * new-career franchise picker, before any team has been created) — anywhere
+ * a `TeamDict` is already in scope, pass it directly to the helpers below
+ * instead so a renamed team keeps its color.
+ */
+export function teamMetaByName(teamName: string): TeamMeta {
+  return TeamColors[teamName] ?? { abbr: '', primary: '#3a3f4b', accent: '#9aa0a6' };
+}
+
+/**
  * Hand-tuned, theme-aware team swatch colors used by filter dropdowns and
  * chips. Each entry has a `dark` and `light` color used as the *foreground*
  * (accent text / dot); the surrounding bubble is a low-alpha tint of it.
@@ -165,18 +191,24 @@ export const TeamSwatches: Record<string, { dark: string; light: string }> = {
  * foreground for swatch dots and selected-filter text. Falls back to the
  * existing primary/accent derivation if a team has no tuned swatch.
  */
-export function getTeamSwatch(teamName: string, scheme: 'light' | 'dark'): string {
+export function getTeamSwatch(team: TeamMeta, teamName: string, scheme: 'light' | 'dark'): string {
   const tuned = TeamSwatches[teamName];
   if (tuned) return tuned[scheme];
-  return getTeamPlayerAccent(teamName, scheme);
+  return getTeamPlayerAccent(team, scheme);
 }
 
 /** Champagne/trophy gold accent used to highlight playoff and Final UI. */
 export const GOLD = '#f0b429';
 
-/** Short team code (e.g. "Chennai Cholas" -> "CHE") for compact labels. */
-export function teamAbbr(teamName: string): string {
-  return TeamColors[teamName]?.abbr ?? teamName;
+/**
+ * Short team code (e.g. "Chennai Cholas" -> "CHE") for compact labels.
+ * Prefer the `abbr` already shipped on a `TeamDict`/`MatchCard`-adjacent
+ * object — it's rename-safe. Falls back to the static table (keyed by
+ * canonical franchise name) or a 3-letter slice of the raw name as a last
+ * resort, for places that only ever have a bare team-name string.
+ */
+export function teamAbbr(teamName: string, abbr?: string): string {
+  return abbr || TeamColors[teamName]?.abbr || teamName;
 }
 
 /** Mixes a hex color toward another hex color by `amount` (0-1). */
@@ -200,10 +232,8 @@ function mixHex(hex: string, towardHex: string, amount: number): string {
  * matching --team-accent-text in the mockups (vivid in dark mode,
  * blended 65/35 toward body text in light mode).
  */
-export function getTeamAccentText(teamName: string, scheme: 'light' | 'dark'): string {
-  const meta = TeamColors[teamName];
-  if (!meta) return Colors[scheme].text;
-  const vivid = vividTeamColor(meta);
+export function getTeamAccentText(team: TeamMeta, scheme: 'light' | 'dark'): string {
+  const vivid = vividTeamColor(team);
   if (scheme === 'dark') return vivid;
   return mixHex(vivid, Colors.light.text, 0.35);
 }
@@ -278,13 +308,11 @@ function saturation(hex: string): number {
  * picks (CSK gold) so white text stays legible. Always returns a color dark
  * enough for `#fff` foreground.
  */
-export function getTeamBackground(teamName: string): string {
-  const meta = TeamColors[teamName];
-  if (!meta) return '#1f9d55';
+export function getTeamBackground(team: TeamMeta, teamName?: string): string {
   // Prefer the more saturated of the two team colors; that skips grayscale.
-  const candidate = saturation(meta.primary) >= saturation(meta.accent) ? meta.primary : meta.accent;
+  const candidate = saturation(team.primary) >= saturation(team.accent) ? team.primary : team.accent;
   // If even the better candidate is washed-out gray, fall back to the swatch.
-  const base = saturation(candidate) < 0.15 ? TeamSwatches[teamName]?.light ?? candidate : candidate;
+  const base = saturation(candidate) < 0.15 ? (teamName && TeamSwatches[teamName]?.light) || candidate : candidate;
   // Ensure it's dark enough for white text; darken toward near-black if needed.
   return relativeLuminance(base) > 0.5 ? mixHex(base, '#111111', 0.45) : base;
 }
@@ -346,12 +374,9 @@ export function getLegibleAccentValue(accentHex: string, scheme: 'light' | 'dark
  * mode falls back the other way. If neither color is a good fit, blends
  * the accent toward the theme's body text color.
  */
-export function getTeamPlayerAccent(teamName: string, scheme: 'light' | 'dark'): string {
-  const meta = TeamColors[teamName];
-  if (!meta) return Colors[scheme].text;
-
-  const vivid = vividTeamColor(meta);
-  const candidates = [vivid, meta.accent, meta.primary];
+export function getTeamPlayerAccent(team: TeamMeta, scheme: 'light' | 'dark'): string {
+  const vivid = vividTeamColor(team);
+  const candidates = [vivid, team.accent, team.primary];
   const fits = (hex: string) => {
     const luminance = relativeLuminance(hex);
     return scheme === 'dark' ? luminance > 0.35 : luminance < 0.7;

@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/card';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getTeamBackground, getTeamSwatch, GOLD, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getTeamBackground, getTeamSwatch, GOLD, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
@@ -43,12 +43,10 @@ export default function SeasonScreen() {
   // Filled surfaces (scoreboard, primary match buttons) take the user team's
   // color. Route it through getTeamBackground rather than the raw payload
   // primary: that vets the color for legibility (skipping near-white/gray
-  // identity colors) and guarantees white text stays readable. Fall back to
-  // the user_team name directly so the accent still resolves during the brief
-  // windows where `team` hasn't been matched in the payload yet — only a truly
-  // unknown team lands on the neutral green default. The Button picks legible
-  // foreground text via contrast.
-  const accent = getTeamBackground(team?.name ?? payload?.user_team ?? '');
+  // identity colors) and guarantees white text stays readable. `team` carries
+  // the backend-resolved (rename-safe) primary/accent, so this stays correct
+  // even after the user renames their franchise.
+  const accent = team ? getTeamBackground(team, team.name) : '#3a3f4b';
 
   if (!activeCareerId) {
     return (
@@ -290,6 +288,7 @@ function FixturesPanel({
   onViewScorecard: (card: MatchCard) => void;
 }) {
   const scheme = useColorScheme();
+  const theme = useTheme();
   const [week, setWeek] = useState(payload.round || 1);
   const [teamFilter, setTeamFilter] = useState('All Teams');
 
@@ -306,7 +305,8 @@ function FixturesPanel({
     }
   }, [payload.round, payload.schedule.length]);
 
-  const userAccent = getTeamSwatch(payload.user_team ?? '', scheme);
+  const team = payload.teams.find((t) => t.name === payload.user_team);
+  const userAccent = team ? getTeamSwatch(team, team.name, scheme) : theme.text;
 
   const weekOptions: DropdownOption[] = useMemo(
     () => payload.schedule.map((_, i) => ({ value: String(i + 1), label: `Week ${i + 1}` })),
@@ -319,7 +319,7 @@ function FixturesPanel({
       ...payload.teams.map((t) => ({
         value: t.name,
         label: `${t.abbr} · ${t.name}`,
-        color: getTeamSwatch(t.name, scheme),
+        color: getTeamSwatch(t, t.name, scheme),
       })),
     ],
     [payload.teams, scheme]
@@ -385,19 +385,23 @@ function FixtureCard({
   );
 
   if (result) {
-    const winnerColor = TeamColors[result.winner]?.primary;
+    const winnerTeam = result.winner === a ? ta : result.winner === b ? tb : undefined;
+    const winnerColor = winnerTeam?.primary;
     return (
       <Pressable onPress={() => onViewScorecard(result)}>
         <Card style={[styles.fixtureCard, { borderLeftWidth: 3, borderLeftColor: winnerColor ?? 'transparent' }]}>
           <Pill label={`Week ${week}`} />
           <ThemedText style={styles.fixtureTitle}>
-            {teamAbbr(result.winner)} {result.margin}
+            {teamAbbr(result.winner, winnerTeam?.abbr)} {result.margin}
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.fixtureSub}>
             {a} vs {b}
           </ThemedText>
           <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
-            {result.innings.map((inn) => `${teamAbbr(inn.team)} ${inn.score}`).join(' · ')} · 🏆 {result.motm}
+            {result.innings
+              .map((inn) => `${teamAbbr(inn.team, inn.team === a ? ta?.abbr : inn.team === b ? tb?.abbr : undefined)} ${inn.score}`)
+              .join(' · ')}{' '}
+            · 🏆 {result.motm}
           </ThemedText>
         </Card>
       </Pressable>
@@ -408,7 +412,7 @@ function FixtureCard({
     <Card style={styles.fixtureCard}>
       <Pill label={`Week ${week}`} />
       <ThemedText style={styles.fixtureTitle}>
-        {teamAbbr(a)} vs {teamAbbr(b)}
+        {teamAbbr(a, ta?.abbr)} vs {teamAbbr(b, tb?.abbr)}
       </ThemedText>
       <ThemedText themeColor="textDim" style={styles.fixtureSub}>
         {a} vs {b}
@@ -431,7 +435,7 @@ function LeagueCompletePanel({ payload }: { payload: LeaguePayload }) {
         <Card key={t.name} style={styles.fixtureCard}>
           <Pill label={`Seed ${i + 1}`} accentColor={t.primary} secondaryColor={t.accent} />
           <ThemedText style={styles.fixtureTitle}>
-            {teamAbbr(t.name)} · {t.name}
+            {teamAbbr(t.name, t.abbr)} · {t.name}
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.fixtureSub}>
             {t.wins}-{t.losses} · {t.points} pts · NRR {t.nrr.toFixed(3)}
@@ -446,7 +450,7 @@ function PlayoffsPanel({ payload }: { payload: LeaguePayload }) {
   return (
     <View style={styles.panelGap}>
       {payload.playoffs.map((p, i) => (
-        <PlayoffCard key={i} match={p} />
+        <PlayoffCard key={i} match={p} teams={payload.teams} />
       ))}
       {payload.playoffs.length === 0 && (
         <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -458,9 +462,10 @@ function PlayoffsPanel({ payload }: { payload: LeaguePayload }) {
 }
 
 /** A single playoff bracket card, with extra gold styling for the Final. */
-function PlayoffCard({ match: p }: { match: PlayoffMatch }) {
+function PlayoffCard({ match: p, teams }: { match: PlayoffMatch; teams: LeaguePayload['teams'] }) {
   const scheme = useColorScheme();
   const isFinal = p.name === 'Final';
+  const abbrFor = (name?: string) => teams.find((t) => t.name === name)?.abbr;
   return (
     <Card
       style={[
@@ -474,11 +479,12 @@ function PlayoffCard({ match: p }: { match: PlayoffMatch }) {
         {p.name}
       </ThemedText>
       <ThemedText themeColor="textDim" style={styles.fixtureSub}>
-        {p.team1 ? teamAbbr(p.team1) : 'TBD'} vs {p.team2 ? teamAbbr(p.team2) : 'TBD'}
+        {p.team1 ? teamAbbr(p.team1, abbrFor(p.team1)) : 'TBD'} vs{' '}
+        {p.team2 ? teamAbbr(p.team2, abbrFor(p.team2)) : 'TBD'}
       </ThemedText>
       {p.winner && (
         <ThemedText style={[styles.fixtureResultLine, isFinal && { color: GOLD }]}>
-          {teamAbbr(p.winner)} {isFinal ? 'are champions!' : 'advanced'}
+          {teamAbbr(p.winner, abbrFor(p.winner))} {isFinal ? 'are champions!' : 'advanced'}
         </ThemedText>
       )}
     </Card>
@@ -592,6 +598,7 @@ function RecentMatchesPanel({
   onViewScorecard: (card: MatchCard) => void;
 }) {
   const matches = [...payload.match_log].reverse();
+  const teamByName = (name?: string) => payload.teams.find((t) => t.name === name);
   if (matches.length === 0) {
     return (
       <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -603,16 +610,16 @@ function RecentMatchesPanel({
     <View style={styles.panelGap}>
       {matches.map((card, i) => (
         <Pressable key={i} onPress={() => onViewScorecard(card)}>
-          <Card style={[styles.fixtureCard, { borderLeftWidth: 3, borderLeftColor: TeamColors[card.winner]?.primary ?? 'transparent' }]}>
+          <Card style={[styles.fixtureCard, { borderLeftWidth: 3, borderLeftColor: teamByName(card.winner)?.primary ?? 'transparent' }]}>
             <Pill label={card.stage} />
             <ThemedText style={styles.fixtureTitle}>
-              {teamAbbr(card.winner)} {card.margin}
+              {teamAbbr(card.winner, teamByName(card.winner)?.abbr)} {card.margin}
             </ThemedText>
             <ThemedText themeColor="textDim" style={styles.fixtureSub}>
               {card.venue} · Toss: {card.toss} · 🏆 MOTM: {card.motm}
             </ThemedText>
             <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
-              {card.innings.map((inn) => `${teamAbbr(inn.team)} ${inn.score}`).join(' · ')}
+              {card.innings.map((inn) => `${teamAbbr(inn.team, teamByName(inn.team)?.abbr)} ${inn.score}`).join(' · ')}
             </ThemedText>
           </Card>
         </Pressable>

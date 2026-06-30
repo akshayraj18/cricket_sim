@@ -74,7 +74,7 @@ export default function SquadScreen() {
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
-  const accent = team ? getTeamPlayerAccent(team.name, scheme) : undefined;
+  const accent = team ? getTeamPlayerAccent(team, scheme) : undefined;
 
   const handleRename = (kind: 'team' | 'player', currentName: string) => {
     if (!activeCareerId) return;

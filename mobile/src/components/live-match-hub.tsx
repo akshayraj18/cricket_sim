@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { getTeamBackground, Radius, Spacing } from '@/constants/theme';
+import { getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
@@ -766,7 +766,7 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const ballsLeft = Math.max(0, 120 - score.balls);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(score.batting_team) }]}>
+    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team) }]}>
       <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
         {score.batting_team}
       </ThemedText>

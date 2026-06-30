@@ -13,7 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -366,7 +366,13 @@ export default function HistoryScreen() {
                     nestedScrollEnabled
                     showsVerticalScrollIndicator={false}>
                     {matchLog.map((card, i) => (
-                      <MatchLogRow key={i} card={card} accent={accent} onPress={() => setViewedScorecard(card)} />
+                      <MatchLogRow
+                        key={i}
+                        card={card}
+                        teams={payload.teams}
+                        accent={accent}
+                        onPress={() => setViewedScorecard(card)}
+                      />
                     ))}
                     {matchLog.length === 0 && (
                       <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -592,9 +598,19 @@ function AllTimeLeaderCard({
   );
 }
 
-function MatchLogRow({ card, accent, onPress }: { card: MatchCard; accent?: string; onPress: () => void }) {
+function MatchLogRow({
+  card,
+  teams,
+  accent,
+  onPress,
+}: {
+  card: MatchCard;
+  teams: { name: string; primary: string }[];
+  accent?: string;
+  onPress: () => void;
+}) {
   const theme = useTheme();
-  const winnerColor = TeamColors[card.winner]?.primary ?? accent ?? theme.green;
+  const winnerColor = teams.find((t) => t.name === card.winner)?.primary ?? accent ?? theme.green;
   return (
     <Pressable onPress={onPress}>
       <Card style={[styles.logCard, { borderLeftWidth: 3, borderLeftColor: winnerColor }]}>

@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
-import { getContrastText, Radius, Spacing, TeamColors, teamAbbr } from '@/constants/theme';
+import { getContrastText, Radius, Spacing, teamAbbr, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { BattingCardTable, BowlingCardTable } from './live-match-hub';
@@ -45,7 +45,7 @@ export function MatchScorecard({
   // Color the scoreboard with the winning team's color, regardless of which
   // team the user controls — so a CSK vs SRH result reads as a CSK-colored
   // card even if the user's team is something else.
-  const winnerColor = TeamColors[card.winner]?.primary ?? accent ?? theme.green;
+  const winnerColor = teamMetaByName(card.winner).primary ?? accent ?? theme.green;
   const scoreboardText = getContrastText(winnerColor);
   const scoreboardTextDim = scoreboardText === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(26,20,4,0.7)';
 
@@ -56,7 +56,7 @@ export function MatchScorecard({
           {card.venue ? `${card.venue} · ` : ''}Toss: {card.toss}
         </ThemedText>
         <ThemedText style={[styles.scoreboardLine, { color: scoreboardText }]}>
-          {teamAbbr(card.winner)} {card.margin}
+          {teamAbbr(card.winner, teamMetaByName(card.winner).abbr)} {card.margin}
         </ThemedText>
         {card.motm ? (
           <ThemedText style={[styles.scoreboardMessage, { color: scoreboardText }]}>
@@ -88,10 +88,10 @@ export function MatchScorecard({
       {card.innings.map((inn, i) => (
         <Card key={i}>
           <ThemedText style={styles.panelTitle}>
-            {teamAbbr(inn.team)} {inn.score}
+            {teamAbbr(inn.team, teamMetaByName(inn.team).abbr)} {inn.score}
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.subtitle}>
-            vs {teamAbbr(inn.against)}
+            vs {teamAbbr(inn.against, teamMetaByName(inn.against).abbr)}
             {inn.impact_sub ? ` · Impact: ${inn.impact_sub}` : ''}
           </ThemedText>
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
@@ -111,7 +111,7 @@ export function MatchScorecard({
           {card.super_over.innings.map((inn, i) => (
             <View key={i} style={styles.superOverInnings}>
               <ThemedText style={styles.subtitleStrong}>
-                {teamAbbr(inn.team)} {inn.score}
+                {teamAbbr(inn.team, teamMetaByName(inn.team).abbr)} {inn.score}
               </ThemedText>
               <View style={styles.overLogBalls}>
                 {inn.events.map((e, j) => (

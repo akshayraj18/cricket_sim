@@ -102,7 +102,8 @@ export default function StatsScreen() {
   const [bowlSort, setBowlSort] = useState<{ key: keyof PlayerDict; dir: 1 | -1 }>({ key: 'wickets', dir: -1 });
 
   const scheme = useColorScheme();
-  const accent = payload ? getTeamSwatch(payload.user_team ?? '', scheme) : undefined;
+  const userTeam = payload?.teams.find((t) => t.name === payload.user_team);
+  const accent = userTeam ? getTeamSwatch(userTeam, userTeam.name, scheme) : undefined;
 
   const teamOptions: DropdownOption[] = useMemo(
     () => [
@@ -110,7 +111,7 @@ export default function StatsScreen() {
       ...(payload?.teams ?? []).map((t) => ({
         value: t.name,
         label: `${t.abbr} · ${t.name}`,
-        color: getTeamSwatch(t.name, scheme),
+        color: getTeamSwatch(t, t.name, scheme),
       })),
     ],
     [payload?.teams, scheme]
