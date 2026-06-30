@@ -137,6 +137,25 @@ export const TeamColors: Record<string, { abbr: string; primary: string; accent:
 export const TEAM_NAMES = Object.keys(TeamColors);
 
 /**
+ * Per-nation primary/accent colors for international teams.
+ * Matches INTERNATIONAL_TEAM_META in constants.py.
+ */
+export const InternationalTeamColors: Record<string, { abbr: string; primary: string; accent: string }> = {
+  'Indicia':   { abbr: 'IND', primary: '#0a63b0', accent: '#f0821e' },
+  'Austrella': { abbr: 'AUS', primary: '#f4d000', accent: '#004f9e' },
+  'Engoria':   { abbr: 'ENG', primary: '#003e8e', accent: '#d4001a' },
+  'Nustria':   { abbr: 'NZL', primary: '#000000', accent: '#c8102e' },
+  'Soutrica':  { abbr: 'SA',  primary: '#007c45', accent: '#f4b942' },
+  'Pakoria':   { abbr: 'PAK', primary: '#005d2e', accent: '#ffffff' },
+  'Srilanya':  { abbr: 'SL',  primary: '#00338d', accent: '#f1c40f' },
+  'Windoria':  { abbr: 'WI',  primary: '#7b0000', accent: '#f7c94e' },
+  'Bangoria':  { abbr: 'BAN', primary: '#006a4e', accent: '#f42a41' },
+  'Afghoria':  { abbr: 'AFG', primary: '#003580', accent: '#d32011' },
+};
+
+export const INTERNATIONAL_TEAM_NAMES = Object.keys(InternationalTeamColors);
+
+/**
  * Minimal team branding shape needed by the color helpers below. Pass the
  * actual `TeamDict` from the API payload (or any subset of these fields)
  * rather than a team name — names can be changed via the rename flow, so a

@@ -95,11 +95,15 @@ export function LiveMatchHub({
         <NextBatterStage match={match} accent={accent} wrap={wrap} careerId={careerId} />
       )}
 
+      {match.status === 'follow_on_decision' && (
+        <FollowOnStage match={match} accent={accent} wrap={wrap} careerId={careerId} />
+      )}
+
       {match.status === 'complete' && (
         <FinalScorecardStage match={match} onComplete={completeMatch} canComplete accent={accent} />
       )}
 
-      {!['toss', 'lineup', 'batting_order', 'impact', 'super_over_setup', 'next_batter', 'complete'].includes(
+      {!['toss', 'lineup', 'batting_order', 'impact', 'super_over_setup', 'next_batter', 'follow_on_decision', 'complete'].includes(
         match.status
       ) && <OverHubStage match={match} accent={accent} wrap={wrap} careerId={careerId} />}
     </View>
@@ -557,6 +561,51 @@ function NextBatterStage({
 }
 
 // ---------------------------------------------------------------------------
+// Follow-on decision (Test only)
+// ---------------------------------------------------------------------------
+
+function FollowOnStage({
+  match,
+  accent,
+  wrap,
+  careerId,
+}: {
+  match: LiveMatchPayload;
+  accent?: string;
+  wrap: (fn: () => Promise<LiveMatchPayload>) => Promise<void>;
+  careerId: string;
+}) {
+  return (
+    <View style={styles.stage}>
+      <View style={[styles.scoreboard, { backgroundColor: accent ?? '#3a3f4b' }]}>
+        <ThemedText style={styles.scoreboardSmall}>{match.team1} vs {match.team2}</ThemedText>
+        <ThemedText style={styles.scoreboardLine}>Follow-on</ThemedText>
+        <ThemedText style={styles.scoreboardMessage}>{match.message}</ThemedText>
+      </View>
+      <Card>
+        <ThemedText style={styles.panelTitle}>Enforce Follow-on?</ThemedText>
+        <ThemedText themeColor="textDim" style={styles.helpText}>
+          The team batting second is still well behind. You can make them bat again immediately (follow-on), or bat again yourself to set a bigger target.
+        </ThemedText>
+        <View style={styles.buttonRow}>
+          <Button
+            label="Enforce Follow-on"
+            variant="primary"
+            accentColor={accent}
+            onPress={() => wrap(() => liveMatchApi.followOnDecision(careerId, true))}
+          />
+          <Button
+            label="Bat Again"
+            variant="secondary"
+            onPress={() => wrap(() => liveMatchApi.followOnDecision(careerId, false))}
+          />
+        </View>
+      </Card>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Over hub — main ball-by-ball control screen
 // ---------------------------------------------------------------------------
 
@@ -617,6 +666,31 @@ function OverHubStage({
 
       {section === 'controls' && (
         <>
+      {match.match_format === 'test' && (
+        <Card>
+          <ThemedText style={styles.panelTitle}>
+            Day {match.current_day ?? 1} · Session {match.current_session ?? 1} of {match.sessions_per_day ?? 3}
+          </ThemedText>
+          {match.pending_session_break && (
+            <>
+              <ThemedText themeColor="textDim" style={styles.helpText}>Session over — stumps or lunch break.</ThemedText>
+              <Button
+                label="Proceed to Next Session"
+                variant="primary"
+                accentColor={accent}
+                onPress={() => wrap(() => liveMatchApi.proceedSession(careerId))}
+              />
+            </>
+          )}
+          {match.can_declare && !match.pending_session_break && (
+            <Button
+              label="Declare Innings"
+              variant="secondary"
+              onPress={() => wrap(() => liveMatchApi.declare(careerId))}
+            />
+          )}
+        </Card>
+      )}
       <Card>
         <ThemedText style={styles.panelTitle}>Ball Controls</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>

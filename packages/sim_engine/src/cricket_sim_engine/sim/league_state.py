@@ -23,6 +23,8 @@ from cricket_sim_engine.sim.constants import (
     OVERSEAS_FIRST_NAMES,
     OVERSEAS_LAST_NAMES,
     team_meta,
+    format_config,
+    INTERNATIONAL_TEAMS_LIST,
 )
 from cricket_sim_engine.sim.helpers import (
     batting_slot_player,
@@ -85,6 +87,12 @@ class LeagueState:
         self.last_standings = []
         self.save_name = ""
         self.draft_pool_type = "current"
+        self.competition = "ipl"
+        self.match_format = "t20"
+        self.career_mode = "league"
+        self.series_length = None
+        self.bilateral_wins = {}
+        self.bilateral_match_num = 0
 
     @staticmethod
     def save_slug(name):
@@ -332,10 +340,12 @@ class LeagueState:
                 ensure_stat_fields(player)
                 self.player_pool.append(player)
 
-    def new_league(self, user_team_name, difficulty="hard", draft_pool="current"):
+    def new_league(self, user_team_name, difficulty="hard", draft_pool="current", match_format="t20"):
         """Reset to a brand-new career: fresh player pool and ten empty franchises, the user assigned to `user_team_name`, and a shuffled mega-draft order ready to start.
 
         `draft_pool` can be "current" (2026 players only) or "alltime" (500+ all-time IPL greats).
+        `match_format` is "t20" (default), "odi", or "test" — IPL careers are
+        nearly always T20 but the format plumbing doesn't assume that.
         Raises `ValueError` if `user_team_name` isn't a real cricket franchise.
         """
         if user_team_name not in IPL_TEAMS_LIST:
@@ -344,6 +354,9 @@ class LeagueState:
         self.season_year = 2026
         self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
         self.draft_pool_type = draft_pool if draft_pool in ("current", "alltime") else "current"
+        self.competition = "ipl"
+        self.match_format = match_format if match_format in ("t20", "odi", "test") else "t20"
+        self.career_mode = "league"
         self.user_team_name = user_team_name
         self.player_pool = get_alltime_player_pool() if self.draft_pool_type == "alltime" else get_initial_player_pool()
         self.teams = [Team(name) for name in IPL_TEAMS_LIST]
@@ -373,6 +386,9 @@ class LeagueState:
         self.season_year = 2026
         self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
         self.draft_pool_type = "rosters2026"
+        self.competition = "ipl"
+        self.match_format = "t20"
+        self.career_mode = "league"
         self.user_team_name = user_team_name
         rosters, leftover_pool = get_2026_rosters_and_pool()
         self.player_pool = leftover_pool
@@ -640,10 +656,22 @@ class LeagueState:
             self.cpu_pick(self.current_draft_team())
 
     def start_regular_season(self):
-        """Transition from the draft to the league stage: build the schedule, reset match/playoff history, ensure every team has leadership assigned, and snapshot season-start ratings."""
+        """Transition from the draft to the league or series stage.
+
+        Dispatches to `start_bilateral_series` for bilateral careers.
+        Otherwise builds the round-robin schedule (IPL 14 rounds; international
+        tournament uses the pre-built 9-round schedule set in the constructor).
+        """
+        if self.career_mode == "bilateral":
+            self.start_bilateral_series()
+            return
         self.phase = "season"
         self.round_num = 1
-        self.schedule = self.build_schedule()
+        if self.competition == "international":
+            # Schedule was already set by new_international_tournament(); don't overwrite it.
+            pass
+        else:
+            self.schedule = self.build_schedule()
         self.live_match = None
         self.match_log = []
         self.fixture_results = []
@@ -764,21 +792,31 @@ class LeagueState:
             raise ValueError("Default batting order must contain 11 unique squad players.")
         bowlers = {p.name for p in team.roster if is_bowling_role(p)}
         bowling = [name for name in bowling_order if name in bowlers]
-        if bowling and len(bowling) != 20:
-            raise ValueError("Default bowling plan must contain 20 overs, or leave it blank.")
-        if bowling and any(bowling.count(name) > 4 for name in set(bowling)):
-            raise ValueError("No bowler can bowl more than 4 overs.")
+        fmt = format_config(getattr(self, "match_format", "t20"))
+        plan_overs = fmt["overs_per_innings"]
+        bowler_cap = fmt["bowler_overs_cap"]
+        if bowling and len(bowling) != plan_overs:
+            raise ValueError(f"Default bowling plan must contain {plan_overs} overs, or leave it blank.")
+        if bowling and any(bowling.count(name) > bowler_cap for name in set(bowling)):
+            raise ValueError(f"No bowler can bowl more than {bowler_cap} overs.")
         if bowling and any(bowling[i] == bowling[i - 1] for i in range(1, len(bowling))):
             raise ValueError("A bowler cannot bowl consecutive overs.")
         team.saved_batting_order_names = batting or list(getattr(team, "saved_starting_xi_names", []))
         team.saved_bowling_over_names = bowling
 
     def default_bowling_plan(self, team):
-        """Build a 20-over bowling plan for `team`: the user's saved plan if they have one, otherwise auto-build one from their match-day 12 (Starting XI plus Impact Sub) by greedily picking the best phase-fit bowler for each over (never the same bowler in consecutive overs, never more than 4 overs each).
+        """Build a full-innings bowling plan for `team` (one bowler per over, sized to the career's match format): the user's saved plan if they have one, otherwise auto-build one from their match-day 12 (Starting XI plus Impact Sub) by greedily picking the best phase-fit bowler for each over (never the same bowler in consecutive overs, never more than the format's per-bowler over cap).
 
         Returns an empty list if the team can't field at least 5 recognised
         bowlers — the UI then falls back to choosing a bowler each over live.
+        Test careers (no fixed pre-match bowling plan) always return [].
         """
+        fmt = format_config(getattr(self, "match_format", "t20"))
+        if fmt["innings_per_side"] > 1:
+            return []
+        overs = fmt["overs_per_innings"]
+        cap = fmt["bowler_overs_cap"]
+        phases = fmt["phase_boundaries"]
         saved = list(getattr(team, "saved_bowling_over_names", []))
         if saved:
             return saved
@@ -793,15 +831,15 @@ class LeagueState:
         if len(bowlers) < 5:
             return []
         def best_for_phase(phase, used, last_name):
-            candidates = [p for p in bowlers if used.get(p.name, 0) < 4]
+            candidates = [p for p in bowlers if used.get(p.name, 0) < cap]
             non_repeat = [p for p in candidates if p.name != last_name]
             if non_repeat:
                 candidates = non_repeat
             return sorted(candidates, key=lambda p: self.bowler_phase_score(p, phase), reverse=True)[0]
         used = {}
         plan = []
-        for over in range(20):
-            phase = innings_phase(over)
+        for over in range(overs):
+            phase = innings_phase(over, phases)
             bowler = best_for_phase(phase, used, plan[-1] if plan else "")
             plan.append(bowler.name)
             used[bowler.name] = used.get(bowler.name, 0) + 1
@@ -1161,13 +1199,25 @@ class LeagueState:
         play (`interactive=True`) or quick-simulates it too and advances the
         round (rolling into playoffs once round 14 completes). In the
         playoffs: unlocks the next bracket match if needed and starts a
-        `LiveMatch` for it. Raises `ValueError` if the match centre isn't
-        open, or (in playoffs) if the user's team isn't part of the next
-        scheduled match.
+        `LiveMatch` for it. In a bilateral series: starts the next
+        user-vs-opponent match directly (no other fixtures). Raises
+        `ValueError` if the match centre isn't open, or (in playoffs) if
+        the user's team isn't part of the next scheduled match.
         """
         if self.phase not in ("season", "playoffs"):
             raise ValueError("Match centre is not open.")
         if self.live_match and self.live_match.status != "complete":
+            return
+        if self.career_mode == "bilateral" and self.phase == "season":
+            if self.bilateral_series_complete():
+                raise ValueError("The bilateral series is already complete.")
+            opp = next(t for t in self.teams if t.name != self.user_team_name)
+            match_label = f"Match {self.bilateral_match_num + 1}"
+            if interactive:
+                self.live_match = LiveMatch(self, self.user_team(), opp, match_label)
+            else:
+                card = self.simulate_match_auto(self.user_team(), opp, match_label)
+                self.record_bilateral_match_result(card)
             return
         if self.phase == "season":
             self.match_log = []
@@ -1182,33 +1232,45 @@ class LeagueState:
             else:
                 self.simulate_match_auto(self.find_team(user_fixture[0]), self.find_team(user_fixture[1]), "League")
                 self.round_num += 1
-                if self.round_num > 14:
+                if self.round_num > len(self.schedule):
                     self.finish_league_stage()
         else:
             match = self.playoff_matches[self.playoff_index]
             if match["status"] == "locked":
-                self.unlock_playoff_match()
+                if self.competition == "international":
+                    self.unlock_international_playoff_match()
+                else:
+                    self.unlock_playoff_match()
                 match = self.playoff_matches[self.playoff_index]
             if self.user_team_name not in (match["team1"], match["team2"]):
                 raise ValueError("Your team is not in the next playoff. Use Quick Sim Next Playoff.")
             self.live_match = LiveMatch(self, self.find_team(match["team1"]), self.find_team(match["team2"]), match["name"])
 
     def complete_live_match(self):
-        """Acknowledge the finished live match: advance the league round (rolling into playoffs at round 15) or record the playoff result, then clear `live_match`.
+        """Acknowledge the finished live match: advance the league round (rolling into playoffs at round 15) or record the playoff/bilateral result, then clear `live_match`.
 
         Raises `ValueError` if there's no completed live match to close out.
         """
         if not self.live_match or self.live_match.status != "complete":
             raise ValueError("Live match is not complete.")
+        if self.career_mode == "bilateral" and self.phase == "season":
+            card = self.live_match.card
+            self.live_match = None
+            self.record_bilateral_match_result(card)
+            return
         if self.phase == "season":
             card = self.live_match.card
             self.round_num += 1
-            if self.round_num > 14:
+            if self.round_num > len(self.schedule):
                 self.finish_league_stage()
             else:
                 self.status_message = self._round_result_message(self.round_num - 1, [card])
         else:
-            self.record_playoff_result(self.live_match.card["winner"])
+            winner = self.live_match.card["winner"] or self.live_match.card.get("team1", "")
+            if self.competition == "international":
+                self.record_international_playoff_result(winner)
+            else:
+                self.record_playoff_result(winner)
         self.live_match = None
 
     def simulate_match_auto(self, team1, team2, stage):
@@ -1247,8 +1309,24 @@ class LeagueState:
         advancing to the next round (or playoffs) and updating the status
         message; if no live match exists yet, simulates the entire round's 5
         fixtures. In the playoffs: unlocks and simulates the next bracket
-        match and records its result.
+        match and records its result. In a bilateral series: simulates the
+        next match and records the series result.
         """
+        if self.career_mode == "bilateral" and self.phase == "season":
+            if self.bilateral_series_complete():
+                return
+            if self.live_match:
+                if self.live_match.status != "complete":
+                    card = self.live_match.auto_finish()
+                else:
+                    card = self.live_match.card
+                self.live_match = None
+            else:
+                opp = next(t for t in self.teams if t.name != self.user_team_name)
+                match_label = f"Match {self.bilateral_match_num + 1}"
+                card = self.simulate_match_auto(self.user_team(), opp, match_label)
+            self.record_bilateral_match_result(card)
+            return
         if self.phase == "season":
             if self.live_match:
                 if self.live_match.status != "complete":
@@ -1258,7 +1336,7 @@ class LeagueState:
                     card = self.live_match.card
                     self.live_match = None
                 self.round_num += 1
-                if self.round_num > 14:
+                if self.round_num > len(self.schedule):
                     self.finish_league_stage()
                 else:
                     self.status_message = self._round_result_message(self.round_num - 1, [card])
@@ -1269,7 +1347,7 @@ class LeagueState:
                 card = self.simulate_match_auto(self.find_team(team_a), self.find_team(team_b), "League")
                 completed.append(card)
             self.round_num += 1
-            if self.round_num > 14:
+            if self.round_num > len(self.schedule):
                 self.finish_league_stage()
             else:
                 self.status_message = self._round_result_message(self.round_num - 1, completed)
@@ -1281,20 +1359,32 @@ class LeagueState:
             else:
                 match = self.playoff_matches[self.playoff_index]
                 if match["status"] == "locked":
-                    self.unlock_playoff_match()
+                    if self.competition == "international":
+                        self.unlock_international_playoff_match()
+                    else:
+                        self.unlock_playoff_match()
                     match = self.playoff_matches[self.playoff_index]
                 card = self.simulate_match_auto(self.find_team(match["team1"]), self.find_team(match["team2"]), match["name"])
             self.live_match = None
-            self.record_playoff_result(card["winner"])
+            winner = card.get("winner") or card.get("team1", "")
+            if self.competition == "international":
+                self.record_international_playoff_result(winner)
+            else:
+                self.record_playoff_result(winner)
 
     def finish_league_stage(self):
-        """Close out the 14-round league stage: snapshot final standings, record the qualifying top four, and move to "league_complete" awaiting the user to start playoffs."""
+        """Close out the league stage: snapshot final standings and move to "league_complete" awaiting the user to start playoffs."""
         self.last_standings = self.standings()
         self.pending_playoff_top_four = [t.name for t in self.last_standings[:4]]
         self.phase = "league_complete"
         self.live_match = None
-        qualified = self.user_team_name in self.pending_playoff_top_four
-        self.status_message = "League stage complete. Review the table and season stats, then start playoffs." if qualified else "League stage complete. Your team missed the top four; review the season, then start or quick-sim playoffs."
+        if self.competition == "international" and self.match_format == "test":
+            qualifiers = [t.name for t in self.last_standings[:2]]
+            qualified = self.user_team_name in qualifiers
+            self.status_message = "League stage complete. Top 2 advance to the Final." if qualified else "League stage complete. Your team missed the top two; review the season, then start or quick-sim playoffs."
+        else:
+            qualified = self.user_team_name in self.pending_playoff_top_four
+            self.status_message = "League stage complete. Review the table and season stats, then start playoffs." if qualified else "League stage complete. Your team missed the top four; review the season, then start or quick-sim playoffs."
 
     def start_playoffs(self):
         """Set up the IPL playoff bracket from the qualifying top four and open the playoffs phase. Raises `ValueError` if the league stage hasn't finished yet."""
@@ -1340,6 +1430,252 @@ class LeagueState:
             self.playoff_matches[2].update({"team1": self.playoff_results[0]["loser"], "team2": self.playoff_results[1]["winner"], "status": "pending"})
         if self.playoff_index == 3 and self.playoff_matches[3]["status"] == "locked":
             self.playoff_matches[3].update({"team1": self.playoff_results[0]["winner"], "team2": self.playoff_results[2]["winner"], "status": "pending"})
+
+    # ------------------------------------------------------------------ #
+    # International tournament helpers                                     #
+    # ------------------------------------------------------------------ #
+
+    def new_international_tournament(self, user_team_name, match_format="t20", career_mode="tournament", difficulty="hard", draft_pool="international_current"):
+        """Reset to a brand-new international tournament career.
+
+        10 national teams play a single round-robin (9 rounds), then:
+        - T20/ODI: top-4 → Semifinal 1 (1v4), Semifinal 2 (2v3), Final
+        - Test: top-2 → straight Final
+
+        Raises `ValueError` if `user_team_name` isn't in `INTERNATIONAL_TEAMS_LIST`.
+        """
+        if user_team_name not in INTERNATIONAL_TEAMS_LIST:
+            raise ValueError("Choose a valid international team.")
+        self.__init__()
+        self.season_year = 2026
+        self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
+        self.competition = "international"
+        self.match_format = match_format if match_format in ("t20", "odi", "test") else "t20"
+        self.career_mode = career_mode if career_mode in ("tournament", "bilateral") else "tournament"
+        self.draft_pool_type = draft_pool
+        self.user_team_name = user_team_name
+        self.teams = [Team(name) for name in INTERNATIONAL_TEAMS_LIST]
+        self.phase = "draft"
+        self.draft_type = "mega"
+        self.draft_order = list(self.teams)
+        random.shuffle(self.draft_order)
+        self.draft_started = False
+        self.match_log = []
+        self.fixture_results = []
+        self.live_match = None
+        self.schedule = self.build_single_round_robin_schedule()
+        user_pick = self.draft_order.index(self.user_team()) + 1
+        self.status_message = f"{user_team_name} enter an international {self.match_format.upper()} tournament on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
+
+    def build_single_round_robin_schedule(self):
+        """Build a pure 9-round single round-robin for 10 teams (no replay rounds).
+
+        Every pair of teams meets exactly once across the 9 rounds.
+        Used for the international tournament (no double-header padding needed).
+        """
+        names = [t.name for t in self.teams]
+        assert len(names) % 2 == 0, "schedule builder assumes an even team count"
+        random.shuffle(names)
+        n = len(names)
+        rotation = list(names)
+        rounds = []
+        for _ in range(n - 1):
+            pairs = [
+                (rotation[i], rotation[n - 1 - i])
+                for i in range(n // 2)
+            ]
+            rounds.append(pairs)
+            rotation = [rotation[0]] + [rotation[-1]] + rotation[1:-1]
+        random.shuffle(rounds)
+        return rounds
+
+    def start_international_playoffs(self):
+        """Set up the international playoff bracket from the top finishers and open the playoffs phase.
+
+        T20/ODI: top-4 → semis + final. Test: top-2 → straight final.
+        Raises `ValueError` if the league stage hasn't finished yet.
+        """
+        if self.phase != "league_complete":
+            raise ValueError("Playoffs are not ready to start.")
+        standings = self.last_standings or self.standings()
+        if self.match_format == "test":
+            top_teams = standings[:2]
+        else:
+            top_teams = standings[:4]
+        self.setup_international_playoffs([t for t in top_teams])
+        self.match_log = []
+        self.live_match = None
+        self.status_message = "International playoffs are ready. Enter the Match Hub if your team is playing, or quick-sim."
+
+    def setup_international_playoffs(self, top_teams):
+        """Lay out the international playoff bracket.
+
+        T20/ODI: Semifinal 1 (1v4), Semifinal 2 (2v3), Final (locked until semis done).
+        Test: straight Final (1v2), no semis.
+        """
+        self.phase = "playoffs"
+        self.playoff_index = 0
+        self.playoff_results = []
+        if self.match_format == "test":
+            p1, p2 = top_teams[0], top_teams[1]
+            self.playoff_matches = [
+                {"name": "Final", "team1": p1.name, "team2": p2.name, "status": "pending"},
+            ]
+        else:
+            p1, p2, p3, p4 = top_teams[0], top_teams[1], top_teams[2], top_teams[3]
+            self.playoff_matches = [
+                {"name": "Semifinal 1", "team1": p1.name, "team2": p4.name, "status": "pending"},
+                {"name": "Semifinal 2", "team1": p2.name, "team2": p3.name, "status": "pending"},
+                {"name": "Final", "team1": "", "team2": "", "status": "locked"},
+            ]
+
+    def record_international_playoff_result(self, winner):
+        """Mark the just-finished international playoff match complete and advance the bracket.
+
+        When the Final is done, transitions to `season_end` with no retention
+        window (international tournaments end cleanly after the champion is crowned).
+        """
+        match = self.playoff_matches[self.playoff_index]
+        loser = match["team2"] if winner == match["team1"] else match["team1"]
+        match.update({"status": "complete", "winner": winner, "loser": loser})
+        self.playoff_results.append({"name": match["name"], "winner": winner, "loser": loser})
+        self.playoff_index += 1
+        if self.playoff_index >= len(self.playoff_matches):
+            self.phase = "season_end"
+            self.status_message = f"{winner} are {self.match_format.upper()} World Champions!"
+        else:
+            self.unlock_international_playoff_match()
+            self.status_message = f"{match['name']}: {winner} beat {loser}. Next match unlocked."
+
+    def unlock_international_playoff_match(self):
+        """Fill the Final with Semifinal 1 winner vs Semifinal 2 winner (T20/ODI only).
+
+        Test has no semis so the Final is already populated — this is a no-op for Test.
+        """
+        if self.match_format == "test":
+            return
+        if self.playoff_index == 2 and self.playoff_matches[2]["status"] == "locked":
+            sf1_winner = self.playoff_results[0]["winner"]
+            sf2_winner = self.playoff_results[1]["winner"]
+            self.playoff_matches[2].update({"team1": sf1_winner, "team2": sf2_winner, "status": "pending"})
+
+    # ------------------------------------------------------------------ #
+    # Bilateral series helpers                                             #
+    # ------------------------------------------------------------------ #
+
+    def new_bilateral_series(self, user_team_name, opponent_name, match_format="t20", series_length=3, difficulty="hard", draft_pool="international_current"):
+        """Reset to a brand-new bilateral series career.
+
+        Two teams play `series_length` (1, 3, or 5) matches. The series ends
+        when one side wins ceil(series_length / 2) matches, or all matches
+        are played. No league table, no playoffs, no retention.
+
+        Raises `ValueError` if either team name is not in
+        `INTERNATIONAL_TEAMS_LIST`, or if they are the same team, or if
+        `series_length` is not in (1, 3, 5).
+        """
+        if user_team_name not in INTERNATIONAL_TEAMS_LIST:
+            raise ValueError("Choose a valid international team.")
+        if opponent_name not in INTERNATIONAL_TEAMS_LIST:
+            raise ValueError("Choose a valid opponent.")
+        if user_team_name == opponent_name:
+            raise ValueError("User team and opponent must be different.")
+        if series_length not in (1, 3, 5):
+            raise ValueError("Series length must be 1, 3, or 5.")
+        self.__init__()
+        self.season_year = 2026
+        self.difficulty = difficulty if difficulty in ("easy", "medium", "hard") else "hard"
+        self.competition = "international"
+        self.match_format = match_format if match_format in ("t20", "odi", "test") else "t20"
+        self.career_mode = "bilateral"
+        self.series_length = series_length
+        self.draft_pool_type = draft_pool
+        self.user_team_name = user_team_name
+        self.teams = [Team(user_team_name), Team(opponent_name)]
+        self.phase = "draft"
+        self.draft_type = "mega"
+        self.draft_order = list(self.teams)
+        random.shuffle(self.draft_order)
+        self.draft_started = False
+        self.match_log = []
+        self.fixture_results = []
+        self.live_match = None
+        self.schedule = []
+        self.bilateral_wins = {user_team_name: 0, opponent_name: 0}
+        self.bilateral_match_num = 0
+        user_pick = self.draft_order.index(self.user_team()) + 1
+        self.status_message = f"{user_team_name} vs {opponent_name} — {series_length}-match {self.match_format.upper()} series on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
+
+    def start_bilateral_series(self):
+        """Transition from draft to the bilateral series: reset match history and open the first match.
+
+        Called the same way as `start_regular_season()` but bypasses the
+        schedule — bilateral matches are played one at a time via
+        `begin_match_day` / `simulate_current_round`.
+        """
+        self.phase = "season"
+        self.round_num = 1
+        self.schedule = []
+        self.live_match = None
+        self.match_log = []
+        self.fixture_results = []
+        self.playoff_matches = []
+        self.playoff_results = []
+        self.playoff_index = 0
+        if not hasattr(self, "bilateral_wins") or not self.bilateral_wins:
+            names = [t.name for t in self.teams]
+            self.bilateral_wins = {n: 0 for n in names}
+            self.bilateral_match_num = 0
+        for team in self.teams:
+            if not team.captain or team.captain not in team.roster:
+                team.auto_assign_cpu_leadership()
+        self.capture_season_baselines()
+        opp = next(t.name for t in self.teams if t.name != self.user_team_name)
+        self.status_message = f"Match 1 of {self.series_length} is ready. {self.user_team_name} vs {opp}."
+
+    def bilateral_series_complete(self):
+        """Return True if the bilateral series has a winner or all matches have been played."""
+        target = (self.series_length + 1) // 2
+        return (
+            any(w >= target for w in self.bilateral_wins.values())
+            or self.bilateral_match_num >= self.series_length
+        )
+
+    def bilateral_series_winner(self):
+        """Return the series winner's name, or '' if the series is tied/drawn."""
+        target = (self.series_length + 1) // 2
+        for name, wins in self.bilateral_wins.items():
+            if wins >= target:
+                return name
+        wins_list = list(self.bilateral_wins.values())
+        if wins_list[0] != wins_list[1]:
+            return max(self.bilateral_wins, key=lambda k: self.bilateral_wins[k])
+        return ""
+
+    def record_bilateral_match_result(self, card):
+        """Update bilateral series tallies from a completed match card and check for series end."""
+        winner = card.get("winner", "")
+        draw = card.get("draw", False)
+        if winner and not draw and winner in self.bilateral_wins:
+            self.bilateral_wins[winner] += 1
+        self.bilateral_match_num += 1
+        if self.bilateral_series_complete():
+            champion = self.bilateral_series_winner()
+            opp = next(t.name for t in self.teams if t.name != self.user_team_name)
+            u_wins = self.bilateral_wins[self.user_team_name]
+            o_wins = self.bilateral_wins[opp]
+            if champion:
+                self.status_message = f"Series over — {champion} win {u_wins}-{o_wins}!"
+            else:
+                self.status_message = f"Series drawn {u_wins}-{o_wins}."
+            self.phase = "season_end"
+        else:
+            match_num = self.bilateral_match_num + 1
+            opp = next(t.name for t in self.teams if t.name != self.user_team_name)
+            u_wins = self.bilateral_wins[self.user_team_name]
+            o_wins = self.bilateral_wins[opp]
+            self.status_message = f"Match {match_num} of {self.series_length} — {self.user_team_name} {u_wins}-{o_wins} {opp}."
+            self.round_num += 1
 
     def open_retention(self):
         """Open the post-season retention window: alternate the keep-limit between a normal reset (`RETAIN_NORMAL`) and a deeper reset (`RETAIN_RESET`) every other season, mirroring the IPL's periodic mega-auction cycle.
@@ -1732,6 +2068,12 @@ class LeagueState:
             "phase": self.phase, "season": self.season_year, "completed_seasons": self.completed_seasons,
             "draft_type": self.draft_type, "round": self.round_num, "user_team": self.user_team_name,
             "difficulty": self.difficulty, "draft_pool_type": self.draft_pool_type,
+            "competition": getattr(self, "competition", "ipl"),
+            "match_format": getattr(self, "match_format", "t20"),
+            "career_mode": getattr(self, "career_mode", "league"),
+            "series_length": getattr(self, "series_length", None),
+            "bilateral_wins": getattr(self, "bilateral_wins", {}),
+            "bilateral_match_num": getattr(self, "bilateral_match_num", 0),
             "status": self.status_message, "teams": [self.team_dict(t) for t in self.teams],
             "standings": [self.team_dict(t) for t in self.standings()] if self.teams else [],
             "squad_size": SQUAD_SIZE, "retention_limit": self.retention_limit,

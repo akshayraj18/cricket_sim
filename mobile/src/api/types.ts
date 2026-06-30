@@ -20,13 +20,21 @@ export interface AuthResponse {
 }
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
-export type DraftPoolType = 'current' | 'alltime' | 'rosters2026';
+export type DraftPoolType = 'current' | 'alltime' | 'rosters2026' | 'international_current';
+export type Competition = 'ipl' | 'international';
+export type MatchFormat = 't20' | 'odi' | 'test';
+export type CareerMode = 'league' | 'tournament' | 'bilateral';
 
 export interface CareerCreateRequest {
   name: string;
   user_team_name: string;
   difficulty?: Difficulty;
   draft_pool_type?: DraftPoolType;
+  competition?: Competition;
+  match_format?: MatchFormat;
+  career_mode?: CareerMode;
+  series_length?: number | null;
+  opponent_name?: string | null;
 }
 
 export interface CareerSummary {
@@ -35,6 +43,10 @@ export interface CareerSummary {
   user_team_name: string;
   difficulty: Difficulty;
   draft_pool_type: DraftPoolType;
+  competition: Competition;
+  match_format: MatchFormat;
+  career_mode: CareerMode;
+  series_length: number | null;
   phase: string;
   season_year: number;
   completed_seasons: number;
@@ -425,6 +437,15 @@ export interface LiveMatchPayload {
   decision: string | null;
   message: string;
   user_toss: boolean;
+  // Test-specific fields (undefined for T20/ODI)
+  match_format?: MatchFormat;
+  current_day?: number;
+  current_session?: number;
+  sessions_per_day?: number;
+  pending_session_break?: boolean;
+  follow_on_available?: boolean;
+  followed_on?: boolean;
+  can_declare?: boolean;
   lineup_context: '' | 'batting' | 'bowling';
   impact_context: '' | 'bat_to_bowl' | 'bowl_to_bat';
   suggested: PlayerDict[];
@@ -465,6 +486,12 @@ export interface LeaguePayload {
   user_team: string | null;
   difficulty: string;
   draft_pool_type: string;
+  competition: Competition;
+  match_format: MatchFormat;
+  career_mode: CareerMode;
+  series_length: number | null;
+  bilateral_wins: Record<string, number>;
+  bilateral_match_num: number;
   status: string | null;
   teams: TeamDict[];
   standings: TeamDict[];

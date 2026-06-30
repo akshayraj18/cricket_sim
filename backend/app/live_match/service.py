@@ -138,6 +138,12 @@ async def apply_action(
         match.set_super_over_lineup(body.get("batters", []), body.get("bowler", ""))
     elif action == "impact-sub":
         match.apply_impact_sub(body.get("out"), body.get("in"))
+    elif action == "proceed-session":
+        match.proceed_session()
+    elif action == "follow-on-decision":
+        match.decide_follow_on(body.get("enforce", True))
+    elif action == "declare":
+        match.declare_innings()
     else:
         raise LiveMatchError(f"Unknown action: {action}")
 

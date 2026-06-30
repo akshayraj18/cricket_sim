@@ -118,7 +118,10 @@ async def rename_entity(
 async def start_playoffs(db: AsyncSession, redis: Redis, user_id: uuid.UUID, career_id: uuid.UUID) -> dict:
     league = await _load_state(db, redis, user_id, career_id)
     try:
-        league.start_playoffs()
+        if getattr(league, "competition", "ipl") == "international":
+            league.start_international_playoffs()
+        else:
+            league.start_playoffs()
     except ValueError as exc:
         raise SeasonError(str(exc)) from exc
     return await _save_and_payload(db, user_id, career_id, league)

@@ -214,7 +214,7 @@ function SeasonOverview({
             </ThemedText>
           )}
           <View style={styles.buttonRow}>
-            {payload.phase === 'season_end' && (
+            {payload.phase === 'season_end' && payload.competition !== 'international' && payload.career_mode !== 'bilateral' && (
               <Button
                 label="Open Retention Window"
                 variant="primary"
@@ -225,7 +225,13 @@ function SeasonOverview({
             )}
             {payload.phase === 'league_complete' && (
               <Button
-                label="Start Playoffs"
+                label={
+                  payload.competition === 'international' && payload.match_format === 'test'
+                    ? 'Start Final'
+                    : payload.competition === 'international'
+                    ? 'Start Playoffs'
+                    : 'Start Playoffs'
+                }
                 variant="primary"
                 accentColor={accent}
                 loading={busyAction}
@@ -240,7 +246,13 @@ function SeasonOverview({
         <View style={styles.buttonRow}>
           {canBeginMatch && (
             <Button
-              label={payload.phase === 'playoffs' ? 'Enter Playoff Match Hub' : 'Enter Match Hub'}
+              label={
+                payload.phase === 'playoffs'
+                  ? 'Enter Playoff Match Hub'
+                  : payload.career_mode === 'bilateral'
+                  ? 'Enter Match Hub'
+                  : 'Enter Match Hub'
+              }
               variant="primary"
               accentColor={accent}
               loading={busy}
@@ -249,7 +261,13 @@ function SeasonOverview({
           )}
           {canSimulate && (
             <Button
-              label={payload.phase === 'playoffs' ? 'Quick Sim Next Playoff' : 'Quick Sim Match Day'}
+              label={
+                payload.phase === 'playoffs'
+                  ? 'Quick Sim Next Playoff'
+                  : payload.career_mode === 'bilateral'
+                  ? 'Quick Sim Next Match'
+                  : 'Quick Sim Match Day'
+              }
               variant="secondary"
               loading={busyAction}
               onPress={() => wrap(() => seasonApi.simulateRound(careerId))}
@@ -261,7 +279,9 @@ function SeasonOverview({
       <SegmentedControl segments={segments} value={tab} onChange={setTab} accentColor={accent} />
 
       {tab === 'fixtures' &&
-        (payload.phase === 'season' ? (
+        (payload.career_mode === 'bilateral' ? (
+          <BilateralPanel payload={payload} onViewScorecard={onViewScorecard} />
+        ) : payload.phase === 'season' ? (
           <FixturesPanel payload={payload} onViewScorecard={onViewScorecard} />
         ) : payload.phase === 'league_complete' ? (
           <LeagueCompletePanel payload={payload} />
@@ -272,6 +292,58 @@ function SeasonOverview({
       {tab === 'standings' && <StandingsPanel payload={payload} accent={accent} />}
 
       {tab === 'recent' && <RecentMatchesPanel payload={payload} onViewScorecard={onViewScorecard} />}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bilateral series panel
+// ---------------------------------------------------------------------------
+
+function BilateralPanel({
+  payload,
+  onViewScorecard,
+}: {
+  payload: LeaguePayload;
+  onViewScorecard: (card: MatchCard) => void;
+}) {
+  const theme = useTheme();
+  const teams = Object.keys(payload.bilateral_wins ?? {});
+  const userTeam = payload.user_team ?? '';
+  const oppTeam = teams.find((t) => t !== userTeam) ?? '';
+  const userWins = (payload.bilateral_wins ?? {})[userTeam] ?? 0;
+  const oppWins = (payload.bilateral_wins ?? {})[oppTeam] ?? 0;
+  const matchNum = payload.bilateral_match_num ?? 0;
+  const seriesLength = payload.series_length ?? 1;
+  const matches = [...payload.match_log].reverse();
+
+  return (
+    <View style={styles.panelGap}>
+      <Card>
+        <ThemedText style={styles.fixtureTitle}>Series Score</ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginVertical: Spacing.two }}>
+          <ThemedText style={{ fontSize: 28, fontWeight: '800' }}>{userWins}</ThemedText>
+          <ThemedText themeColor="textFaint" style={{ fontSize: 16 }}>–</ThemedText>
+          <ThemedText style={{ fontSize: 28, fontWeight: '800' }}>{oppWins}</ThemedText>
+        </View>
+        <ThemedText themeColor="textDim" style={styles.fixtureSub}>
+          {userTeam} vs {oppTeam} · Match {matchNum + 1} of {seriesLength}
+        </ThemedText>
+      </Card>
+      {matches.length > 0 && (
+        <Card>
+          <ThemedText style={styles.fixtureTitle}>Results</ThemedText>
+          {matches.map((card, i) => (
+            <Pressable key={i} onPress={() => onViewScorecard(card)}>
+              <View style={[styles.fixtureCard, { borderColor: theme.border }]}>
+                <ThemedText style={styles.fixtureTitle}>
+                  {card.winner ? `${card.winner} ${card.margin}` : 'Match drawn'}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ))}
+        </Card>
+      )}
     </View>
   );
 }

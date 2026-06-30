@@ -29,6 +29,10 @@ def _summary(career: Career) -> CareerSummary:
         user_team_name=career.user_team_name,
         difficulty=career.difficulty,
         draft_pool_type=career.draft_pool_type,
+        competition=getattr(career, "competition", "ipl"),
+        match_format=getattr(career, "match_format", "t20"),
+        career_mode=getattr(career, "career_mode", "league"),
+        series_length=getattr(career, "series_length", None),
         phase=career.phase,
         season_year=career.season_year,
         completed_seasons=career.completed_seasons,
@@ -92,7 +96,10 @@ async def create_career(
 ) -> CareerDetail:
     try:
         career = await service.create_career(
-            db, user.id, body.name, body.user_team_name, body.difficulty, body.draft_pool_type
+            db, user.id, body.name, body.user_team_name, body.difficulty, body.draft_pool_type,
+            competition=body.competition, match_format=body.match_format,
+            career_mode=body.career_mode, series_length=body.series_length,
+            opponent_name=body.opponent_name,
         )
     except service.CareerError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc

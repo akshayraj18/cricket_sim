@@ -94,11 +94,12 @@ def ensure_stat_fields(player):
         player.stats.setdefault(key, value)
 
 
-def innings_phase(over_num):
-    """Classify a (zero-indexed) over number into the standard T20 phase: Powerplay (overs 1-6), Middle Overs (7-15), or Death Overs (16-20)."""
-    if over_num < 6:
+def innings_phase(over_num, phase_boundaries=(6, 15)):
+    """Classify a (zero-indexed) over number into Powerplay/Middle Overs/Death Overs using `phase_boundaries` (start-of-middle, start-of-death) — defaults to the standard T20 cutoffs (6, 15)."""
+    powerplay_end, death_start = phase_boundaries
+    if over_num < powerplay_end:
         return "Powerplay"
-    if over_num < 15:
+    if over_num < death_start:
         return "Middle Overs"
     return "Death Overs"
 

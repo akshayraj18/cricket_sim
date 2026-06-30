@@ -8,6 +8,58 @@ location, squad sizing, and the retention-window cycle.
 SAVE_FILE = "ui_save_state.pkl"
 SAVES_DIR = "saves"
 SQUAD_SIZE = 25
+
+# Per-format match parameters. `balls_per_innings` is the hard cap for a
+# single innings (Test bowls out or declares well before its theoretical
+# 450-over ceiling in practice, but the cap still bounds the engine loop).
+# `bowler_overs_cap` is the max overs one bowler may bowl in an innings
+# (T20's IPL-style 4-over cap; ODI's 10; Test has none, capped here at the
+# innings-balls ceiling instead so `available_bowlers` filtering still works).
+# `phase_boundaries` are (start_over_exclusive_of_powerplay, start_over_of_death)
+# cutoffs consumed by `innings_phase`.
+MATCH_FORMAT_CONFIG = {
+    "t20": {
+        "overs_per_innings": 20,
+        "balls_per_innings": 120,
+        "innings_per_side": 1,
+        "bowler_overs_cap": 4,
+        "phase_boundaries": (6, 15),
+        "follow_on_margin": None,
+        "allows_draw": False,
+        "days": 1,
+        "sessions_per_day": 1,
+        "overs_per_session": 20,
+    },
+    "odi": {
+        "overs_per_innings": 50,
+        "balls_per_innings": 300,
+        "innings_per_side": 1,
+        "bowler_overs_cap": 10,
+        "phase_boundaries": (10, 40),
+        "follow_on_margin": None,
+        "allows_draw": False,
+        "days": 1,
+        "sessions_per_day": 1,
+        "overs_per_session": 50,
+    },
+    "test": {
+        "overs_per_innings": 90,
+        "balls_per_innings": 540,
+        "innings_per_side": 2,
+        "bowler_overs_cap": 90,
+        "phase_boundaries": (10, 70),
+        "follow_on_margin": 200,
+        "allows_draw": True,
+        "days": 5,
+        "sessions_per_day": 3,
+        "overs_per_session": 30,
+    },
+}
+
+
+def format_config(match_format):
+    """`MATCH_FORMAT_CONFIG` entry for `match_format`, defaulting to T20 for unset/unknown values (keeps existing IPL careers behaving exactly as before)."""
+    return MATCH_FORMAT_CONFIG.get(match_format or "t20", MATCH_FORMAT_CONFIG["t20"])
 # Max overseas players allowed in a full squad (IPL rule is 8; we allow 9). This
 # is the SQUAD cap enforced during the mega draft — distinct from the on-field
 # limit of 4 overseas in any playing XI (see live_match / set_user_xi).
@@ -54,6 +106,28 @@ TEAM_META = {
     "Punjab Panthers": {"abbr": "PUN", "home": "Five Rivers Stadium", "primary": "#5a3e8e", "accent": "#e8505b"},
 }
 
+# IP-safe, initial-preserving nation names for the 10-country international
+# roster (same convention as IPL — keep recognizable but altered so no real
+# governing body or nation name is used verbatim). Keys are stable internal
+# IDs that may differ from the display name the user sees.
+INTERNATIONAL_TEAMS_LIST = [
+    "Indicia", "Austrella", "Engoria", "Nustria", "Soutrica",
+    "Pakoria", "Srilanya", "Windoria", "Bangoria", "Afghoria",
+]
+
+INTERNATIONAL_TEAM_META = {
+    "Indicia":   {"abbr": "IND", "home": "National Cricket Stadium", "primary": "#0a63b0", "accent": "#f0821e"},
+    "Austrella": {"abbr": "AUS", "home": "Southern Cricket Ground",  "primary": "#f4d000", "accent": "#004f9e"},
+    "Engoria":   {"abbr": "ENG", "home": "Lord's International",     "primary": "#003e8e", "accent": "#d4001a"},
+    "Nustria":   {"abbr": "NZL", "home": "Eden Park International",  "primary": "#000000", "accent": "#c8102e"},
+    "Soutrica":  {"abbr": "SA",  "home": "Cape Town Stadium",        "primary": "#007c45", "accent": "#f4b942"},
+    "Pakoria":   {"abbr": "PAK", "home": "National Stadium Karachi", "primary": "#005d2e", "accent": "#ffffff"},
+    "Srilanya":  {"abbr": "SL",  "home": "P. Saravanamuttu Stadium", "primary": "#00338d", "accent": "#f1c40f"},
+    "Windoria":  {"abbr": "WI",  "home": "Kensington Oval",          "primary": "#7b0000", "accent": "#f7c94e"},
+    "Bangoria":  {"abbr": "BAN", "home": "Mirpur International",     "primary": "#006a4e", "accent": "#f42a41"},
+    "Afghoria":  {"abbr": "AFG", "home": "Kabul International",      "primary": "#003580", "accent": "#d32011"},
+}
+
 # Neutral branding for a team whose name isn't a TEAM_META key (e.g. one the
 # user renamed to something custom and that hasn't kept its original key).
 _DEFAULT_TEAM_META = {
@@ -74,7 +148,7 @@ def team_meta(team):
     """
     name = getattr(team, "name", team) if not isinstance(team, str) else team
     meta_name = getattr(team, "meta_name", None) if not isinstance(team, str) else None
-    meta = TEAM_META.get(meta_name) or TEAM_META.get(name)
+    meta = TEAM_META.get(meta_name) or TEAM_META.get(name) or INTERNATIONAL_TEAM_META.get(meta_name) or INTERNATIONAL_TEAM_META.get(name)
     if meta:
         return meta
     fallback = dict(_DEFAULT_TEAM_META)
