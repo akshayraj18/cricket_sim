@@ -32,11 +32,15 @@ def test_set_user_presets_requires_a_wicketkeeper_in_starting_xi(drafted):
     team = league.user_team()
     starting_xi_names = league.smart_starting_xi(team)
     xi = resolve(team, starting_xi_names)
-    keeper = next(p for p in xi if is_wicketkeeper_option(p))
-    bench_non_keeper = next(
+    keepers_in_xi = [p for p in xi if is_wicketkeeper_option(p)]
+    bench_non_keepers = iter(
         p for p in team.roster if p.name not in starting_xi_names and not is_wicketkeeper_option(p)
     )
-    no_keeper_xi = [bench_non_keeper.name if name == keeper.name else name for name in starting_xi_names]
+    # Swap every keeper in the XI out for a bench non-keeper, so the resulting
+    # XI has zero wicketkeeper options regardless of how many keepers the
+    # (seeded) mega draft happened to stack onto this team.
+    swap_in = {keeper.name: next(bench_non_keepers).name for keeper in keepers_in_xi}
+    no_keeper_xi = [swap_in.get(name, name) for name in starting_xi_names]
 
     with pytest.raises(ValueError):
         league.set_user_presets([], [], starting_xi=no_keeper_xi)

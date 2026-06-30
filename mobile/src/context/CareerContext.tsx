@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -13,7 +14,11 @@ import { careersApi } from '@/api/careers';
 import { CareerSummary } from '@/api/types';
 import { useAuth } from '@/context/AuthContext';
 
-const ACTIVE_CAREER_KEY = 'cricket_sim.active_career_id';
+const LEGACY_CAREER_KEY = 'cricket_sim.active_career_id';
+
+function careerKey(userId: string) {
+  return `cricket_sim.active_career_id.${userId}`;
+}
 
 interface CareerContextValue {
   activeCareerId: string | null;
@@ -26,32 +31,66 @@ interface CareerContextValue {
 const CareerContext = createContext<CareerContextValue | null>(null);
 
 export function CareerProvider({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const [activeCareerId, setActiveCareerIdState] = useState<string | null>(null);
   const [activeCareer, setActiveCareer] = useState<CareerSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const prevStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const prevStatus = prevStatusRef.current;
+    prevStatusRef.current = status;
+
+    if (status === 'signed-out') {
+      // Clear in-memory career state immediately so tabs don't show stale data.
+      setActiveCareerIdState(null);
+      setActiveCareer(null);
+      setLoading(false);
+      return;
+    }
+
     if (status !== 'signed-in') {
       setLoading(false);
       return;
     }
 
     (async () => {
-      const stored = await AsyncStorage.getItem(ACTIVE_CAREER_KEY);
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+      const key = careerKey(user.id);
+      let stored = await AsyncStorage.getItem(key);
+
+      // One-time migration: on the first sign-in after this update, move any
+      // value from the old global key into the per-user key, then delete it.
+      if (!stored && prevStatus !== 'signed-in') {
+        const legacy = await AsyncStorage.getItem(LEGACY_CAREER_KEY);
+        if (legacy) {
+          stored = legacy;
+          await AsyncStorage.setItem(key, legacy);
+          await AsyncStorage.removeItem(LEGACY_CAREER_KEY);
+        }
+      }
+
       if (stored) setActiveCareerIdState(stored);
       setLoading(false);
     })();
-  }, [status]);
+  }, [status, user?.id]);
 
-  const setActiveCareerId = useCallback((careerId: string | null) => {
-    setActiveCareerIdState(careerId);
-    if (careerId) {
-      AsyncStorage.setItem(ACTIVE_CAREER_KEY, careerId);
-    } else {
-      AsyncStorage.removeItem(ACTIVE_CAREER_KEY);
-    }
-  }, []);
+  const setActiveCareerId = useCallback(
+    (careerId: string | null) => {
+      setActiveCareerIdState(careerId);
+      if (!user?.id) return;
+      const key = careerKey(user.id);
+      if (careerId) {
+        AsyncStorage.setItem(key, careerId);
+      } else {
+        AsyncStorage.removeItem(key);
+      }
+    },
+    [user?.id]
+  );
 
   const refreshActiveCareer = useCallback(async () => {
     if (!activeCareerId) {

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { liveMatchApi } from '@/api/liveMatch';
 import { seasonApi } from '@/api/season';
 import { LeaguePayload, MatchCard, PlayoffMatch, ScheduleFixture } from '@/api/types';
@@ -26,6 +28,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function SeasonScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const { showError } = useError();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
@@ -87,6 +90,7 @@ export default function SeasonScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.body, contentContainerStyle]}>
         <ScreenHeader eyebrow={`${activeCareer?.season_year ?? payload?.season ?? ''} Season`} title="Match Centre" />
         {loading && !payload && (
           <View style={styles.center}>
@@ -144,6 +148,7 @@ export default function SeasonScreen() {
             )}
           </ScrollView>
         )}
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -621,6 +626,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  body: {
     flex: 1,
   },
   center: {

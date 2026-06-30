@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { AccountSheet } from '@/components/account-sheet';
 import { CareerCard } from '@/components/career-card';
 import { ThemedText } from '@/components/themed-text';
@@ -21,6 +23,7 @@ function initials(name: string | null): string {
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const { user } = useAuth();
   const { careers, loading, error, refresh, deleteCareer } = useCareers();
   const { activeCareerId, setActiveCareerId } = useCareer();
@@ -49,7 +52,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={styles.appbar}>
+        <View style={[styles.appbar, contentContainerStyle]}>
           <View style={styles.wordmark}>
             <ThemedText style={styles.mark}>🏏</ThemedText>
             <ThemedText style={styles.wordmarkText}>CricSim</ThemedText>
@@ -62,7 +65,7 @@ export default function HomeScreen() {
         </View>
         <AccountSheet visible={accountVisible} onClose={() => setAccountVisible(false)} />
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Your Careers
           </ThemedText>

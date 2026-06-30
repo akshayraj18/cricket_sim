@@ -36,7 +36,9 @@ export function SegmentedControl<T extends string>({
             <ThemedText
               style={[styles.label, active && { color: activeTextColor }]}
               themeColor={active ? undefined : 'textDim'}
-              numberOfLines={1}>
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}>
               {seg.label}
             </ThemedText>
           </Pressable>
@@ -58,15 +60,16 @@ const styles = StyleSheet.create({
   },
   seg: {
     flex: 1,
-    minWidth: 76,
+    minWidth: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
+    paddingVertical: 7,
     paddingHorizontal: 6,
     borderRadius: Radius.md - 5,
   },
   label: {
     fontSize: 11,
     fontWeight: '700',
+    textAlign: 'center',
   },
 });

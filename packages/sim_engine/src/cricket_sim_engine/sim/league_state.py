@@ -1093,11 +1093,19 @@ class LeagueState:
         so this swap doesn't undo a role balance already established by
         `enforce_role_balance` — falling back to the best-OVR domestic option
         if no same-role replacement is available.
+
+        Never removes the squad's only wicketkeeper option this way — if the
+        lowest-rated overseas player is the lone keeper in `selected`, the
+        next-lowest-rated overseas non-keeper is trimmed instead, so the
+        4-overseas cap can never silently leave the XI without a keeper.
         """
         selected = selected[:11]
         while sum(1 for p in selected if p.is_overseas) > 4:
-            overseas = [p for p in selected if p.is_overseas]
-            remove = sorted(overseas, key=lambda p: p.current_ovr)[0]
+            overseas = sorted([p for p in selected if p.is_overseas], key=lambda p: p.current_ovr)
+            keepers_in_selected = [p for p in selected if is_wicketkeeper_option(p)]
+            if len(keepers_in_selected) <= 1:
+                overseas = [p for p in overseas if not is_wicketkeeper_option(p)] or overseas
+            remove = overseas[0]
             selected.remove(remove)
             domestic_pool = sorted([p for p in roster if not p.is_overseas and p not in selected], key=lambda p: p.current_ovr, reverse=True)
             domestic = next((p for p in domestic_pool if counts_as_batter(p) == counts_as_batter(remove) and counts_as_bowler(p) == counts_as_bowler(remove)), None)
@@ -1112,6 +1120,11 @@ class LeagueState:
     def enforce_role_balance(self, selected, roster, min_batters=0, min_bowlers=0):
         """Top up `selected` until it has at least `min_batters` batting options and `min_bowlers` bowling options, swapping in the best-suited bench player for the worst-suited non-matching incumbent each time (then re-applying `enforce_xi_limits`).
 
+        Never swaps out the designated wicketkeeper (if `selected` has one) —
+        a keeper fails `counts_as_bowler` and always has a near-zero bowling
+        rating, so without this guard the bowler top-up would treat them as
+        the cheapest "removable" incumbent and evict the only keeper from the XI.
+
         Stops early (rather than looping forever) if no valid swap exists —
         e.g. a squad that genuinely can't field enough specialists.
         """
@@ -1121,7 +1134,9 @@ class LeagueState:
             candidate = next((p for p in pool if predicate(p)), None)
             if not candidate:
                 return False
-            removable = sorted([p for p in selected if not predicate(p)], key=remove_key)
+            removable = sorted(
+                [p for p in selected if not predicate(p) and not is_wicketkeeper_option(p)], key=remove_key
+            )
             if not removable:
                 return False
             out = removable[0]

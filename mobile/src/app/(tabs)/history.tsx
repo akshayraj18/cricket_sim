@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLayout } from '@/hooks/use-layout';
+
 import { MatchCard, PlayerDict, SeasonHistoryEntry } from '@/api/types';
 import { NoActiveCareer } from '@/components/empty-state';
 import { MatchScorecard } from '@/components/match-scorecard';
@@ -181,6 +183,7 @@ function parseBestBowling(label: string | undefined): [number, number] {
 
 export default function HistoryScreen() {
   const theme = useTheme();
+  const { contentContainerStyle } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error } = useLeague();
   const [tab, setTab] = useState<HistoryTab>('log');
@@ -319,8 +322,10 @@ export default function HistoryScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <ScreenHeader title="League History" />
-          <NoActiveCareer />
+          <View style={[styles.body, contentContainerStyle]}>
+            <ScreenHeader title="League History" />
+            <NoActiveCareer />
+          </View>
         </SafeAreaView>
       </View>
     );
@@ -329,6 +334,7 @@ export default function HistoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.body, contentContainerStyle]}>
         <ScreenHeader eyebrow={activeCareer?.name} title="League History" />
         {loading && (
           <View style={styles.center}>
@@ -503,6 +509,7 @@ export default function HistoryScreen() {
           </ScrollView>
         )}
         <PlayerProfileSheet player={profilePlayer} onClose={() => setProfilePlayer(null)} accentColor={accent} />
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -728,6 +735,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  body: {
     flex: 1,
   },
   center: {
