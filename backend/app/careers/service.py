@@ -4,13 +4,12 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cricket_sim_engine.players_data import IPL_TEAMS_LIST
-from cricket_sim_engine.sim.constants import INTERNATIONAL_TEAMS_LIST
 from cricket_sim_engine.sim.league_state import LeagueState
 
 from app.db.models.career import Career, Match as MatchRow, MatchBall as MatchBallRow, Player as PlayerRow, Team as TeamRow
 
 VALID_DIFFICULTIES = ("easy", "medium", "hard")
-VALID_DRAFT_POOL_TYPES = ("current", "alltime", "rosters2026", "international_current")
+VALID_DRAFT_POOL_TYPES = ("current", "alltime", "rosters2026", "international_current", "alltime_t20_intl", "alltime_odi", "alltime_test")
 
 # `card["stage"]` values produced by the engine -> `matches.stage` values.
 STAGE_NAMES = {

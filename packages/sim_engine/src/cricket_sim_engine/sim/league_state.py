@@ -10,7 +10,16 @@ import pickle
 import random
 
 from cricket_sim_engine.models import Player, Team
-from cricket_sim_engine.players_data import IPL_TEAMS_LIST, get_initial_player_pool, get_alltime_player_pool, get_2026_rosters_and_pool
+from cricket_sim_engine.players_data import (
+    IPL_TEAMS_LIST,
+    get_initial_player_pool,
+    get_alltime_player_pool,
+    get_2026_rosters_and_pool,
+    get_international_rosters,
+    get_alltime_t20_intl_pool,
+    get_alltime_odi_pool,
+    get_alltime_test_pool,
+)
 from cricket_sim_engine.sim.constants import (
     SAVE_FILE,
     SAVES_DIR,
@@ -1455,17 +1464,48 @@ class LeagueState:
         self.draft_pool_type = draft_pool
         self.user_team_name = user_team_name
         self.teams = [Team(name) for name in INTERNATIONAL_TEAMS_LIST]
-        self.phase = "draft"
-        self.draft_type = "mega"
-        self.draft_order = list(self.teams)
-        random.shuffle(self.draft_order)
-        self.draft_started = False
         self.match_log = []
         self.fixture_results = []
         self.live_match = None
         self.schedule = self.build_single_round_robin_schedule()
-        user_pick = self.draft_order.index(self.user_team()) + 1
-        self.status_message = f"{user_team_name} enter an international {self.match_format.upper()} tournament on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
+
+        if draft_pool == "international_current":
+            # Skip-draft: assign real current rosters directly and start play.
+            rosters, leftover_pool = get_international_rosters(self.match_format)
+            self.player_pool = leftover_pool
+            for team in self.teams:
+                team.roster = list(rosters.get(team.name, []))
+                for player in team.roster:
+                    player.team_name = team.name
+            self.draft_type = "mega"
+            self.draft_order = list(self.teams)
+            self.draft_started = True
+            self.start_regular_season()
+            self.status_message = (
+                f"{user_team_name} lead their national squad into the international "
+                f"{self.match_format.upper()} tournament on {self.difficulty.title()} mode. "
+                "League stage is ready."
+            )
+        else:
+            # All-time draft pool: pick by format.
+            if draft_pool == "alltime_odi":
+                self.player_pool = get_alltime_odi_pool()
+            elif draft_pool == "alltime_test":
+                self.player_pool = get_alltime_test_pool()
+            else:
+                # alltime_t20_intl or unknown — fall back to T20I all-time pool.
+                self.player_pool = get_alltime_t20_intl_pool()
+            self.phase = "draft"
+            self.draft_type = "mega"
+            self.draft_order = list(self.teams)
+            random.shuffle(self.draft_order)
+            self.draft_started = False
+            user_pick = self.draft_order.index(self.user_team()) + 1
+            self.status_message = (
+                f"{user_team_name} enter an international {self.match_format.upper()} "
+                f"tournament on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. "
+                "Start the draft when ready."
+            )
 
     def build_single_round_robin_schedule(self):
         """Build a pure 9-round single round-robin for 10 teams (no replay rounds).
@@ -1592,19 +1632,48 @@ class LeagueState:
         self.draft_pool_type = draft_pool
         self.user_team_name = user_team_name
         self.teams = [Team(user_team_name), Team(opponent_name)]
-        self.phase = "draft"
-        self.draft_type = "mega"
-        self.draft_order = list(self.teams)
-        random.shuffle(self.draft_order)
-        self.draft_started = False
         self.match_log = []
         self.fixture_results = []
         self.live_match = None
         self.schedule = []
         self.bilateral_wins = {user_team_name: 0, opponent_name: 0}
         self.bilateral_match_num = 0
-        user_pick = self.draft_order.index(self.user_team()) + 1
-        self.status_message = f"{user_team_name} vs {opponent_name} — {series_length}-match {self.match_format.upper()} series on {self.difficulty.title()} mode. You draft {ordinal(user_pick)}. Start the draft when ready."
+
+        if draft_pool == "international_current":
+            # Skip-draft: assign real current rosters, then begin the series.
+            rosters, leftover_pool = get_international_rosters(self.match_format)
+            self.player_pool = leftover_pool
+            for team in self.teams:
+                team.roster = list(rosters.get(team.name, []))
+                for player in team.roster:
+                    player.team_name = team.name
+            self.draft_type = "mega"
+            self.draft_order = list(self.teams)
+            self.draft_started = True
+            self.start_bilateral_series()
+            self.status_message = (
+                f"{user_team_name} vs {opponent_name} — {series_length}-match "
+                f"{self.match_format.upper()} series on {self.difficulty.title()} mode. "
+                "Match 1 is ready."
+            )
+        else:
+            if draft_pool == "alltime_odi":
+                self.player_pool = get_alltime_odi_pool()
+            elif draft_pool == "alltime_test":
+                self.player_pool = get_alltime_test_pool()
+            else:
+                self.player_pool = get_alltime_t20_intl_pool()
+            self.phase = "draft"
+            self.draft_type = "mega"
+            self.draft_order = list(self.teams)
+            random.shuffle(self.draft_order)
+            self.draft_started = False
+            user_pick = self.draft_order.index(self.user_team()) + 1
+            self.status_message = (
+                f"{user_team_name} vs {opponent_name} — {series_length}-match "
+                f"{self.match_format.upper()} series on {self.difficulty.title()} mode. "
+                f"You draft {ordinal(user_pick)}. Start the draft when ready."
+            )
 
     def start_bilateral_series(self):
         """Transition from draft to the bilateral series: reset match history and open the first match.

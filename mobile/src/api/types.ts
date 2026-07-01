@@ -20,7 +20,7 @@ export interface AuthResponse {
 }
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
-export type DraftPoolType = 'current' | 'alltime' | 'rosters2026' | 'international_current';
+export type DraftPoolType = 'current' | 'alltime' | 'rosters2026' | 'international_current' | 'alltime_t20_intl' | 'alltime_odi' | 'alltime_test';
 export type Competition = 'ipl' | 'international';
 export type MatchFormat = 't20' | 'odi' | 'test';
 export type CareerMode = 'league' | 'tournament' | 'bilateral';

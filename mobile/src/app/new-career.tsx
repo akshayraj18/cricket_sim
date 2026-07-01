@@ -28,7 +28,7 @@ import { useAnalytics } from '@/observability/analytics';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
-type Step = 'competition' | 'format' | 'mode' | 'opponent' | 'team' | 'difficulty' | 'confirm';
+type Step = 'competition' | 'format' | 'mode' | 'roster' | 'opponent' | 'team' | 'difficulty' | 'confirm';
 
 const FORMATS: { value: MatchFormat; label: string; desc: string }[] = [
   { value: 't20', label: 'T20', desc: '20 overs per side' },
@@ -67,6 +67,7 @@ export default function NewCareerScreen() {
   const [opponentTeam, setOpponentTeam] = useState(INTERNATIONAL_TEAM_NAMES[1]);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [name, setName] = useState('');
+  const [draftPoolMode, setDraftPoolMode] = useState<'current' | 'alltime'>('current');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,8 +88,12 @@ export default function NewCareerScreen() {
     setError(null);
     try {
       const draftPool: DraftPoolType =
-        competition === 'international' ? 'international_current' :
-        competition === 'ipl' ? 'rosters2026' : 'current';
+        competition === 'ipl' ? 'rosters2026' :
+        draftPoolMode === 'alltime' ? (
+          matchFormat === 'odi' ? 'alltime_odi' :
+          matchFormat === 'test' ? 'alltime_test' :
+          'alltime_t20_intl'
+        ) : 'international_current';
 
       const career = await createCareer({
         name: name.trim() || defaultName(),
@@ -121,14 +126,17 @@ export default function NewCareerScreen() {
   const goBack = () => {
     if (step === 'format') { setStep('competition'); return; }
     if (step === 'mode') { setStep('format'); return; }
-    if (step === 'opponent') { setStep('mode'); return; }
+    if (step === 'roster') { setStep('mode'); return; }
+    if (step === 'opponent') { setStep('roster'); return; }
     if (step === 'team') {
-      if (competition === 'international' && careerMode === 'bilateral') { setStep('opponent'); return; }
-      if (competition === 'international') { setStep('mode'); return; }
+      if (competition === 'international') { setStep('roster'); return; }
       setStep('competition');
       return;
     }
-    if (step === 'difficulty') { setStep('team'); return; }
+    if (step === 'difficulty') {
+      setStep(competition === 'international' && careerMode === 'bilateral' ? 'opponent' : 'team');
+      return;
+    }
     if (step === 'confirm') { setStep('difficulty'); return; }
   };
 
@@ -149,7 +157,7 @@ export default function NewCareerScreen() {
               <Pressable
                 onPress={() => { setCompetition('ipl'); setCareerMode('league'); setStep('team'); }}
                 style={({ pressed }) => [styles.bigCard, { backgroundColor: theme.bgCard, borderColor: theme.border }, pressed && styles.pressed]}>
-                <ThemedText style={styles.bigCardTitle}>IPL Franchise</ThemedText>
+                <ThemedText style={styles.bigCardTitle}>Indian T20 League</ThemedText>
                 <ThemedText themeColor="textDim" style={styles.bigCardDesc}>
                   Manage a T20 franchise through drafts, seasons, and playoffs.
                 </ThemedText>
@@ -202,7 +210,7 @@ export default function NewCareerScreen() {
             <ThemedText themeColor="textFaint" style={styles.label}>Career Mode</ThemedText>
             <View style={styles.cardList}>
               <Pressable
-                onPress={() => { setCareerMode('tournament'); setStep('team'); }}
+                onPress={() => { setCareerMode('tournament'); setStep('roster'); }}
                 style={({ pressed }) => [styles.bigCard, { backgroundColor: theme.bgCard, borderColor: theme.border }, pressed && styles.pressed]}>
                 <ThemedText style={styles.bigCardTitle}>World Tournament</ThemedText>
                 <ThemedText themeColor="textDim" style={styles.bigCardDesc}>
@@ -210,7 +218,7 @@ export default function NewCareerScreen() {
                 </ThemedText>
               </Pressable>
               <Pressable
-                onPress={() => { setCareerMode('bilateral'); setStep('opponent'); }}
+                onPress={() => { setCareerMode('bilateral'); setStep('roster'); }}
                 style={({ pressed }) => [styles.bigCard, { backgroundColor: theme.bgCard, borderColor: theme.border }, pressed && styles.pressed]}>
                 <ThemedText style={styles.bigCardTitle}>Bilateral Series</ThemedText>
                 <ThemedText themeColor="textDim" style={styles.bigCardDesc}>
@@ -221,27 +229,67 @@ export default function NewCareerScreen() {
           </View>
         )}
 
-        {/* Step 3b: Bilateral options (opponent + series length) */}
+        {/* Step 3b: Roster type — Current Roster or All-Time Greats */}
+        {step === 'roster' && (
+          <View style={styles.field}>
+            <ThemedText themeColor="textFaint" style={styles.label}>Squad Selection</ThemedText>
+            <View style={styles.cardList}>
+              <Pressable
+                onPress={() => {
+                  setDraftPoolMode('current');
+                  setStep(careerMode === 'bilateral' ? 'opponent' : 'team');
+                }}
+                style={({ pressed }) => [styles.bigCard, { backgroundColor: theme.bgCard, borderColor: theme.border }, pressed && styles.pressed]}>
+                <ThemedText style={styles.bigCardTitle}>Current Roster</ThemedText>
+                <ThemedText themeColor="textDim" style={styles.bigCardDesc}>
+                  Play with today's real national squads. No draft — jump straight into the action.
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setDraftPoolMode('alltime');
+                  setStep(careerMode === 'bilateral' ? 'opponent' : 'team');
+                }}
+                style={({ pressed }) => [styles.bigCard, { backgroundColor: theme.bgCard, borderColor: theme.border }, pressed && styles.pressed]}>
+                <ThemedText style={styles.bigCardTitle}>All-Time Greats</ThemedText>
+                <ThemedText themeColor="textDim" style={styles.bigCardDesc}>
+                  Mega draft from 350+ legends across all eras. No overseas limits — pick your dream squad.
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {/* Step 3c: Bilateral setup — your team, opponent, and series length on one screen */}
         {step === 'opponent' && (
           <View style={styles.field}>
-            <ThemedText themeColor="textFaint" style={styles.label}>Series Length</ThemedText>
-            <View style={styles.segRow}>
-              {SERIES_LENGTHS.map((sl) => {
-                const sel = seriesLength === sl.value;
+            <ThemedText themeColor="textFaint" style={styles.label}>Your Nation</ThemedText>
+            <View style={styles.teamGrid}>
+              {INTERNATIONAL_TEAM_NAMES.map((n) => {
+                const meta = InternationalTeamColors[n];
+                const sel = n === intlTeam;
+                const accentText = getTeamAccentText(meta, scheme === 'dark' ? 'dark' : 'light');
                 return (
                   <Pressable
-                    key={sl.value}
-                    onPress={() => setSeriesLength(sl.value)}
+                    key={n}
+                    onPress={() => {
+                      setIntlTeam(n);
+                      if (n === opponentTeam) {
+                        setOpponentTeam(INTERNATIONAL_TEAM_NAMES.find((o) => o !== n) ?? opponentTeam);
+                      }
+                    }}
                     style={({ pressed }) => [
-                      styles.segItem,
-                      { backgroundColor: sel ? theme.green : theme.bgCard, borderColor: sel ? theme.green : theme.border },
+                      styles.teamChip,
+                      { backgroundColor: theme.bgCard, borderColor: sel ? theme.green : theme.border },
                       pressed && styles.pressed,
                     ]}>
-                    <ThemedText style={[styles.segLabel, { color: sel ? '#1a1404' : theme.text }]}>{sl.label}</ThemedText>
+                    <ThemedText style={[styles.teamAbbr, { color: accentText }]}>{meta.abbr}</ThemedText>
+                    <ThemedText themeColor="textDim" style={styles.teamName} numberOfLines={1}>{n}</ThemedText>
                   </Pressable>
                 );
               })}
             </View>
+
             <ThemedText themeColor="textFaint" style={[styles.label, { marginTop: Spacing.three }]}>Opponent</ThemedText>
             <View style={styles.teamGrid}>
               {INTERNATIONAL_TEAM_NAMES.filter((n) => n !== intlTeam).map((n) => {
@@ -263,8 +311,28 @@ export default function NewCareerScreen() {
                 );
               })}
             </View>
+
+            <ThemedText themeColor="textFaint" style={[styles.label, { marginTop: Spacing.three }]}>Series Length</ThemedText>
+            <View style={styles.segRow}>
+              {SERIES_LENGTHS.map((sl) => {
+                const sel = seriesLength === sl.value;
+                return (
+                  <Pressable
+                    key={sl.value}
+                    onPress={() => setSeriesLength(sl.value)}
+                    style={({ pressed }) => [
+                      styles.segItem,
+                      { backgroundColor: sel ? theme.green : theme.bgCard, borderColor: sel ? theme.green : theme.border },
+                      pressed && styles.pressed,
+                    ]}>
+                    <ThemedText style={[styles.segLabel, { color: sel ? '#1a1404' : theme.text }]}>{sl.label}</ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             <Pressable
-              onPress={() => setStep('team')}
+              onPress={() => setStep('difficulty')}
               style={({ pressed }) => [styles.nextBtn, { backgroundColor: theme.green, opacity: pressed ? 0.85 : 1 }]}>
               <ThemedText style={styles.nextBtnText}>Next</ThemedText>
             </Pressable>
@@ -278,26 +346,24 @@ export default function NewCareerScreen() {
               {competition === 'ipl' ? 'Choose Franchise' : 'Choose Nation'}
             </ThemedText>
             <View style={styles.teamGrid}>
-              {teamNames
-                .filter((n) => !(careerMode === 'bilateral' && n === opponentTeam))
-                .map((n) => {
-                  const meta = teamColors[n];
-                  const sel = n === (competition === 'ipl' ? team : intlTeam);
-                  const accentText = getTeamAccentText(meta, scheme === 'dark' ? 'dark' : 'light');
-                  return (
-                    <Pressable
-                      key={n}
-                      onPress={() => competition === 'ipl' ? setTeam(n) : setIntlTeam(n)}
-                      style={({ pressed }) => [
-                        styles.teamChip,
-                        { backgroundColor: theme.bgCard, borderColor: sel ? theme.green : theme.border },
-                        pressed && styles.pressed,
-                      ]}>
-                      <ThemedText style={[styles.teamAbbr, { color: accentText }]}>{meta.abbr}</ThemedText>
-                      <ThemedText themeColor="textDim" style={styles.teamName} numberOfLines={1}>{n}</ThemedText>
-                    </Pressable>
-                  );
-                })}
+              {teamNames.map((n) => {
+                const meta = teamColors[n];
+                const sel = n === (competition === 'ipl' ? team : intlTeam);
+                const accentText = getTeamAccentText(meta, scheme === 'dark' ? 'dark' : 'light');
+                return (
+                  <Pressable
+                    key={n}
+                    onPress={() => competition === 'ipl' ? setTeam(n) : setIntlTeam(n)}
+                    style={({ pressed }) => [
+                      styles.teamChip,
+                      { backgroundColor: theme.bgCard, borderColor: sel ? theme.green : theme.border },
+                      pressed && styles.pressed,
+                    ]}>
+                    <ThemedText style={[styles.teamAbbr, { color: accentText }]}>{meta.abbr}</ThemedText>
+                    <ThemedText themeColor="textDim" style={styles.teamName} numberOfLines={1}>{n}</ThemedText>
+                  </Pressable>
+                );
+              })}
             </View>
             <Pressable
               onPress={() => setStep('difficulty')}
