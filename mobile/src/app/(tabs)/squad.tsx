@@ -182,6 +182,7 @@ export default function SquadScreen() {
                 setSaveError={setSaveError}
                 onPlayerPress={setProfilePlayer}
                 refresh={refresh}
+                competition={payload.competition}
               />
             )}
 
@@ -297,6 +298,7 @@ function BattingXiTab({
   setSaveError,
   onPlayerPress,
   refresh,
+  competition,
 }: {
   careerId: string;
   team: NonNullable<ReturnType<typeof useLeague>['payload']>['teams'][number];
@@ -306,6 +308,7 @@ function BattingXiTab({
   setSaveError: (v: string | null) => void;
   onPlayerPress: (p: PlayerDict) => void;
   refresh: () => Promise<void>;
+  competition: string;
 }) {
   const { showError } = useError();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
@@ -360,7 +363,7 @@ function BattingXiTab({
   };
 
   const save = async () => {
-    const xiError = xiValidationError(xi, 'Starting XI', team.roster) || impactSubError(impactSub, xi, team.roster);
+    const xiError = xiValidationError(xi, 'Starting XI', team.roster) || (competition === 'ipl' ? impactSubError(impactSub, xi, team.roster) : null);
     if (xiError) {
       setSaveError(xiError);
       return;
@@ -371,7 +374,7 @@ function BattingXiTab({
       await seasonApi.setPresets(careerId, {
         batting_order: xi,
         starting_xi: xi,
-        impact_sub_name: impactSub,
+        impact_sub_name: competition === 'ipl' ? impactSub : null,
       });
       await refresh();
     } catch (err) {
@@ -447,37 +450,39 @@ function BattingXiTab({
         />
       </View>
 
-      <View>
-        <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
-          Impact Sub
-        </ThemedText>
-        <ThemedText themeColor="textDim" style={styles.helpText}>
-          If you bat first, your Impact Sub comes on for a batter at the innings break. If you bowl first, your
-          Impact Sub starts the match in place of that batter and the original player returns at the break.
-        </ThemedText>
-        <Card style={styles.lineupCard}>
-          {impactSub && byName.get(impactSub) ? (
-            <PlayerRow player={byName.get(impactSub)!} accentColor={accent} onPress={() => setImpactPickerOpen(true)} />
-          ) : (
-            <PlayerRow
-              player={{ name: 'Empty', role: '-', ovr: 0, batting_archetype: '', bowling_phase: '' }}
-              onPress={() => setImpactPickerOpen(true)}
-              subtitle="Tap to assign"
-            />
-          )}
-        </Card>
-        <PlayerPickerModal
-          visible={impactPickerOpen}
-          title="Impact Sub"
-          options={impactSubOptions}
-          selected={impactSub}
-          onSelect={(name) => {
-            setImpactSub(name);
-            setImpactPickerOpen(false);
-          }}
-          onClose={() => setImpactPickerOpen(false)}
-        />
-      </View>
+      {competition === 'ipl' && (
+        <View>
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
+            Impact Sub
+          </ThemedText>
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            If you bat first, your Impact Sub comes on for a batter at the innings break. If you bowl first, your
+            Impact Sub starts the match in place of that batter and the original player returns at the break.
+          </ThemedText>
+          <Card style={styles.lineupCard}>
+            {impactSub && byName.get(impactSub) ? (
+              <PlayerRow player={byName.get(impactSub)!} accentColor={accent} onPress={() => setImpactPickerOpen(true)} />
+            ) : (
+              <PlayerRow
+                player={{ name: 'Empty', role: '-', ovr: 0, batting_archetype: '', bowling_phase: '' }}
+                onPress={() => setImpactPickerOpen(true)}
+                subtitle="Tap to assign"
+              />
+            )}
+          </Card>
+          <PlayerPickerModal
+            visible={impactPickerOpen}
+            title="Impact Sub"
+            options={impactSubOptions}
+            selected={impactSub}
+            onSelect={(name) => {
+              setImpactSub(name);
+              setImpactPickerOpen(false);
+            }}
+            onClose={() => setImpactPickerOpen(false)}
+          />
+        </View>
+      )}
 
       <Button label="Autofill Starting XI" variant="secondary" accentColor={accent} onPress={autofill} />
 

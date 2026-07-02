@@ -307,7 +307,6 @@ function BilateralPanel({
   payload: LeaguePayload;
   onViewScorecard: (card: MatchCard) => void;
 }) {
-  const theme = useTheme();
   const teams = Object.keys(payload.bilateral_wins ?? {});
   const userTeam = payload.user_team ?? '';
   const oppTeam = teams.find((t) => t !== userTeam) ?? '';
@@ -316,33 +315,60 @@ function BilateralPanel({
   const matchNum = payload.bilateral_match_num ?? 0;
   const seriesLength = payload.series_length ?? 1;
   const matches = [...payload.match_log].reverse();
+  const teamByName = (name?: string) => payload.teams.find((t) => t.name === name);
+  const userTeamDict = teamByName(userTeam);
+  const oppTeamDict = teamByName(oppTeam);
 
   return (
     <View style={styles.panelGap}>
       <Card>
-        <ThemedText style={styles.fixtureTitle}>Series Score</ThemedText>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginVertical: Spacing.two }}>
-          <ThemedText style={{ fontSize: 28, fontWeight: '800' }}>{userWins}</ThemedText>
-          <ThemedText themeColor="textFaint" style={{ fontSize: 16 }}>–</ThemedText>
-          <ThemedText style={{ fontSize: 28, fontWeight: '800' }}>{oppWins}</ThemedText>
+        <ThemedText themeColor="textFaint" style={styles.sectionLabel}>Series</ThemedText>
+        <View style={styles.bilateralScoreRow}>
+          <View style={styles.bilateralTeamBlock}>
+            <View style={[styles.bilateralColorDot, { backgroundColor: userTeamDict?.primary ?? '#3a3f4b' }]} />
+            <ThemedText style={styles.bilateralTeamName} numberOfLines={1}>
+              {userTeamDict?.abbr ?? userTeam}
+            </ThemedText>
+            <ThemedText style={[styles.bilateralScore, { color: userTeamDict?.primary ?? undefined }]}>
+              {userWins}
+            </ThemedText>
+          </View>
+          <ThemedText themeColor="textFaint" style={styles.bilateralDash}>–</ThemedText>
+          <View style={[styles.bilateralTeamBlock, styles.bilateralTeamRight]}>
+            <ThemedText style={[styles.bilateralScore, { color: oppTeamDict?.primary ?? undefined }]}>
+              {oppWins}
+            </ThemedText>
+            <ThemedText style={styles.bilateralTeamName} numberOfLines={1}>
+              {oppTeamDict?.abbr ?? oppTeam}
+            </ThemedText>
+            <View style={[styles.bilateralColorDot, { backgroundColor: oppTeamDict?.primary ?? '#3a3f4b' }]} />
+          </View>
         </View>
-        <ThemedText themeColor="textDim" style={styles.fixtureSub}>
-          {userTeam} vs {oppTeam} · Match {matchNum + 1} of {seriesLength}
+        <ThemedText themeColor="textDim" style={[styles.fixtureSub, { textAlign: 'center', marginTop: 4 }]}>
+          {payload.match_format?.toUpperCase()} · Match {matchNum + 1} of {seriesLength}
         </ThemedText>
       </Card>
       {matches.length > 0 && (
-        <Card>
-          <ThemedText style={styles.fixtureTitle}>Results</ThemedText>
-          {matches.map((card, i) => (
-            <Pressable key={i} onPress={() => onViewScorecard(card)}>
-              <View style={[styles.fixtureCard, { borderColor: theme.border }]}>
-                <ThemedText style={styles.fixtureTitle}>
-                  {card.winner ? `${card.winner} ${card.margin}` : 'Match drawn'}
-                </ThemedText>
-              </View>
-            </Pressable>
-          ))}
-        </Card>
+        <View style={styles.panelGap}>
+          <ThemedText themeColor="textFaint" style={styles.sectionLabel}>Results</ThemedText>
+          {matches.map((card, i) => {
+            const winnerTeam = teamByName(card.winner);
+            return (
+              <Pressable key={i} onPress={() => onViewScorecard(card)}>
+                <Card style={[styles.fixtureCard, card.winner && { borderLeftWidth: 3, borderLeftColor: winnerTeam?.primary ?? 'transparent' }]}>
+                  <Pill label={`Match ${matchNum - i}`} />
+                  <ThemedText style={styles.fixtureTitle}>
+                    {card.winner ? `${teamAbbr(card.winner, winnerTeam?.abbr)} ${card.margin}` : 'Match drawn'}
+                  </ThemedText>
+                  <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
+                    {card.innings.map((inn) => `${teamAbbr(inn.team, teamByName(inn.team)?.abbr)} ${inn.score}`).join(' · ')}
+                    {card.motm ? ` · 🏆 ${card.motm}` : ''}
+                  </ThemedText>
+                </Card>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
     </View>
   );
@@ -455,6 +481,8 @@ function FixtureCard({
   const result = (payload.fixture_results || []).find(
     (c) => c.round === week && ((c.team1 === a && c.team2 === b) || (c.team1 === b && c.team2 === a))
   );
+  const isIntl = payload.competition === 'international';
+  const roundLabel = isIntl ? `Match ${week}` : `Week ${week}`;
 
   if (result) {
     const winnerTeam = result.winner === a ? ta : result.winner === b ? tb : undefined;
@@ -462,18 +490,18 @@ function FixtureCard({
     return (
       <Pressable onPress={() => onViewScorecard(result)}>
         <Card style={[styles.fixtureCard, { borderLeftWidth: 3, borderLeftColor: winnerColor ?? 'transparent' }]}>
-          <Pill label={`Week ${week}`} />
+          <Pill label={roundLabel} accentColor={winnerColor} />
           <ThemedText style={styles.fixtureTitle}>
             {teamAbbr(result.winner, winnerTeam?.abbr)} {result.margin}
           </ThemedText>
           <ThemedText themeColor="textDim" style={styles.fixtureSub}>
-            {a} vs {b}
+            {teamAbbr(a, ta?.abbr)} vs {teamAbbr(b, tb?.abbr)}
           </ThemedText>
           <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
             {result.innings
               .map((inn) => `${teamAbbr(inn.team, inn.team === a ? ta?.abbr : inn.team === b ? tb?.abbr : undefined)} ${inn.score}`)
-              .join(' · ')}{' '}
-            · 🏆 {result.motm}
+              .join(' · ')}
+            {result.motm ? ` · 🏆 ${result.motm}` : ''}
           </ThemedText>
         </Card>
       </Pressable>
@@ -482,7 +510,7 @@ function FixtureCard({
 
   return (
     <Card style={styles.fixtureCard}>
-      <Pill label={`Week ${week}`} />
+      <Pill label={roundLabel} />
       <ThemedText style={styles.fixtureTitle}>
         {teamAbbr(a, ta?.abbr)} vs {teamAbbr(b, tb?.abbr)}
       </ThemedText>
@@ -490,8 +518,8 @@ function FixtureCard({
         {a} vs {b}
       </ThemedText>
       <ThemedText themeColor="textFaint" style={styles.fixtureSub}>
-        {ta?.abbr ?? a} {ta?.wins ?? 0}-{ta?.losses ?? 0} vs {tb?.abbr ?? b} {tb?.wins ?? 0}-{tb?.losses ?? 0} ·{' '}
-        {ta?.home ?? 'Cricket Stadium'}
+        {ta?.wins ?? 0}-{ta?.losses ?? 0} vs {tb?.wins ?? 0}-{tb?.losses ?? 0}
+        {!isIntl ? ` · ${ta?.home ?? 'Cricket Stadium'}` : ''}
       </ThemedText>
     </Card>
   );
@@ -537,26 +565,30 @@ function PlayoffsPanel({ payload }: { payload: LeaguePayload }) {
 function PlayoffCard({ match: p, teams }: { match: PlayoffMatch; teams: LeaguePayload['teams'] }) {
   const scheme = useColorScheme();
   const isFinal = p.name === 'Final';
-  const abbrFor = (name?: string) => teams.find((t) => t.name === name)?.abbr;
+  const teamFor = (name?: string) => teams.find((t) => t.name === name);
+  const t1 = teamFor(p.team1);
+  const t2 = teamFor(p.team2);
+  const winnerTeam = teamFor(p.winner);
   return (
     <Card
       style={[
         styles.fixtureCard,
         isFinal && styles.finalCard,
         isFinal && { borderColor: GOLD, backgroundColor: scheme === 'dark' ? '#2a2310' : '#fffbe9' },
+        !isFinal && p.winner && { borderLeftWidth: 3, borderLeftColor: winnerTeam?.primary ?? 'transparent' },
       ]}>
-      <Pill label={p.status} accentColor={isFinal ? GOLD : undefined} />
+      <Pill label={p.status} accentColor={isFinal ? GOLD : winnerTeam?.primary} />
       <ThemedText style={[styles.fixtureTitle, isFinal && { color: GOLD }]}>
         {isFinal ? '🏆 ' : ''}
         {p.name}
       </ThemedText>
       <ThemedText themeColor="textDim" style={styles.fixtureSub}>
-        {p.team1 ? teamAbbr(p.team1, abbrFor(p.team1)) : 'TBD'} vs{' '}
-        {p.team2 ? teamAbbr(p.team2, abbrFor(p.team2)) : 'TBD'}
+        {p.team1 ? teamAbbr(p.team1, t1?.abbr) : 'TBD'} vs{' '}
+        {p.team2 ? teamAbbr(p.team2, t2?.abbr) : 'TBD'}
       </ThemedText>
       {p.winner && (
         <ThemedText style={[styles.fixtureResultLine, isFinal && { color: GOLD }]}>
-          {teamAbbr(p.winner, abbrFor(p.winner))} {isFinal ? 'are champions!' : 'advanced'}
+          {teamAbbr(p.winner, winnerTeam?.abbr)} {isFinal ? 'are champions!' : 'advanced'}
         </ThemedText>
       )}
     </Card>
@@ -827,5 +859,40 @@ const styles = StyleSheet.create({
   teamDropLine: {
     fontSize: 11.5,
     lineHeight: 16,
+  },
+  bilateralScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: Spacing.two,
+    gap: Spacing.two,
+  },
+  bilateralTeamBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bilateralTeamRight: {
+    justifyContent: 'flex-end',
+  },
+  bilateralColorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  bilateralTeamName: {
+    fontSize: 13,
+    fontWeight: '700',
+    flex: 1,
+  },
+  bilateralScore: {
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  bilateralDash: {
+    fontSize: 22,
+    fontWeight: '300',
   },
 });

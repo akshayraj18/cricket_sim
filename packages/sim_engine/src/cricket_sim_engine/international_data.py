@@ -704,16 +704,16 @@ AFGHANISTAN_TEST = [
 # ---------------------------------------------------------------------------
 
 _ROSTERS = {
-    "Indicia": {"t20": INDIA_T20I, "odi": INDIA_ODI, "test": INDIA_TEST},
-    "Austrella": {"t20": AUSTRALIA_T20I, "odi": AUSTRALIA_ODI, "test": AUSTRALIA_TEST},
-    "Engoria": {"t20": ENGLAND_T20I, "odi": ENGLAND_ODI, "test": ENGLAND_TEST},
-    "Nustria": {"t20": NEW_ZEALAND_T20I, "odi": NEW_ZEALAND_ODI, "test": NEW_ZEALAND_TEST},
-    "Soutrica": {"t20": SOUTH_AFRICA_T20I, "odi": SOUTH_AFRICA_ODI, "test": SOUTH_AFRICA_TEST},
-    "Pakoria": {"t20": PAKISTAN_T20I, "odi": PAKISTAN_ODI, "test": PAKISTAN_TEST},
-    "Srilanya": {"t20": SRI_LANKA_T20I, "odi": SRI_LANKA_ODI, "test": SRI_LANKA_TEST},
-    "Windoria": {"t20": WEST_INDIES_T20I, "odi": WEST_INDIES_ODI, "test": WEST_INDIES_TEST},
-    "Bangoria": {"t20": BANGLADESH_T20I, "odi": BANGLADESH_ODI, "test": BANGLADESH_TEST},
-    "Afghoria": {"t20": AFGHANISTAN_T20I, "odi": AFGHANISTAN_ODI, "test": AFGHANISTAN_TEST},
+    "India":        {"t20": INDIA_T20I,       "odi": INDIA_ODI,       "test": INDIA_TEST},
+    "Australia":    {"t20": AUSTRALIA_T20I,   "odi": AUSTRALIA_ODI,   "test": AUSTRALIA_TEST},
+    "England":      {"t20": ENGLAND_T20I,     "odi": ENGLAND_ODI,     "test": ENGLAND_TEST},
+    "New Zealand":  {"t20": NEW_ZEALAND_T20I, "odi": NEW_ZEALAND_ODI, "test": NEW_ZEALAND_TEST},
+    "South Africa": {"t20": SOUTH_AFRICA_T20I,"odi": SOUTH_AFRICA_ODI,"test": SOUTH_AFRICA_TEST},
+    "Pakistan":     {"t20": PAKISTAN_T20I,    "odi": PAKISTAN_ODI,    "test": PAKISTAN_TEST},
+    "Sri Lanka":    {"t20": SRI_LANKA_T20I,   "odi": SRI_LANKA_ODI,   "test": SRI_LANKA_TEST},
+    "West Indies":  {"t20": WEST_INDIES_T20I, "odi": WEST_INDIES_ODI, "test": WEST_INDIES_TEST},
+    "Bangladesh":   {"t20": BANGLADESH_T20I,  "odi": BANGLADESH_ODI,  "test": BANGLADESH_TEST},
+    "Afghanistan":  {"t20": AFGHANISTAN_T20I, "odi": AFGHANISTAN_ODI, "test": AFGHANISTAN_TEST},
 }
 
 

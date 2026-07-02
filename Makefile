@@ -53,9 +53,9 @@ backend-down:
 backend-migrate:
 	cd backend && uv run alembic upgrade head
 
-# Start the FastAPI dev server at http://localhost:8000
+# Start the FastAPI dev server at http://0.0.0.0:8000 (reachable by iOS Simulator via LAN IP)
 backend-run:
-	cd backend && uv run uvicorn app.main:app --reload --port 8000
+	cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --reload --port 8000
 
 # Run backend tests against the local Postgres container (requires backend-up).
 backend-test:
