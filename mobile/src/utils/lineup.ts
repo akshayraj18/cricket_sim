@@ -1,14 +1,14 @@
 import { PlayerDict, TeamDict } from '@/api/types';
 
-/** Mirrors ORDER_ZONES in webapp/app.js — batting order slot groupings. */
+/** Batting order slot groupings used across all formats. */
 export const ORDER_ZONES = [
   { key: 'top', label: 'Openers', range: [1, 2] as const },
   { key: 'middle', label: 'Middle Order', range: [3, 5] as const },
-  { key: 'death', label: 'Death Overs', range: [6, 7] as const },
+  { key: 'lower', label: 'Lower Order', range: [6, 7] as const },
   { key: 'tail', label: 'Tail', range: [8, 11] as const },
 ];
 
-/** Mirrors OVER_PHASE_ZONES in webapp/app.js — bowling plan over groupings. */
+/** T20 bowling phase groupings for the bowling plan. */
 export const OVER_PHASE_ZONES = [
   { key: 'powerplay', label: 'Powerplay', range: [1, 6] as const },
   { key: 'middle', label: 'Middle Overs', range: [7, 15] as const },
@@ -87,7 +87,7 @@ export function teamAccent(team: TeamDict | undefined): string {
   return team?.accent ?? '#3ddc84';
 }
 
-/** Score a bowler's fit for a given over phase. Mirrors bowlingPlanScore() in webapp/app.js. */
+/** Score a bowler's fit for a given over phase. */
 function bowlingPlanScore(p: PlayerDict, phase: string): number {
   let score = Number(p.bowl) || 0;
   const bowlType = `${p.bowling_type || ''} ${p.bowling_phase || ''}`;
@@ -101,8 +101,7 @@ function bowlingPlanScore(p: PlayerDict, phase: string): number {
 /**
  * Builds a 20-over bowling plan from the eligible bowlers in `bowlFirst`,
  * picking the best-fit bowler for each over's phase (Powerplay/Middle/Death)
- * while respecting the 4-over cap and no-consecutive-overs rule. Mirrors
- * autofillBowlingPlan() in webapp/app.js.
+ * while respecting the 4-over cap and no-consecutive-overs rule.
  */
 export function autofillBowlingPlan(bowlFirst: string[], roster: PlayerDict[]): string[] {
   const eligibleNames = bowlingOptions(bowlFirst, roster);

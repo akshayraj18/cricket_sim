@@ -15,10 +15,6 @@ venv/
 # Datasets
 player_datasets/
 
-# Notes
-ideas.txt
-docs/LAUNCH_ROADMAP.md
-
 # Secrets / credentials (OAuth client secrets, IDs, keys) — never commit
 docs/ids.txt
 *.secrets

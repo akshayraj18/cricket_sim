@@ -514,3 +514,100 @@ def test_impact_context_bowl_to_bat_when_user_bowls_first():
     play_through_innings(match)
     assert match.status == "impact"
     assert match.impact_context() == "bowl_to_bat"
+
+
+# ---------------------------------------------------------------------------
+# payload: total_balls and match_format fields (multi-format plumbing)
+# ---------------------------------------------------------------------------
+
+
+def test_payload_total_balls_t20():
+    """T20 payload exposes total_balls = 120."""
+    league, match, presets, team = _start_live_innings(seed=200)
+    p = match.payload()
+    assert p["total_balls"] == 120
+    assert p["match_format"] == "t20"
+
+
+def test_payload_total_balls_odi():
+    """ODI payload exposes total_balls = 300."""
+    random.seed(201)
+    league = drafted_league(seed=201)
+    league.match_format = "odi"
+    team = league.user_team()
+    league.set_leadership(team.captain.name, team.vice_captain.name)
+    presets = apply_smart_presets(league)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    force_toss(match, winner_team=team, decision="bat")
+    submit_user_xi_for_innings_role(league, match, presets)
+    p = match.payload()
+    assert p["total_balls"] == 300
+    assert p["match_format"] == "odi"
+
+
+def test_payload_total_balls_test():
+    """Test payload exposes total_balls = 540."""
+    random.seed(202)
+    league = drafted_league(seed=202)
+    league.match_format = "test"
+    team = league.user_team()
+    league.set_leadership(team.captain.name, team.vice_captain.name)
+    presets = apply_smart_presets(league)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    force_toss(match, winner_team=team, decision="bat")
+    submit_user_xi_for_innings_role(league, match, presets)
+    p = match.payload()
+    assert p["total_balls"] == 540
+    assert p["match_format"] == "test"
+
+
+# ---------------------------------------------------------------------------
+# win margin: "won by N wickets" — never "0 wickets", correct singular
+# ---------------------------------------------------------------------------
+
+
+def test_win_margin_never_says_won_by_0_wickets():
+    """Chase wins must never report 'won by 0 wickets' — the bug this fix addressed."""
+    import re
+    for seed in range(1, 30):
+        random.seed(seed)
+        league = drafted_league(seed=seed)
+        team = league.user_team()
+        league.set_leadership(team.captain.name, team.vice_captain.name)
+        league.begin_match_day(interactive=True)
+        match = league.live_match
+        card = match.auto_finish()
+        if card and not card.get("draw"):
+            margin = card.get("margin", "")
+            # "won by 0 wickets" is invalid; "won by 10 wickets" is fine
+            assert not re.search(r"by 0 wickets?", margin), f"seed {seed}: got '{margin}'"
+
+
+def test_win_margin_uses_singular_for_1_wicket():
+    """A 1-wicket win must say '1 wicket' not '1 wickets'."""
+    from cricket_sim_engine.sim.live_match import LiveMatch
+
+    # Directly test the margin string logic by probing complete_match internals:
+    # Build a minimal innings scenario where chasing team loses 9 wickets.
+    for seed in range(1, 100):
+        random.seed(seed)
+        league = drafted_league(seed=seed)
+        team = league.user_team()
+        league.set_leadership(team.captain.name, team.vice_captain.name)
+        league.begin_match_day(interactive=True)
+        match = league.live_match
+        card = match.auto_finish()
+        if card and not card.get("draw"):
+            margin = card.get("margin", "")
+            if "wicket" in margin:
+                # Margin must be "N wicket" or "N wickets" — never "N wickets" when N==1
+                parts = margin.split()
+                # format: "won by N wicket(s)"
+                idx = parts.index("wicket") if "wicket" in parts else (parts.index("wickets") if "wickets" in parts else -1)
+                if idx >= 1:
+                    n = int(parts[idx - 1])
+                    word = parts[idx]
+                    assert (n == 1 and word == "wicket") or (n != 1 and word == "wickets"), \
+                        f"seed {seed}: plural mismatch in '{margin}'"

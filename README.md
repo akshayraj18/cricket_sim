@@ -1,220 +1,201 @@
-# Cricket Franchise Sim
+# CricSim
 
-A cricket franchise career simulation. Pick a team, run the mega draft, play or sim every match over-by-over, manage retentions, and build a dynasty across multiple seasons.
+A cricket franchise and international career simulation. Draft players, manage your squad, play or simulate every match ball-by-ball, and build a dynasty across formats and seasons.
 
-Runs as a **React Native / Expo mobile app** (iOS/Android) backed by a **FastAPI + Postgres + Redis** service, with the original browser frontend kept for validation. Accounts are durable: play as a guest and link Sign in with Apple / Google to keep your career across devices.
+**Stack:** React Native / Expo (iOS/Android) · FastAPI + Postgres + Redis · Python sim engine
 
-## Features
+Live on the App Store. Backend deployed on Railway.
 
-### Franchise Management
-- **Mega draft** — 10 teams, 25 players each, snake order, max 9 overseas per squad. Draft manually pick by pick, autodraft one pick at a time, or let the CPU run the whole thing.
-- **Three starting modes** — current-era mega draft, all-time-greats mega draft (500+ historical T20 cricket legends with career-based ratings), or skip the draft entirely and start the season with each franchise's real-world cricket 2026 roster.
-- **Three difficulty levels** — Easy, Medium, Hard (affects CPU squad quality and match engine).
-- **Leadership** — assign captain, vice-captain, and preferred wicketkeeper.
-- **Saved presets ("11+1" model)** — set a Starting XI and one Impact Sub, plus a default batting order and 20-over bowling plan, that auto-apply every match. The captain, vice-captain, and designated wicketkeeper are locked into the Starting XI and can't be subbed out.
+---
 
-### Season Structure
-- **14-round league stage** — 5 matches per round across all 10 teams. The schedule guarantees every team plays each of the other 9 at least once, with 5 repeat fixtures, and no pair ever meets more than twice. Simulate any round instantly or play your match live.
-- **Points table and NRR** — live standings updated after every result.
-- **Modern playoff bracket** — top 4 qualify. Qualifier 1, Eliminator, Qualifier 2, Final. Play your matches or quick-sim any you're not in.
-- **Season history** — champion, runner-up, season MVP, final standings, and top batting/bowling tables archived every season.
+## What you can do
 
-### Match Engine
-- **Over-by-over interactive play** — play a full over, a single ball, or play until a wicket falls.
-- **Toss** — if you win the toss, choose bat or bowl; otherwise the CPU decides.
-- **Lineup selection** — pick your XI from your 25-player squad (max 4 overseas in the XI), set batting order, assign a bowler per over or use your saved plan.
-- **Smart batting order** — XIs are auto-arranged by best fit per slot (factoring in each player's natural batting position and phase rating, with tail-enders seated last), grouped into Openers / Middle Order / Death Overs / Tail zones across the draft, squad, and lineup screens. The same smart order the squad screen shows is what a quick-sim plays and the match-hub lineup pre-fills — no need to save presets first.
-- **Aggression sliders** — set per-batter and per-bowler aggression (1–5) live during the match.
-- **Impact Player rule** — one substitution per innings, any time before the 15th over of the second innings. Swap in a specialist bowler when defending or an extra hitter when chasing.
-- **Next-batter selection** — after a wicket, choose who comes in next.
-- **Super Over** — tied matches go to a super over; pick 2 batters and 1 bowler.
-- **Auto-finish** — hand any live match to the engine to complete it instantly.
+### Careers
+- **Indian T20 League** — 10 city franchises, 14-round league, IPL-style playoffs (Q1/Eliminator/Q2/Final). Draft from current 2026 rosters or 500+ all-time T20 greats.
+- **International Tournament** — 10 nations (or 10 world city franchises for All-Time drafts), 9-round round-robin, semis + final (T20/ODI) or straight final (Test).
+- **Bilateral Series** — Pick a nation, pick an opponent, play a full best-of-1/3/5 series across any format. All matches always play out.
 
-### Stats and Leaderboards
-Per player, per season: runs, balls, average, strike rate, highest score, 50s, 100s, fours, sixes, wickets, economy, bowling average, bowling SR, best figures, catches, stumpings, run-outs, MoTM awards, MVP score.
+### Formats
+- **T20** — 20 overs, powerplay (1-6), middle (7-15), death (16-20). Impact Sub rule (IPL only). Super Over for ties.
+- **ODI** — 50 overs, powerplay (1-10), middle (11-40), slog (41-50). 10-over bowler cap.
+- **Test** — 5 days, 3 sessions/day, 30 overs/session. Follow-on, declarations, draws. 2 innings per side.
 
-Leaderboards: Orange Cap, Purple Cap, sixes, fours, boundaries, highest score, strike rate, economy, best figures, fielding, MVP.
+### Draft
+- **Mega draft** — 10 teams, 25 players each, snake order, max 9 overseas per squad.
+- **Three pools** — Current 2026 rosters (no draft, straight to season), All-Time T20 Greats, All-Time ODI Greats, All-Time Test Greats.
+- **World city franchises** — All-Time tournament drafts use fictional world-city teams (Mumbai Monsoons, Sydney Sharks, etc.) with unique colors.
 
-### Multi-season Career
-- **Retention window** — alternates between a 11-player and 5-player keep limit. CPU teams retain their best players by MVP score; you choose yours.
-- **Post-retention draft** — reverse-standings order (no snake), giving last-placed teams first pick of the released pool.
-- **Player progression** — ratings, form, and age update each off-season. Young players develop; veterans decline.
-- **Regen prospects** — ~30 young domestic/overseas players are generated and added to the pool before each new draft.
-- **Save/load** — full career state (including in-progress matches) is saved to named slots under `saves/`.
+### Match engine
+- Play ball-by-ball, over-by-over, or hand off to the engine.
+- Aggression sliders (1–5) for batters and bowlers, live during the match.
+- Smart batting order pre-filled by natural slot. Next-batter selection after wickets.
+- Bowler selection each over (or CPU auto-selects with fatigue/rotation logic).
+- Test: skip session, skip 10 overs, declare innings. ODI: end innings. T20: end innings, super over.
 
-### Onboarding
-- **Guided spotlight tour** — a first-run walkthrough that drives the real app: it moves tab to tab, dims the screen, and spotlights the area each step describes (Home → Squad → Season → Match Centre → Stats → History). Replayable any time from the account menu's "How to Play".
+### Season & history
+- Live standings with NRR. Match log. Per-player seasonal and career stats.
+- Orange Cap / Purple Cap / season MVP. Full season history archive.
+- Multi-season retention (11-player or 5-player window, alternating). Post-retention draft.
 
-### Legal
-- **Hosted Terms of Service & Privacy Policy** — published via GitHub Pages from `docs/legal/`, and linked in-app from the sign-in screen and account sheet. These double as the public policy URLs required by the App Store / Play Store.
-
-## Requirements
-
-- Python 3.12+
-- [uv](https://github.com/astral-sh/uv) (package manager)
-- Node ≥ 20.19.4 (for the mobile app)
+---
 
 ## Setup
 
-The primary stack is the **Expo mobile app + FastAPI backend**. To run it locally:
+Requires Python 3.12+, [uv](https://github.com/astral-sh/uv), Node ≥ 20.19.4.
 
 ```bash
-make install                                                  # Python deps
-make backend-up && make backend-migrate && make backend-run   # Postgres + Redis + API on :8000
-make mobile-install && make mobile                            # Metro + dev client on :8081
+# Install Python deps
+make install
+
+# Start backend (Postgres + Redis + API on :8000)
+make backend-up && make backend-migrate && make backend-run
+
+# Start mobile dev server (Metro + dev client on :8081)
+make mobile-install && make mobile
 ```
 
-The original browser frontend is kept for quick validation without the mobile toolchain:
+If the iOS Simulator dev client shows "Could not connect", run:
+```bash
+make mobile-sim-open
+```
+
+---
+
+## Make targets
 
 ```bash
-make run   # legacy stdlib web server
+make backend-up        # start Postgres + Redis containers
+make backend-down      # stop containers
+make backend-migrate   # run Alembic migrations
+make backend-run       # start FastAPI on :8000 (with --reload)
+make mobile            # start Metro + dev client on :8081
+make mobile-ios        # rebuild native iOS dev client (needed after config plugin changes)
+make mobile-typecheck  # tsc --noEmit
+make mobile-lint       # expo lint
+make test              # full pytest suite
+make test ARGS="-k live_match"  # filter tests
+make lint              # pyflakes static check
+make clean             # remove __pycache__ / .pyc
 ```
 
-Then open [http://localhost:8765](http://localhost:8765) in your browser.
-
-## Other commands
-
-```bash
-make test          # run the test suite
-make test ARGS="-k impact_sub"   # filter tests by name
-make lint          # pyflakes static check
-make kill          # stop any running legacy/ui_server.py process
-make clean         # remove __pycache__ / .pyc files
-```
-
-## Data files
-
-`players.csv` and `players_alltime.csv` live in the `cricket_sim_engine` package and contain the current-era and all-time player pools respectively, including each player's `natural_slot` (1-11) used to seed the smart batting order. Both are required to run the app.
+---
 
 ## Project structure
 
-This repo is a `uv` workspace with three parts:
-
 ```
-packages/sim_engine/         — cricket_sim_engine: the core simulation engine (installable package)
+packages/sim_engine/               — installable Python package (cricket_sim_engine)
   src/cricket_sim_engine/
+    engine.py                      — per-ball outcome sampler (MatchEngine)
+    models.py                      — Player, Team data classes + progression
+    players_data.py                — loads CSV pools into Player objects
+    international_data.py          — current international rosters per format
+    players.csv                    — IPL current 2026 roster pool
+    players_alltime.csv            — IPL all-time T20 pool (500+ players)
+    players_alltime_t20_intl.csv   — International all-time T20 pool
+    players_alltime_odi.csv        — International all-time ODI pool
+    players_alltime_test.csv       — International all-time Test pool
     sim/
-      league_state.py        — top-level state machine: draft, schedule, playoffs, retention, save/load
-      live_match.py           — single-match driver: toss, lineups, over-by-over play, super over
-      helpers.py              — role/phase classification utilities
-      constants.py            — seed data, squad sizes, team branding
-    engine.py                 — per-ball outcome sampler (batting/bowling matchup model)
-    models.py                 — Player and Team data classes, progression logic
-    players_data.py           — loads players.csv / players_alltime.csv into Player objects, T20 2026 rosters
-    players.csv, players_alltime.csv
+      league_state.py              — career state machine (draft, schedule, playoffs, bilateral, save/load)
+      live_match.py                — single-match driver (toss, lineup, over-by-over, Test sessions)
+      helpers.py                   — role/phase classification utilities
+      constants.py                 — MATCH_FORMAT_CONFIG, team branding, squad limits
 
-backend/                      — FastAPI service (Postgres + Redis) — see backend section below
+backend/                           — FastAPI service
   app/
-    main.py                   — FastAPI app entrypoint
-    db/                        — SQLAlchemy models, session
-    auth/, careers/, live_match/, season/  — route modules
-  alembic/                    — DB migrations
-  docker-compose.yml          — local Postgres + Redis
+    main.py                        — app entrypoint, router registration
+    auth/                          — JWT auth, Apple/Google sign-in, refresh tokens
+    careers/                       — career CRUD, new-career wizard dispatch
+    live_match/                    — over-by-over match actions (play-ball, play-over, declare, etc.)
+    season/                        — round simulation, standings, playoff actions
+    db/                            — SQLAlchemy models, Alembic migrations, Redis helpers
+  docker-compose.yml               — local Postgres + Redis
 
-mobile/                       — React Native / Expo app (the primary frontend)
+mobile/                            — React Native / Expo app
   src/
-    app/                       — expo-router screens (tabs: home, squad, season, stats, history)
-    components/                — draft hub, live-match hub, squad/lineup editors, sign-in, account sheet
-    context/                   — Auth, Career, League, Theme providers
-    api/                       — typed client for the FastAPI backend (auth, careers, live match)
+    app/                           — expo-router screens + tabs (home, squad, season, stats, history)
+    components/                    — live-match-hub, draft-hub, retention-hub, player-profile, etc.
+    api/                           — typed FastAPI client (auth, careers, live match, season)
+    context/                       — Auth, Career, League, Theme, Error providers
+    constants/theme.ts             — team colors (IPL, international, world franchises), spacing, typography
+    utils/lineup.ts                — batting order zones, bowler scoring, XI validation
 
-webapp/                       — original static browser frontend (index.html, app.js, styles.css)
-
-legacy/                        — original stdlib HTTP server (ui_server.py), kept as a fallback
-                                  until the FastAPI backend reaches feature parity
-
-tests/                         — pytest suite for cricket_sim_engine (engine, league state, live match, models)
-legacy/tests/                  — tests for the legacy ui_server.py
+docs/                              — reference documents (see below)
+legacy/                            — original stdlib browser server (kept for quick local validation)
+webapp/                            — original browser frontend
+tests/                             — pytest suite (engine, league state, live match, models)
+scripts/                           — one-off data scripts (IP-safe rename, etc.)
 ```
+
+---
+
+## Key docs
+
+| File | What it covers |
+|---|---|
+| `docs/engine.txt` | Ball-by-ball probability model, format configs, all tuning values |
+| `docs/new_career_schema.txt` | Career wizard flow, API payload, team lists, valid combinations |
+| `docs/architecture.txt` | System architecture, data flow, key design decisions |
+| `docs/LAUNCH_ROADMAP.md` | App Store / Play Store launch checklist |
+| `docs/ideas.txt` | Feature backlog and phase roadmap |
+| `backend/DEPLOY.md` | Production deployment guide |
+
+---
 
 ## Backend (FastAPI + Postgres + Redis)
 
 ```bash
-make backend-up        # start Postgres + Redis (Docker)
-make backend-migrate   # apply Alembic migrations
-make backend-run       # start the FastAPI dev server at http://localhost:8000
-make backend-down      # stop Postgres + Redis
+make backend-up        # Docker: start Postgres + Redis
+make backend-migrate   # apply Alembic migrations to local DB
+make backend-run       # uvicorn on :8000 with --reload
 ```
 
-Copy `backend/.env.example` to `backend/.env` to override defaults (DB URL, Redis URL, etc.).
-For a real (non-default) JWT secret locally, run `make gen-secret` once — it writes a strong
-`JWT_SECRET` to the gitignored `backend/.env.local`, which takes precedence over `.env`. See
-[Deploying to production](#deploying-to-production) for how secrets work in production.
+Copy `backend/.env.example` to `backend/.env` for local config. For a real JWT secret:
+```bash
+make gen-secret        # writes JWT_SECRET to backend/.env.local (gitignored)
+```
 
-## Mobile app (React Native / Expo)
+Production env vars (set in Railway/Render secrets panel — never commit):
 
-The app lives in `mobile/` and talks to the FastAPI backend. Expo/Metro needs Node ≥ 20.19.4; the `make mobile*` targets auto-select the newest installed nvm Node ≥ 20.
+| Variable | Value |
+|---|---|
+| `ENVIRONMENT` | `production` |
+| `JWT_SECRET` | strong random secret (≥32 chars) |
+| `DATABASE_URL` | managed Postgres connection string |
+| `REDIS_URL` | managed Redis connection string |
+| `CORS_ALLOW_ORIGINS` | explicit web origins (not `*`) |
+| `SENTRY_DSN` | (optional) Sentry DSN |
+
+The backend refuses to start in production with insecure defaults.
+
+---
+
+## Mobile (React Native / Expo)
+
+Expo/Metro requires Node ≥ 20.19.4. The `make mobile*` targets auto-select the newest nvm Node ≥ 20.
 
 ```bash
-make backend-up && make backend-migrate && make backend-run   # backend first
-
-make mobile-install    # install JS deps (first time)
-make mobile            # start Metro + the dev client on :8081
-make mobile-ios        # build + run the native iOS dev client on a simulator
-make mobile-typecheck  # tsc --noEmit  (matches CI)
-make mobile-lint       # expo lint    (matches CI)
+make mobile-install    # npm install (first time only)
+make mobile            # Metro + dev client on :8081
+make mobile-ios        # rebuild native iOS app (after config plugin or native dep changes)
 ```
 
-If the iOS Simulator's dev client shows "Could not connect to development server",
-run `make mobile-sim-open` to point it at `127.0.0.1:8081`.
+**Apple/Google sign-in** only works in a development build (`make mobile-ios`), not plain Metro. After changing a config plugin or native dependency, re-run `make mobile-ios`.
 
-**Native modules / sign-in.** Apple and Google sign-in are native modules, so they
-only work in a development build (`make mobile-ios`), not a bare Metro reload.
-After changing a config plugin or native dependency, re-run `make mobile-ios`.
+**Production builds** go through EAS Build (`eas build`). The production profile injects `EXPO_PUBLIC_API_URL` pointing at the Railway backend.
 
-- **Sign in with Apple** (iOS) needs a paid Apple Developer team to provision the
-  capability; set it under the target's Signing & Capabilities in Xcode.
-- **Google sign-in** needs OAuth client IDs (iOS + Web) from Google Cloud Console.
-  Provide them via `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` / `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
-  and the backend's `google_client_ids`. The Web client ID is the token audience the
-  backend verifies, so the two must match. Never commit OAuth client *secrets*.
+---
 
-### Accounts & cloud save
+## Accounts
 
-- Play immediately as a **guest** — the career is saved server-side and survives
-  sign-out and app reloads on the same device.
-- **Link Apple or Google** from the account sheet to make the account durable and
-  portable; the existing guest career carries over.
-- Tokens: short-lived access token + 30-day rotating refresh token, stored in the
-  device keychain (`expo-secure-store`).
+- **Guest** — career created immediately, saved server-side, survives restarts.
+- **Link Apple or Google** — makes the account durable and device-portable; existing career carries over.
+- Tokens: short-lived access token + 30-day rotating refresh token, stored in device keychain (`expo-secure-store`).
+
+---
 
 ## Deploying to production
 
-The backend refuses to start in production with insecure defaults (it calls
-`Settings.validate_production_safety()` at boot). Before deploying, set these on your
-host (Railway / Render / Fly.io / a VPS — use the host's **secrets / environment
-variables** panel; do **not** commit them):
-
-| Variable | Production value |
-| --- | --- |
-| `ENVIRONMENT` | `production` (turns on the safety checks below) |
-| `JWT_SECRET` | A strong, random secret (≥ 32 chars). Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`. |
-| `CORS_ALLOW_ORIGINS` | An explicit, comma-separated allowlist of web origins (not `*`). Only matters for browser callers — the native app sends no Origin. |
-| `DATABASE_URL` / `REDIS_URL` | Your managed Postgres / Redis connection strings. |
-| `SENTRY_DSN` | (optional) Your Sentry project DSN for crash reporting. |
-
-**Legal pages.** The Terms of Service and Privacy Policy live in `docs/legal/`
-(Markdown sources + publish-ready HTML) and are published via GitHub Pages (Pages
-source = `/docs` on `main`), e.g.
-`https://akshayraj18.github.io/cricket_sim/legal/terms.html`. The mobile app links to
-those URLs by default; override per-build with `EXPO_PUBLIC_TERMS_URL` /
-`EXPO_PUBLIC_PRIVACY_POLICY_URL` (e.g. a custom marketing domain). App Store / Play
-Store submissions need both to resolve on a stable public URL.
-
-**About the JWT secret.** It signs the login tokens — anyone who knows it can forge a
-session for any user, so treat it like a master password.
-
-- **Generate it once and keep it stable.** Changing it invalidates every existing
-  session (all users get logged out). Only rotate deliberately.
-- **Production:** set `JWT_SECRET` in your host's secrets panel. This is what most apps
-  do — the secret lives in the deploy environment, never in the repo. No third-party
-  secrets product (Vault/Doppler/etc.) is required at this scale; your host's built-in
-  env panel is the standard answer.
-- **Local / self-hosted convenience:** `make gen-secret` writes a stable secret to the
-  gitignored `backend/.env.local` (and refuses to overwrite an existing one, so you
-  can't accidentally rotate). Real OS environment variables still override it.
-
-**Rate limiting** (`/auth/*`) is Redis-backed, so production needs a reachable Redis;
-it fails open (allows requests) if Redis is down. This throttles credential/token abuse
-but is **not** DDoS protection — put a CDN/WAF/reverse proxy (e.g. Cloudflare) in front
-for network-layer protection.
+See `backend/DEPLOY.md` for the full production deployment checklist. Key points:
+- Backend live at Railway. DB and Redis managed add-ons.
+- Legal pages (ToS + Privacy Policy) published via GitHub Pages from `docs/legal/`.
+- EAS Build handles signed iOS/Android release binaries.

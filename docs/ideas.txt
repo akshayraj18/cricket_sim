@@ -1,0 +1,80 @@
+CricSim — Feature Backlog & Roadmap
+Last updated: July 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Phase 0  — FastAPI backend, Postgres/Redis, JWT auth
+Phase 1  — React Native / Expo mobile app, full career flow
+Phase 2  — Auth & cloud save (Apple/Google sign-in, guest accounts, refresh tokens)
+Phase 3  — Telemetry (Sentry crash reporting, PostHog analytics, backend logging)
+Phase 4  — Local notifications (re-engagement reminders)
+Phase 5  — App Store submission, EAS Build, TestFlight, legal pages
+Phase 8A — Multi-format engine (T20 / ODI / Test) — format configs, phase system,
+            Test day/session pacing, follow-on, declarations, draws
+Phase 8B — All-time ODI and Test draft pools
+Phase 8C — International careers (tournament + bilateral), world city franchises,
+            current national team rosters, real country/city names
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IN PROGRESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- international_data.py: real current 2026 squads for 10 nations × 3 formats
+- players_alltime_t20_intl.csv / players_alltime_odi.csv / players_alltime_test.csv:
+  research and verify correct natural_slot for each all-time great
+- Backend service.py: wire skip-draft path for international_current careers
+- Bilateral series: fix 500 errors on simulate-round during Test/ODI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEXT PRIORITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Gameplay / Format Quality
+  - Verify and fix all-time great player natural_slot values per format
+  - IPL → "Indian T20 League" rename in mobile UI text
+  - NRR column in international standings (Test: W/D/L/Points table)
+  - Day summary card after stumps in Test (runs, wickets, highlights)
+  - Required rate display in ODI chase (current RR vs required RR)
+  - Partnership tracker (runs + balls for current stand)
+  - Milestone alerts: 50/100 for batters, 5-wicket hauls for bowlers
+  - Phase color coding in T20 scoreboard (green powerplay, amber middle, red death)
+
+Bug Fixes (from KNOWN_ISSUES.md)
+  - Account data bleed: scope active_career_id storage key per user id
+  - "How to Play" tutorial error before career exists
+  - Team color fallback to green on match hub + fixtures row
+  - iPhone display: squad tab overflow, scorecard spacing, text size scaling
+
+Draft Improvements
+  - Format filter in draft: Test draft shows Test specialists first (endurance/technique)
+  - Stats column: show batting avg / bowling avg in addition to OVR for ODI/Test drafts
+  - "Best available" pick suggestion per format priority
+
+Phase 6 — Monetisation
+  - StoreKit (iOS) + Google Play Billing
+  - "Pro" subscription tier — feature gate: advanced analytics, full history, rename packs
+  - Auction mode (alternative to snake draft — bid-based squad building)
+  - One-time content pack purchases
+
+Phase 7 — Engagement
+  - Commentary / flavor-text feed during matches
+  - Achievements / badges (first century, 5-wicket haul, unbeaten season, etc.)
+  - Daily / weekly challenges
+  - Advanced analytics screens (Pro)
+
+Phase 8D — Auction Mode
+  - Bid-based squad building as an alternative to snake/mega draft
+  - Format-agnostic; can ship independently of format work
+
+Phase 9 — Social / Multiplayer  (Pro flagship)
+  - Multiplayer leagues (friends, shared simulation)
+  - Global leaderboards / ranked seasons
+  - Trade system between human-managed franchises
+
+Phase 10 — v1.0 Stable
+  - Full QA across devices (iPhone 15/16/17, iPad, various Android)
+  - Localization (EN first; consider Hindi/Urdu for India market)
+  - App Store optimization
+  - Launch marketing

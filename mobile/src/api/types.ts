@@ -437,11 +437,12 @@ export interface LiveMatchPayload {
   decision: string | null;
   message: string;
   user_toss: boolean;
-  // Test-specific fields (undefined for T20/ODI)
   match_format?: MatchFormat;
+  total_balls?: number;
   current_day?: number;
   current_session?: number;
   sessions_per_day?: number;
+  overs_remaining_in_session?: number;
   pending_session_break?: boolean;
   follow_on_available?: boolean;
   followed_on?: boolean;

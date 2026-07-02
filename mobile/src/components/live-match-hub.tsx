@@ -138,8 +138,10 @@ function TossStage({
       <Card>
         <ThemedText style={styles.panelTitle}>Choose Decision</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
-          You&apos;ll confirm your Starting XI next. Bowl first starts your Impact Sub in place of a batter; you choose
-          the bowler for each over live in the hub.
+          You&apos;ll confirm your Starting XI next.
+          {match.match_format === 't20'
+            ? ' Bowl first starts your Impact Sub in place of a batter; you choose the bowler for each over live.'
+            : ' You choose the bowler for each over live in the hub.'}
         </ThemedText>
         <View style={styles.buttonRow}>
           <Button
@@ -234,8 +236,7 @@ function LineupStage({
           </ThemedText>
         ) : (
           <ThemedText themeColor="textDim" style={styles.helpText}>
-            {match.message} Tap a slot to assign or swap a player. Slots are grouped by where each player naturally
-            bats — openers, middle order, death overs, tail.
+            {match.message} Tap a slot to assign or swap a player. Slots are grouped by batting position — openers, middle order, lower order, tail.
           </ThemedText>
         )}
         {validationError && (
@@ -666,29 +667,20 @@ function OverHubStage({
 
       {section === 'controls' && (
         <>
-      {match.match_format === 'test' && (
+      {match.match_format === 'test' && match.pending_session_break && (
         <Card>
           <ThemedText style={styles.panelTitle}>
-            Day {match.current_day ?? 1} · Session {match.current_session ?? 1} of {match.sessions_per_day ?? 3}
+            Session Over
           </ThemedText>
-          {match.pending_session_break && (
-            <>
-              <ThemedText themeColor="textDim" style={styles.helpText}>Session over — stumps or lunch break.</ThemedText>
-              <Button
-                label="Proceed to Next Session"
-                variant="primary"
-                accentColor={accent}
-                onPress={() => wrap(() => liveMatchApi.proceedSession(careerId))}
-              />
-            </>
-          )}
-          {match.can_declare && !match.pending_session_break && (
-            <Button
-              label="Declare Innings"
-              variant="secondary"
-              onPress={() => wrap(() => liveMatchApi.declare(careerId))}
-            />
-          )}
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            Stumps or lunch break — Day {match.current_day ?? 1}, Session {match.current_session ?? 1} of {match.sessions_per_day ?? 3}.
+          </ThemedText>
+          <Button
+            label="Proceed to Next Session"
+            variant="primary"
+            accentColor={accent}
+            onPress={() => wrap(() => liveMatchApi.proceedSession(careerId))}
+          />
         </Card>
       )}
       <Card>
@@ -726,8 +718,20 @@ function OverHubStage({
         <View style={styles.buttonRow}>
           <Button label="Skip 5 Overs" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 30, stop_on_wicket: false }))} />
           <Button label="Skip 10 Overs" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 60, stop_on_wicket: false }))} />
-          <Button label="End Innings" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 120, stop_on_wicket: false }))} />
+          {match.match_format === 'test'
+            ? <Button label="Skip Session" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: (match.overs_remaining_in_session ?? 30) * 6, stop_on_wicket: false }))} />
+            : <Button label="End Innings" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: match.total_balls ?? 120, stop_on_wicket: false }))} />
+          }
         </View>
+        {match.can_declare && (
+          <View style={[styles.buttonRow, { marginTop: 4 }]}>
+            <Button
+              label="Declare Innings"
+              variant="secondary"
+              onPress={() => wrap(() => liveMatchApi.declare(careerId))}
+            />
+          </View>
+        )}
       </Card>
 
       <Card>
@@ -837,7 +841,8 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const nonStriker = score.bat_stats.find((p) => p.name === score.non_striker);
   const bowler = score.bowl_stats.find((p) => p.name === score.active_bowler);
   const neededRuns = score.target ? Math.max(0, score.target - score.runs) : 0;
-  const ballsLeft = Math.max(0, 120 - score.balls);
+  const totalBalls = match.total_balls ?? 120;
+  const ballsLeft = Math.max(0, totalBalls - score.balls);
 
   return (
     <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team) }]}>
@@ -897,8 +902,11 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
       </View>
 
       <ThemedText style={styles.scoreboardSmall}>
-        {score.phase}
-        {score.target ? ` · ${neededRuns} needed off ${ballsLeft}` : ` · ${ballsLeft} balls left`}
+        {match.match_format === 'test'
+          ? `Day ${match.current_day ?? 1} · Session ${match.current_session ?? 1} · ${match.overs_remaining_in_session ?? 0} ov left in session`
+          : match.match_format === 'odi'
+          ? `${score.phase}${score.target ? ` · ${neededRuns} needed off ${Math.ceil(ballsLeft / 6)} ov` : ` · ${Math.ceil(ballsLeft / 6)} ov left`}`
+          : `${score.phase}${score.target ? ` · ${neededRuns} needed off ${ballsLeft}` : ` · ${ballsLeft} balls left`}`}
       </ThemedText>
     </View>
   );

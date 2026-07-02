@@ -106,26 +106,45 @@ TEAM_META = {
     "Punjab Panthers": {"abbr": "PUN", "home": "Five Rivers Stadium", "primary": "#5a3e8e", "accent": "#e8505b"},
 }
 
-# IP-safe, initial-preserving nation names for the 10-country international
-# roster (same convention as IPL — keep recognizable but altered so no real
-# governing body or nation name is used verbatim). Keys are stable internal
-# IDs that may differ from the display name the user sees.
 INTERNATIONAL_TEAMS_LIST = [
-    "Indicia", "Austrella", "Engoria", "Nustria", "Soutrica",
-    "Pakoria", "Srilanya", "Windoria", "Bangoria", "Afghoria",
+    "India", "Australia", "England", "New Zealand", "South Africa",
+    "Pakistan", "Sri Lanka", "West Indies", "Bangladesh", "Afghanistan",
 ]
 
 INTERNATIONAL_TEAM_META = {
-    "Indicia":   {"abbr": "IND", "home": "National Cricket Stadium", "primary": "#0a63b0", "accent": "#f0821e"},
-    "Austrella": {"abbr": "AUS", "home": "Southern Cricket Ground",  "primary": "#f4d000", "accent": "#004f9e"},
-    "Engoria":   {"abbr": "ENG", "home": "Lord's International",     "primary": "#003e8e", "accent": "#d4001a"},
-    "Nustria":   {"abbr": "NZL", "home": "Eden Park International",  "primary": "#000000", "accent": "#c8102e"},
-    "Soutrica":  {"abbr": "SA",  "home": "Cape Town Stadium",        "primary": "#007c45", "accent": "#f4b942"},
-    "Pakoria":   {"abbr": "PAK", "home": "National Stadium Karachi", "primary": "#005d2e", "accent": "#ffffff"},
-    "Srilanya":  {"abbr": "SL",  "home": "P. Saravanamuttu Stadium", "primary": "#00338d", "accent": "#f1c40f"},
-    "Windoria":  {"abbr": "WI",  "home": "Kensington Oval",          "primary": "#7b0000", "accent": "#f7c94e"},
-    "Bangoria":  {"abbr": "BAN", "home": "Mirpur International",     "primary": "#006a4e", "accent": "#f42a41"},
-    "Afghoria":  {"abbr": "AFG", "home": "Kabul International",      "primary": "#003580", "accent": "#d32011"},
+    "India":        {"abbr": "IND", "home": "Narendra Modi Stadium",     "primary": "#0a63b0", "accent": "#f0821e"},
+    "Australia":    {"abbr": "AUS", "home": "Melbourne Cricket Ground",  "primary": "#f4d000", "accent": "#004f9e"},
+    "England":      {"abbr": "ENG", "home": "Lord's Cricket Ground",     "primary": "#003e8e", "accent": "#d4001a"},
+    "New Zealand":  {"abbr": "NZL", "home": "Eden Park",                 "primary": "#000000", "accent": "#c8102e"},
+    "South Africa": {"abbr": "SA",  "home": "Newlands Cricket Ground",   "primary": "#007c45", "accent": "#f4b942"},
+    "Pakistan":     {"abbr": "PAK", "home": "National Stadium Karachi",  "primary": "#005d2e", "accent": "#ffffff"},
+    "Sri Lanka":    {"abbr": "SL",  "home": "R. Premadasa Stadium",      "primary": "#00338d", "accent": "#f1c40f"},
+    "West Indies":  {"abbr": "WI",  "home": "Kensington Oval",           "primary": "#7b0000", "accent": "#f7c94e"},
+    "Bangladesh":   {"abbr": "BAN", "home": "Mirpur National Stadium",   "primary": "#006a4e", "accent": "#f42a41"},
+    "Afghanistan":  {"abbr": "AFG", "home": "Kabul International Stadium","primary": "#003580", "accent": "#d32011"},
+}
+
+# City-franchise teams for the World Tournament mega draft.
+# One franchise per international cricket nation, named after a city in that
+# country — same alliterative city + animal/element convention as IPL teams.
+# Used when career_mode="tournament" with draft_pool="alltime_world".
+WORLD_TEAMS_LIST = [
+    "Mumbai Monsoons", "Sydney Sharks", "London Lions", "Auckland Alpines",
+    "Cape Town Cobras", "Karachi Komets", "Colombo Cyclones",
+    "Kingston Kings", "Dhaka Dragons", "Kabul Kestrels",
+]
+
+WORLD_TEAM_META = {
+    "Mumbai Monsoons":  {"abbr": "MBM", "home": "Mumbai World Stadium",    "primary": "#7c00d4", "accent": "#00f5c8"},
+    "Sydney Sharks":    {"abbr": "SYD", "home": "Sydney Cricket Ground",   "primary": "#ff5f1f", "accent": "#1af0ff"},
+    "London Lions":     {"abbr": "LON", "home": "London Cricket Arena",    "primary": "#d400a8", "accent": "#ffe600"},
+    "Auckland Alpines": {"abbr": "AKL", "home": "Eden Park Auckland",      "primary": "#00b8a0", "accent": "#ff3864"},
+    "Cape Town Cobras": {"abbr": "CPT", "home": "Cape Town Stadium",       "primary": "#ff9500", "accent": "#1a0066"},
+    "Karachi Komets":   {"abbr": "KAR", "home": "National Stadium Karachi","primary": "#00d4ff", "accent": "#8b00ff"},
+    "Colombo Cyclones": {"abbr": "CMB", "home": "R. Premadasa Stadium",    "primary": "#c8f500", "accent": "#1a0033"},
+    "Kingston Kings":   {"abbr": "KNG", "home": "Kensington Oval",         "primary": "#ff0066", "accent": "#f5f500"},
+    "Dhaka Dragons":    {"abbr": "DHA", "home": "Mirpur International",    "primary": "#5c00c8", "accent": "#ff8c00"},
+    "Kabul Kestrels":   {"abbr": "KBL", "home": "Kabul International",     "primary": "#00e676", "accent": "#c4003c"},
 }
 
 # Neutral branding for a team whose name isn't a TEAM_META key (e.g. one the
@@ -148,7 +167,9 @@ def team_meta(team):
     """
     name = getattr(team, "name", team) if not isinstance(team, str) else team
     meta_name = getattr(team, "meta_name", None) if not isinstance(team, str) else None
-    meta = TEAM_META.get(meta_name) or TEAM_META.get(name) or INTERNATIONAL_TEAM_META.get(meta_name) or INTERNATIONAL_TEAM_META.get(name)
+    meta = (TEAM_META.get(meta_name) or TEAM_META.get(name)
+            or INTERNATIONAL_TEAM_META.get(meta_name) or INTERNATIONAL_TEAM_META.get(name)
+            or WORLD_TEAM_META.get(meta_name) or WORLD_TEAM_META.get(name))
     if meta:
         return meta
     fallback = dict(_DEFAULT_TEAM_META)
