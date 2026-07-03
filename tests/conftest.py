@@ -1,7 +1,7 @@
 """Shared fixtures and helpers for the cricket-sim test suite.
 
-Tests drive `LeagueState`/`LiveMatch` directly (the same objects `ui_server.py`
-wraps with HTTP) so they exercise real game logic without a server process.
+Tests drive `LeagueState`/`LiveMatch` directly, exercising real game logic
+without a server process.
 """
 import random
 

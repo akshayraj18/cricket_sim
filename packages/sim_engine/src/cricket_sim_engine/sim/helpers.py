@@ -42,8 +42,18 @@ def counts_as_batter(player):
 
 
 def counts_as_bowler(player):
-    """Whether this player can be selected into a bowling plan at all (role-wise)."""
-    return "Bowler" in player.role or player.role == "All-Rounder"
+    """Whether this player can be selected into a bowling plan.
+
+    Primary bowlers/all-rounders always qualify. Batsmen and wicketkeepers
+    with bowling_ovr >= 65 also qualify as genuine part-time options (e.g.
+    Sachin Tendulkar 65-68, Chris Gayle 68-72, Viv Richards 68). The
+    phase-fit score naturally deprioritises them vs specialist bowlers. The
+    65 floor keeps out players who essentially never bowl (Kohli, Dhoni,
+    Root etc. sit at 10-20).
+    """
+    if "Bowler" in player.role or player.role == "All-Rounder":
+        return True
+    return getattr(player, "bowling_ovr", 0) >= 65
 
 
 def ordinal(number):

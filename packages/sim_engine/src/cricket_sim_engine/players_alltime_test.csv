@@ -1,5 +1,5 @@
 name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand,batting_archetype,bowling_phase,bowling_type,strengths,weaknesses,natural_slot
-Sachin Tendulkar,Batsman,99,99,18,False,24,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Consistency,Technique against all bowling",Short-pitch pace,1
+Sachin Tendulkar,Batsman,99,99,65,False,24,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Consistency,Technique against all bowling",Short-pitch pace,1
 Don Bradman,Batsman,99,99,10,False,26,Right,Right,Anchor,Part-time,None,"Average 99.94,Concentration",Short-pitch pace,3
 Brian Lara,Batsman,98,99,10,False,27,Left,Right,Anchor,Part-time,None,"Technique,Elegance,Score 400",Short-pitch pace,3
 Garfield Sobers,All-Rounder,98,98,95,False,24,Left,Left,Aggressive Opener,Powerplay,Left-arm Fast,"Greatest ever,Versatility",Age,3

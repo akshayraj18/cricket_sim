@@ -2,7 +2,7 @@ name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_
 Virat Kohli,Batsman,97,98,12,False,27,Right,Right,Anchor,Part-time,None,"Chase mastery,Consistency",Short-pitch pace,3
 AB de Villiers,Wicketkeeper,97,98,15,False,27,Right,None,Aggressive Opener,Part-time,None,"360-degree batting,Finishing",Short-pitch spin,4
 Jasprit Bumrah,Bowler (Fast),96,18,97,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Accuracy",Batting,11
-Chris Gayle,Batsman,96,97,42,False,26,Left,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Six hitting",Swing bowling,1
+Chris Gayle,Batsman,96,97,68,False,26,Left,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Six hitting",Swing bowling,1
 MS Dhoni,Wicketkeeper,96,95,12,False,27,Right,None,Lower-order Hitter,Part-time,None,"Finishing,Keeping",Short-pitch pace,5
 Rashid Khan,All-Rounder,95,72,96,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
 Rohit Sharma,Batsman,95,96,10,False,28,Right,Right,Aggressive Opener,Part-time,None,"Big innings,Six hitting",Early swing,1
@@ -15,7 +15,7 @@ Martin Guptill,Batsman,92,93,10,False,30,Right,Right,Aggressive Opener,Part-time
 Aaron Finch,Batsman,92,93,10,False,29,Right,Right,Aggressive Opener,Part-time,None,"Opening partnerships,Power",Short-pitch pace,1
 Babar Azam,Batsman,92,93,10,False,26,Right,None,Anchor,Part-time,None,"Elegant technique,Consistency",Short-pitch pace,3
 Glenn Maxwell,All-Rounder,92,91,80,False,28,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Switch hitting,Fielding",Inconsistency with ball,5
-Sanath Jayasuriya,Batsman,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
+Sanath Jayasuriya,All-Rounder,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
 Lasith Malinga,Bowler (Fast),91,14,96,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Slingy action",Batting,11
 Eoin Morgan,Batsman,91,92,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Ramp shots,Reverse sweep",Short pitch from right-armers,4
 Brendon McCullum,Wicketkeeper,91,92,10,False,30,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Leadership",Late swing,1

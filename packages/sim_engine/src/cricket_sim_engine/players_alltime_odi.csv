@@ -1,8 +1,8 @@
 name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand,batting_archetype,bowling_phase,bowling_type,strengths,weaknesses,natural_slot
-Sachin Tendulkar,Batsman,98,99,18,False,24,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Consistency,Technique",Short-pitch pace,1
+Sachin Tendulkar,Batsman,98,99,68,False,24,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Consistency,Technique",Short-pitch pace,1
 Virat Kohli,Batsman,97,98,12,False,27,Right,Right,Anchor,Part-time,None,"Chase mastery,Consistency",Short-pitch pace,3
 AB de Villiers,Wicketkeeper,97,98,15,False,27,Right,None,Aggressive Opener,Part-time,None,"360-degree batting,Finishing",Short-pitch spin,4
-Viv Richards,Batsman,97,98,12,False,27,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Dominance",Short-pitch pace,3
+Viv Richards,Batsman,97,98,68,False,27,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Dominance",Short-pitch pace,3
 Jasprit Bumrah,Bowler (Fast),96,18,97,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Accuracy",Batting,11
 Jacques Kallis,All-Rounder,96,96,92,False,30,Right,Right,Anchor,Powerplay,Right-arm Fast-medium,"Consistency,All-round",Scoring rate,3
 MS Dhoni,Wicketkeeper,96,95,12,False,27,Right,None,Lower-order Hitter,Part-time,None,"Finishing,Keeping",Short-pitch pace,5
@@ -12,7 +12,7 @@ Kumar Sangakkara,Wicketkeeper,95,97,10,False,29,Left,Right,Anchor,Part-time,None
 Joe Root,Batsman,95,97,12,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Consistency,Adaptability",Short-pitch pace,4
 Brian Lara,Batsman,95,97,10,False,27,Left,Right,Anchor,Part-time,None,"Technique,Elegance",Short-pitch pace,3
 Rashid Khan,All-Rounder,95,72,96,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
-Chris Gayle,Batsman,94,95,42,False,26,Left,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Opening dominance",Swing bowling,1
+Chris Gayle,Batsman,94,95,72,False,26,Left,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Opening dominance",Swing bowling,1
 Adam Gilchrist,Wicketkeeper,94,95,10,False,29,Left,Right,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Short-pitch spin,1
 Wasim Akram,Bowler (Fast),93,35,97,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Reverse swing",Batting,11
 Rahul Dravid,Batsman,93,95,10,False,30,Right,Right,Anchor,Part-time,None,"Technique,Patience",Scoring rate,3
@@ -23,7 +23,7 @@ Kagiso Rabada,Bowler (Fast),93,24,95,False,24,Right,Right,Defensive Tailender,Po
 Steve Smith,Batsman,93,95,10,False,27,Right,Right,Anchor,Part-time,Leg-spin,"Unconventional technique,Consistency",Short-pitch pace,4
 Ben Stokes,All-Rounder,93,87,90,False,27,Left,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Match-winning ability,Leadership",Fitness management,6
 Kane Williamson,Batsman,93,95,10,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Technique,Leadership",Aggressive periods,3
-Sanath Jayasuriya,Batsman,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
+Sanath Jayasuriya,All-Rounder,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
 Shane Watson,All-Rounder,92,91,88,False,26,Right,Right,Aggressive Opener,Powerplay,Right-arm Fast-medium,"Power hitting,New-ball swing",Short-pitch pace,1
 Jos Buttler,Wicketkeeper,92,94,10,False,27,Right,None,Aggressive Opener,Part-time,None,"Explosive hitting,Glove work",Left-arm spin,4
 Babar Azam,Batsman,92,93,10,False,26,Right,None,Anchor,Part-time,None,"Elegant technique,Consistency",Short-pitch pace,3
