@@ -13,7 +13,7 @@ dependencies = [
     "alembic>=1.14",
     "redis>=5.2",
     "pydantic-settings>=2.6",
-    "pyjwt[crypto]>=2.10",
+    "pyjwt[crypto]>=2.13.0",
     "httpx>=0.28",
     "sentry-sdk[fastapi]>=2.0",
 ]
