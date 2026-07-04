@@ -28,6 +28,7 @@ import { useNotifications } from '@/context/NotificationsContext';
 import { useCareers } from '@/hooks/use-careers';
 import { useAnalytics } from '@/observability/analytics';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useLayout } from '@/hooks/use-layout';
 import { useTheme } from '@/hooks/use-theme';
 
 type Step = 'competition' | 'intl_options' | 'opponent' | 'team' | 'difficulty';
@@ -53,6 +54,7 @@ const DIFFICULTIES: { value: Difficulty; label: string }[] = [
 export default function NewCareerScreen() {
   const theme = useTheme();
   const scheme = useColorScheme();
+  const { contentContainerStyle } = useLayout();
   const { createCareer } = useCareers();
   const { setActiveCareerId } = useCareer();
   const { promptPermission } = useNotifications();
@@ -142,7 +144,7 @@ export default function NewCareerScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} keyboardShouldPersistTaps="handled">
         {step !== 'competition' && (
           <Pressable onPress={goBack} style={styles.backBtn}>
             <ThemedText themeColor="textDim" style={styles.backLabel}>← Back</ThemedText>

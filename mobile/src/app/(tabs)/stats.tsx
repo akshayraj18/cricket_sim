@@ -141,7 +141,7 @@ export default function StatsScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <View style={[styles.body, contentContainerStyle]}>
+          <View style={styles.body}>
             <ScreenHeader title="Stats" />
             <NoActiveCareer />
           </View>
@@ -166,7 +166,7 @@ export default function StatsScreen() {
           </View>
         )}
         {!loading && !error && payload && (
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
             <View style={[styles.searchRow, { backgroundColor: theme.bgElevated, borderColor: theme.border }]}>
               <TextInput
                 value={search}

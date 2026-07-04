@@ -322,7 +322,7 @@ export default function HistoryScreen() {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-          <View style={[styles.body, contentContainerStyle]}>
+          <View style={styles.body}>
             <ScreenHeader title="League History" />
             <NoActiveCareer />
           </View>
@@ -347,7 +347,7 @@ export default function HistoryScreen() {
           </View>
         )}
         {!loading && !error && payload && (
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
             {viewedScorecard ? (
               <MatchScorecard
                 card={viewedScorecard}

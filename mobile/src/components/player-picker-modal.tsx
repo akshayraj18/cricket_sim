@@ -78,6 +78,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   sheet: {
     borderTopLeftRadius: Radius.lg,
@@ -85,6 +86,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingHorizontal: Spacing.four,
     maxHeight: '75%',
+    width: '100%',
+    maxWidth: 600,
   },
   header: {
     flexDirection: 'row',

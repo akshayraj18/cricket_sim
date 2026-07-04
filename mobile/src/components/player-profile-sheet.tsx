@@ -94,12 +94,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   sheet: {
     borderTopLeftRadius: Radius.lg,
     borderTopRightRadius: Radius.lg,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: Spacing.four,
     maxHeight: '85%',
+    width: '100%',
+    maxWidth: 600,
   },
   header: {
     flexDirection: 'row',

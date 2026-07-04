@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
+import { getContrastText, getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
@@ -843,54 +843,56 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const neededRuns = score.target ? Math.max(0, score.target - score.runs) : 0;
   const totalBalls = match.total_balls ?? 120;
   const ballsLeft = Math.max(0, totalBalls - score.balls);
+  const scoreBg = score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team);
+  const scoreText = getContrastText(scoreBg);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team) }]}>
-      <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
+    <View style={[styles.scoreboard, { backgroundColor: scoreBg }]}>
+      <ThemedText style={[styles.scoreboardTeam, { color: scoreText }]} numberOfLines={1}>
         {score.batting_team}
       </ThemedText>
       <View style={styles.scoreboardScoreRow}>
-        <ThemedText style={styles.scoreboardLine}>
+        <ThemedText style={[styles.scoreboardLine, { color: scoreText }]}>
           {score.runs}/{score.wickets}
         </ThemedText>
-        <ThemedText style={styles.scoreboardOvers}>({overs} ov)</ThemedText>
+        <ThemedText style={[styles.scoreboardOvers, { color: scoreText, opacity: 0.85 }]}>({overs} ov)</ThemedText>
       </View>
       {score.target ? (
-        <ThemedText style={styles.scoreboardSmall}>Target {score.target}</ThemedText>
+        <ThemedText style={[styles.scoreboardSmall, { color: scoreText }]}>Target {score.target}</ThemedText>
       ) : null}
 
       {score.striker ? (
         <View style={styles.batterLine}>
-          <ThemedText style={styles.strikeMark}>{'>'}</ThemedText>
-          <ThemedText style={styles.batterName} numberOfLines={1}>
+          <ThemedText style={[styles.strikeMark, { color: scoreText }]}>{'>'}</ThemedText>
+          <ThemedText style={[styles.batterName, { color: scoreText }]} numberOfLines={1}>
             {score.striker}
           </ThemedText>
-          <ThemedText style={styles.batterFigs}>
+          <ThemedText style={[styles.batterFigs, { color: scoreText, opacity: 0.85 }]}>
             {striker?.runs ?? 0} ({striker?.balls ?? 0})
           </ThemedText>
         </View>
       ) : null}
       {score.non_striker ? (
         <View style={styles.batterLine}>
-          <ThemedText style={styles.strikeMark}> </ThemedText>
-          <ThemedText style={styles.batterName} numberOfLines={1}>
+          <ThemedText style={[styles.strikeMark, { color: scoreText }]}> </ThemedText>
+          <ThemedText style={[styles.batterName, { color: scoreText, opacity: 0.75 }]} numberOfLines={1}>
             {score.non_striker}
           </ThemedText>
-          <ThemedText style={styles.batterFigs}>
+          <ThemedText style={[styles.batterFigs, { color: scoreText, opacity: 0.75 }]}>
             {nonStriker?.runs ?? 0} ({nonStriker?.balls ?? 0})
           </ThemedText>
         </View>
       ) : null}
 
       {score.partnership ? (
-        <View style={styles.scoreboardDivider}>
-          <ThemedText style={styles.scoreboardSmall}>Partnership</ThemedText>
-          <ThemedText style={[styles.scoreboardSmall, styles.scoreboardSmallStrong]}>{score.partnership}</ThemedText>
+        <View style={[styles.scoreboardDivider, { borderTopColor: scoreText === '#ffffff' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)' }]}>
+          <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]}>Partnership</ThemedText>
+          <ThemedText style={[styles.scoreboardSmall, styles.scoreboardSmallStrong, { color: scoreText }]}>{score.partnership}</ThemedText>
         </View>
       ) : null}
 
       <View style={styles.currentOverBlock}>
-        <ThemedText style={styles.scoreboardSmall} numberOfLines={1}>
+        <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]} numberOfLines={1}>
           {abbreviateName(score.active_bowler ?? 'No bowler')}
           {bowler ? ` · ${bowler.wickets ?? 0}-${bowler.runs ?? 0} (${bowler.overs})` : ''}
         </ThemedText>
@@ -901,7 +903,7 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
         </View>
       </View>
 
-      <ThemedText style={styles.scoreboardSmall}>
+      <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]}>
         {match.match_format === 'test'
           ? `Day ${match.current_day ?? 1} · Session ${match.current_session ?? 1} · ${match.overs_remaining_in_session ?? 0} ov left in session`
           : match.match_format === 'odi'
