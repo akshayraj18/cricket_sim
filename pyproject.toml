@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "cricket-sim-engine",
     "kagglehub>=1.0.2",
-    "pandas>=3.0.3",
+    "pandas>=3.0.5",
 ]
 
 [dependency-groups]
