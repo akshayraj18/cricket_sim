@@ -49,7 +49,6 @@ type SortKey = 'ovr' | 'name' | 'role' | 'mvp';
 
 export default function SquadScreen() {
   const theme = useTheme();
-  const { contentContainerStyle } = useLayout();
   const scheme = useColorScheme();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
