@@ -27,16 +27,22 @@ So instrumentation ships first, in this release, even though users won't see it.
 
 ## Scope — in
 
-1. **Phase 8 content** (PR #32): T20/ODI/Test formats, international tournaments
-   and bilateral series, all-time ODI/Test draft pools, world franchises.
-   Already built; merged once CI is green.
-2. **Gameplay analytics events** — draft started/completed/abandoned, match
+1. ~~**Phase 8 content** (PR #32): T20/ODI/Test formats, international
+   tournaments and bilateral series, all-time ODI/Test draft pools, world
+   franchises.~~ **Merged 2026-08-18.**
+2. ~~**IP-safe player names** (PR #44).~~ **Merged 2026-08-18.** Phase 8 had
+   shipped 465 real names; all renamed. This was a hard blocker.
+3. ~~**Security dependencies** (PR #43).~~ **Merged 2026-08-18.** Dependabot
+   alerts 18 → 3; the remaining three are build-time only and two have no patch
+   in existence. See "Known risks".
+4. **Gameplay analytics events** — draft started/completed/abandoned, match
    started/completed, season completed, screen views, `$device_model`.
-   Small, low-risk, and unblocks measuring everything else.
-3. **Account data bleed on sign-out/sign-in** (`KNOWN_ISSUES.md`) — a privacy
+   Small, low-risk, and unblocks measuring everything else. **Still to do.**
+5. **Account data bleed on sign-out/sign-in** (`KNOWN_ISSUES.md`) — a privacy
    bug, and cheap: scope the `active_career_id` storage key per user id.
-4. **Tutorial "career not found" on first run** — a first-run crash in a release
-   whose whole theme is first-run retention.
+   **Still to do.**
+6. **Tutorial "career not found" on first run** — a first-run crash in a release
+   whose whole theme is first-run retention. **Still to do.**
 
 ## Scope — out (deliberately)
 
@@ -68,12 +74,23 @@ So instrumentation ships first, in this release, even though users won't see it.
 
 - **CI pins Node 20, which reached EOL in April 2026.** `make mobile` already
   uses Node 22 locally (Makefile auto-selects the newest v2x), so CI and local
-  differ. Worth aligning, but *after* this release.
-- **18 open Dependabot vulnerabilities (15 high) on main**, plus 6 open
-  Dependabot PRs. Triage the high ones before the next release.
+  differ. `actions/setup-node` is now v7 (#38) but `node-version:` is still 20.
+  Worth aligning, but *after* this release.
+- **3 Dependabot alerts remain and are accepted for v1.1.** All are build-time
+  tooling that never enters the App Store binary: two `image-size` (high, via
+  `metro`) for which **no patched version exists**, and one `uuid` (medium, via
+  `@expo/ngrok`/`xcode`, dev-only). The exposure is a developer machine at
+  bundle time, not an end user.
+- **Deferred to the post-v1.1 SDK upgrade:** Expo SDK 57 / RN 0.86, which is the
+  only thing that clears the remaining toolchain advisories, and the
+  `@sentry/react-native` 7 → 8 major bump that rides with it. Do not take these
+  in a release window — Sentry is what tells us whether the release is healthy.
 - We ship blind on crash rates: the Sentry credentials in `secrets/ids.txt` are
   ingest-only DSNs. Generate a Sentry **auth token** so crash-free-session rate
   can go in this checklist.
+- **`expo-web-browser` gained a config plugin in #43** — a native change. The
+  dev client must be rebuilt (`make mobile-ios`); a JS reload will not pick it
+  up, and neither will a stale simulator build.
 
 ---
 
