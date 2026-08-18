@@ -1,254 +1,254 @@
 name,role,base_ovr,batting_ovr,bowling_ovr,is_overseas,age,batting_hand,bowling_hand,batting_archetype,bowling_phase,bowling_type,strengths,weaknesses,natural_slot
-Sachin Tendulkar,Batsman,98,99,68,False,24,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Consistency,Technique",Short-pitch pace,1
-Virat Kohli,Batsman,97,98,12,False,27,Right,Right,Anchor,Part-time,None,"Chase mastery,Consistency",Short-pitch pace,3
-AB de Villiers,Wicketkeeper,97,98,15,False,27,Right,None,Aggressive Opener,Part-time,None,"360-degree batting,Finishing",Short-pitch spin,4
-Viv Richards,Batsman,97,98,68,False,27,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Dominance",Short-pitch pace,3
-Jasprit Bumrah,Bowler (Fast),96,18,97,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Accuracy",Batting,11
-Jacques Kallis,All-Rounder,96,96,92,False,30,Right,Right,Anchor,Powerplay,Right-arm Fast-medium,"Consistency,All-round",Scoring rate,3
-MS Dhoni,Wicketkeeper,96,95,12,False,27,Right,None,Lower-order Hitter,Part-time,None,"Finishing,Keeping",Short-pitch pace,5
-Ricky Ponting,Batsman,96,97,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
-Rohit Sharma,Batsman,96,97,10,False,28,Right,Right,Aggressive Opener,Part-time,None,"Big hundreds,Six hitting",Early swing,1
-Kumar Sangakkara,Wicketkeeper,95,97,10,False,29,Left,Right,Anchor,Part-time,None,"Glove work,Run scoring",Express pace,3
-Joe Root,Batsman,95,97,12,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Consistency,Adaptability",Short-pitch pace,4
-Brian Lara,Batsman,95,97,10,False,27,Left,Right,Anchor,Part-time,None,"Technique,Elegance",Short-pitch pace,3
-Rashid Khan,All-Rounder,95,72,96,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
-Chris Gayle,Batsman,94,95,72,False,26,Left,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Opening dominance",Swing bowling,1
-Adam Gilchrist,Wicketkeeper,94,95,10,False,29,Left,Right,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Short-pitch spin,1
-Wasim Akram,Bowler (Fast),93,35,97,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Reverse swing",Batting,11
-Rahul Dravid,Batsman,93,95,10,False,30,Right,Right,Anchor,Part-time,None,"Technique,Patience",Scoring rate,3
-Glenn McGrath,Bowler (Fast),93,12,97,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Accuracy,Line and length",Batting,11
-Muttiah Muralitharan,Bowler (Spin),93,30,98,False,28,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Doosra,Economy",Batting,11
-Sourav Ganguly,Batsman,93,94,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Technique,Leadership",Swing outside off,1
-Kagiso Rabada,Bowler (Fast),93,24,95,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Bounce",Economy in ODIs,10
-Steve Smith,Batsman,93,95,10,False,27,Right,Right,Anchor,Part-time,Leg-spin,"Unconventional technique,Consistency",Short-pitch pace,4
-Ben Stokes,All-Rounder,93,87,90,False,27,Left,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Match-winning ability,Leadership",Fitness management,6
-Kane Williamson,Batsman,93,95,10,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Technique,Leadership",Aggressive periods,3
-Sanath Jayasuriya,All-Rounder,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
-Shane Watson,All-Rounder,92,91,88,False,26,Right,Right,Aggressive Opener,Powerplay,Right-arm Fast-medium,"Power hitting,New-ball swing",Short-pitch pace,1
-Jos Buttler,Wicketkeeper,92,94,10,False,27,Right,None,Aggressive Opener,Part-time,None,"Explosive hitting,Glove work",Left-arm spin,4
-Babar Azam,Batsman,92,93,10,False,26,Right,None,Anchor,Part-time,None,"Elegant technique,Consistency",Short-pitch pace,3
-Glenn Maxwell,All-Rounder,91,91,80,False,28,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Switch hitting,Fielding",Inconsistency with ball,5
-Waqar Younis,Bowler (Fast),91,14,96,False,23,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Reverse swing,Yorkers",Batting,11
-Anil Kumble,Bowler (Spin),91,22,96,False,28,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Wicket-taking,Accuracy",Batting,11
-Shane Warne,Bowler (Spin),91,25,97,False,28,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Bowling intelligence",Batting,11
-Kapil Dev,All-Rounder,91,82,90,False,25,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Match-winning ability,Swing",Consistency,7
-Eoin Morgan,Batsman,91,92,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Ramp shots,Reverse sweep",Short pitch from right-armers,4
-Virendra Sehwag,Batsman,91,93,20,False,28,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Demolition",Swing bowling,1
-Kieron Pollard,All-Rounder,91,91,82,False,27,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Power hitting,Leadership",Spin on turning tracks,6
-Martin Crowe,Batsman,91,93,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
-Imran Khan,All-Rounder,91,84,92,False,32,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Swing,Leadership",Age,7
-Shaheen Shah Afridi,Bowler (Fast),91,20,93,False,22,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Batting,11
-Lasith Malinga,Bowler (Fast),91,14,96,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Slingy action",Batting,11
-Shoaib Akhtar,Bowler (Fast),90,14,96,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Reverse swing",Batting,11
-Shakib Al Hasan,All-Rounder,90,84,91,False,26,Left,Left,Middle-order Rotator,Middle Overs,Left-arm Orthodox,"Greatest BAN cricketer,Utility",Age management,5
-Pat Cummins,All-Rounder,90,26,93,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Accuracy,Reverse swing",Batting,11
-Hardik Pandya,All-Rounder,90,90,87,False,26,Right,Right,Lower-order Hitter,Death,Right-arm Fast,"Power hitting,Death pace",Fitness management,6
-Lance Klusener,All-Rounder,90,88,86,False,27,Left,Left,Lower-order Hitter,Death,Right-arm Fast-medium,"Death hitting,Death bowling",Consistency,8
-Travis Head,Batsman,90,92,10,False,28,Left,None,Aggressive Opener,Part-time,None,"Explosive starts,Timing",Spin on turning tracks,1
-Quinton de Kock,Wicketkeeper,90,92,10,False,26,Left,None,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Pace outside off,1
-Brendon McCullum,Wicketkeeper,90,91,10,False,30,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Leadership",Late swing,1
-Mohammed Shami,Bowler (Fast),90,18,92,False,29,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Seam movement",Age management,10
-Kevin Pietersen,Batsman,90,91,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"Switch hitting,Technique",Short-pitch pace,4
-Shubman Gill,Batsman,90,92,10,False,23,Right,None,Anchor,Part-time,None,"Technique,Elegance",Hostile pace,1
-Yuvraj Singh,All-Rounder,90,91,82,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Six hitting,Left-arm spin",Short-pitch pace,4
-Graeme Pollock,Batsman,90,92,10,False,24,Left,Right,Anchor,Part-time,None,"SA legend,Technique",Short-pitch pace,3
-Barry Richards,Batsman,90,92,10,False,24,Right,Right,Anchor,Part-time,None,"Brilliance,Technique",Short-pitch pace,1
-Shaun Pollock,All-Rounder,90,76,92,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"All-round,Accuracy",Batting,8
-Andrew Symonds,All-Rounder,89,89,78,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Power hitting,Fielding",Spin on turning tracks,5
-Ross Taylor,Batsman,89,91,10,False,30,Right,Right,Anchor,Part-time,None,"Middle-order mastery,Technique",Short-pitch pace,4
-Aravinda de Silva,Batsman,89,91,12,False,28,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Attacking technique,Improvisation",Short-pitch pace,3
-Javed Miandad,Batsman,89,90,10,False,23,Right,Right,Anchor,Part-time,Leg-spin,"Technique,Composure",Short-pitch pace,3
-Mahela Jayawardene,Batsman,89,91,10,False,30,Right,Right,Anchor,Part-time,None,"Technique,Elegance",Short-pitch pace,3
-Mike Hussey,Batsman,89,91,10,False,29,Left,Right,Anchor,Part-time,None,"Finishing,Technique",Short-pitch pace,5
-Hashim Amla,Batsman,89,91,10,False,28,Right,Right,Anchor,Part-time,None,"Solid technique,Consistency",Short-pitch pace,1
-Anrich Nortje,Bowler (Fast),89,18,92,False,27,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Fitness,10
-Harbhajan Singh,Bowler (Spin),89,78,91,False,22,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Doosra,Home spin",Away tours,8
-Zaheer Khan,Bowler (Fast),89,18,91,False,28,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Reverse swing,Wicket-taking",Batting,11
-Ravindra Jadeja,All-Rounder,89,80,89,False,29,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Fielding,Left-arm spin",Powerplay batting,8
-Shikhar Dhawan,Batsman,89,91,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Consistency",Short-pitch pace,1
-Matthew Hayden,Batsman,88,89,10,False,30,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Technique",Short-pitch pace,1
-Michael Bevan,Batsman,88,90,10,False,28,Left,Right,Anchor,Part-time,None,"ODI finishing,Technique",Power,5
-Chaminda Vaas,Bowler (Fast),88,20,92,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast-medium,"Swing,Left-arm angle",Batting,11
-Shahid Afridi,All-Rounder,88,82,88,False,25,Right,Right,Aggressive Opener,Middle Overs,Leg-spin,"Six hitting,Leg-spin",Inconsistency,1
-Tillakaratne Dilshan,Batsman,88,89,12,False,30,Right,Right,Aggressive Opener,Part-time,None,"Dilscoop,Improvisation",Short-pitch pace,1
-Andrew Flintoff,All-Rounder,88,82,87,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Swing,Power hitting",Consistency,6
-Dwayne Bravo,All-Rounder,88,77,90,False,26,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Death bowling,Fielding",Spin on slow tracks,7
-Mitchell Starc,Bowler (Fast),88,18,92,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Batting,11
-Harry Brook,Batsman,88,90,10,False,24,Right,None,Aggressive Opener,Part-time,None,"Aggression,Technique",Spin on turning tracks,3
-Jofra Archer,Bowler (Fast),88,22,91,False,25,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Injury history,10
-Wanindu Hasaranga,All-Rounder,88,72,90,False,25,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
-Kuldeep Yadav,Bowler (Spin),88,24,91,False,27,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist-spin,"Googly,Variations",Batting,10
-Rishabh Pant,Wicketkeeper,88,90,10,False,24,Left,None,Aggressive Opener,Part-time,None,"Match-winning innings,Glove work",Wide outside off,6
-Inzamam-ul-Haq,Batsman,88,90,10,False,28,Right,Right,Anchor,Part-time,None,"Technique,Finishing",Running between wickets,4
-Andy Flower,Wicketkeeper,88,90,10,False,27,Left,Right,Anchor,Part-time,None,"Zimbabwe legend,Technique",Short-pitch pace,3
-Tamim Iqbal,Batsman,87,88,10,False,26,Left,Right,Aggressive Opener,Part-time,None,"Explosive starts,Left-hand technique",Short-pitch pace,1
-Andre Russell,All-Rounder,87,84,84,False,28,Right,Right,Lower-order Hitter,Death,Right-arm Fast,"Power hitting,Death bowling",Fitness management,6
-Aiden Markram,All-Rounder,87,88,15,False,26,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Timing,Leadership",Short-pitch pace,3
-Josh Hazlewood,Bowler (Fast),87,18,90,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Line and length,Economy",Death overs,10
-Trent Boult,Bowler (Fast),87,20,90,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast-medium,"Swing,New-ball wickets",Death economy,11
-Mujeeb Ur Rahman,Bowler (Spin),87,18,90,False,21,Right,Right,Defensive Tailender,Powerplay,Right-arm Offbreak,"Mystery spin,Powerplay economy",Batting,10
-Kusal Mendis,Wicketkeeper,87,89,10,False,26,Right,Right,Anchor,Part-time,None,"Glove work,Attacking ability",Left-arm spin,4
-KL Rahul,Wicketkeeper,87,89,10,False,27,Right,None,Anchor,Part-time,None,"Technique,Versatility",Scoring rate,2
-Yuzvendra Chahal,Bowler (Spin),87,18,92,False,27,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,Economy",Batting,11
-Sunil Narine,All-Rounder,87,78,90,False,25,Right,Right,Aggressive Opener,Powerplay,Right-arm Offbreak,"Mystery spin,Power hitting",Express pace,1
-Saqlain Mushtaq,Bowler (Spin),87,22,91,False,22,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Doosra,Economy",Batting,11
-Everton Weekes,Batsman,87,89,10,False,26,Right,Right,Anchor,Part-time,None,"3Ws,5 consecutive hundreds",Short-pitch pace,3
-Jacob Oram,All-Rounder,86,82,84,False,28,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Height,Bat and ball",Injuries,7
-Shoaib Malik,All-Rounder,86,86,76,False,26,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Consistency,Adaptability",Express pace,5
-Ajantha Mendis,Bowler (Spin),86,14,90,False,25,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Mystery spin,Carrom ball",Batting,11
-Adil Rashid,Bowler (Spin),86,28,88,False,29,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,White-ball economy",Batting,10
-Jason Roy,Batsman,86,87,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Fielding",Short-pitch pace,1
-Faf du Plessis,Batsman,86,87,10,False,29,Right,Right,Aggressive Opener,Part-time,None,"Power hitting,Technique",Spin off-stump,1
-David Miller,Batsman,86,88,10,False,27,Left,None,Lower-order Hitter,Part-time,None,"Six hitting,Finishing",Spin in early overs,6
-Adam Zampa,Bowler (Spin),86,22,89,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Economy",Short boundaries,10
-Axar Patel,All-Rounder,86,78,86,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Batting depth",Short-pitched deliveries,8
-Mohammed Asif,Bowler (Fast),86,14,90,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Accuracy,Reverse swing",Batting,11
-Shreyas Iyer,Batsman,86,88,12,False,26,Right,None,Anchor,Part-time,None,"Leg-side play,Finisher",Short-pitch bowling,5
-Mushfiqur Rahim,Wicketkeeper,86,88,10,False,27,Right,None,Anchor,Part-time,None,"Prolific BAN batter,Grit",Age management,5
-Shai Hope,Wicketkeeper,86,88,10,False,27,Right,None,Anchor,Part-time,None,"Prolific run-scorer,Leadership",Power in death,2
-Marnus Labuschagne,Batsman,86,88,10,False,26,Right,Right,Anchor,Part-time,Leg-spin,"Concentration,Technique",Scoring rate in ODIs,4
-Devon Conway,Wicketkeeper,86,88,10,False,28,Left,None,Anchor,Part-time,None,"Clean timing,Glove work",Short pitch,2
-Gordon Greenidge,Batsman,86,88,10,False,27,Right,Right,Aggressive Opener,Part-time,None,"Power hitting,Dominance",Short-pitch pace,1
-Clive Lloyd,Batsman,86,87,10,False,29,Left,Right,Anchor,Part-time,None,"Leadership,Power hitting",Short-pitch pace,5
-Heath Streak,All-Rounder,86,70,86,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Zimbabwe legend,Pace",Batting,9
-Chris Cairns,All-Rounder,86,82,84,False,28,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"All-round,Power hitting",Fitness,7
-Mohammed Siraj,Bowler (Fast),85,18,88,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Accuracy",Death economy,10
-Pathum Nissanka,Batsman,85,87,10,False,24,Right,None,Anchor,Part-time,None,"Consistency,Technique",Power in death,1
-Mohammad Rizwan,Wicketkeeper,85,87,10,False,29,Right,None,Anchor,Part-time,None,"Grit,Glove work",Aggression,5
-Fakhar Zaman,Batsman,85,87,10,False,26,Left,None,Aggressive Opener,Part-time,None,"Big innings,Power",Age management,1
-Naseem Shah,Bowler (Fast),85,18,88,False,19,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Raw pace,Bounce",Batting,10
-Ben Duckett,Batsman,85,87,10,False,27,Left,None,Aggressive Opener,Part-time,None,"Left-hand aggression,Sweep",Short-pitch pace,2
-Mustafizur Rahman,Bowler (Fast),85,18,88,False,23,Left,Left,Defensive Tailender,Death,Left-arm Fast-medium,"Cutter,Variations",Economy,10
-Keshav Maharaj,Bowler (Spin),85,24,87,False,28,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,White-ball spin",Express pace wickets,10
-Moeen Ali,All-Rounder,85,83,83,False,30,Left,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Power hitting,Economy",Short-pitch pace,4
-Clyde Walcott,Wicketkeeper,85,87,10,False,27,Right,None,Anchor,Part-time,None,"3Ws,Power hitting",Short-pitch pace,3
-Frank Worrell,Batsman,85,87,10,False,27,Left,Right,Anchor,Part-time,None,"3Ws,Leadership",Short-pitch pace,3
-Stuart Broad,Bowler (Fast),84,22,87,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Swing,Consistency",Batting,10
-Upul Tharanga,Batsman,84,85,10,False,25,Left,Right,Aggressive Opener,Part-time,None,"Left-hand technique,Fluency",Short-pitch pace,1
-Jason Holder,All-Rounder,84,74,82,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Height,Leadership",Economy in ODIs,7
-Dhananjaya de Silva,All-Rounder,84,82,74,False,28,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Technique,Utility",Express pace,5
-Kamindu Mendis,All-Rounder,84,80,76,False,24,Left,Left,Anchor,Middle Overs,Left-arm Orthodox,"Switch hitting,Ambidextrous spin",Bowling workload,7
-Charith Asalanka,Batsman,84,86,10,False,25,Left,Left,Anchor,Part-time,Left-arm Orthodox,"Consistency,Leadership",Express pace,3
-Daryl Mitchell,All-Rounder,84,84,72,False,29,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Clutch performances,Grit",Bowling consistency,5
-Mitchell Santner,All-Rounder,84,76,84,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Left-arm spin",Pace,7
-Lockie Ferguson,Bowler (Fast),84,18,87,False,28,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Economy,11
-Rahmanullah Gurbaz,Wicketkeeper,84,86,10,False,20,Right,None,Anchor,Part-time,None,"Explosive starts,Youth",Consistency,1
-Mohammad Nabi,All-Rounder,84,74,82,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Experience,Utility",Age management,6
-Fazalhaq Farooqi,Bowler (Fast),84,16,87,False,22,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Death economy,10
-Tim Southee,Bowler (Fast),84,20,87,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Experience",Pace,10
-Prabath Jayasuriya,Bowler (Spin),84,18,87,False,28,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Home spin,Economy",Away surfaces,10
-Shimron Hetmyer,Batsman,84,86,10,False,24,Left,None,Lower-order Hitter,Part-time,None,"Power hitting,Left-hand",Availability,6
-Imran Tahir,Bowler (Spin),84,16,88,False,32,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,Economy",Batting,11
-Rohan Kanhai,Batsman,84,86,10,False,27,Right,Right,Anchor,Part-time,None,"Elegance,WI legend",Short-pitch pace,3
-Graeme Hick,Batsman,84,85,10,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"County legend,Technique",Short-pitch pace,4
-Damien Martyn,Batsman,84,85,10,False,29,Right,Right,Anchor,Part-time,None,"Elegance,Technique",Short-pitch pace,4
-Makhaya Ntini,Bowler (Fast),84,12,87,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Accuracy",Batting,11
-Javagal Srinath,Bowler (Fast),84,14,87,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Batting,11
-Arjuna Ranatunga,Batsman,83,85,10,False,27,Left,Right,Anchor,Part-time,None,"Leadership,Tactical acumen",Fitness,5
-Rassie van der Dussen,Batsman,83,84,10,False,29,Right,Right,Middle-order Rotator,Part-time,None,"Technique,Finishing",Express pace,5
-Shadab Khan,All-Rounder,83,72,84,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Lower-order hitting",Economy in powerplay,8
-Mehidy Hasan Miraz,All-Rounder,83,72,82,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,All-round",Express pace,8
-Maheesh Theekshana,Bowler (Spin),83,18,86,False,22,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Mystery spin,Economy",Away surfaces,10
-Marco Jansen,All-Rounder,83,72,83,False,22,Left,Left,Lower-order Hitter,Death,Left-arm Fast-medium,"Tall seam,Left-arm angle",Death economy,8
-Washington Sundar,All-Rounder,83,72,82,False,22,Left,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,Utility",Pace in powerplay,8
-Chris Woakes,All-Rounder,83,70,83,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Swing,Economy",Death bowling,9
-Alzarri Joseph,Bowler (Fast),83,20,86,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Wicket-taking",Fitness management,10
-Desmond Haynes,Batsman,83,84,10,False,27,Right,Right,Anchor,Part-time,None,"West Indian opener,Consistency",Short-pitch pace,1
-Sikandar Raza,All-Rounder,83,82,79,False,28,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Consistency,Utility",Express pace,4
-Graeme Swann,Bowler (Spin),83,26,86,False,30,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Economy,Partnership breaking",Batting,10
-Mushtaq Ahmed,Bowler (Spin),83,18,86,False,25,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Economy",Batting,11
-Marcus Trescothick,Batsman,83,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Short-pitch pace,1
-Nasser Hussain,Batsman,83,84,10,False,29,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,4
-Brad Haddin,Wicketkeeper,83,84,10,False,29,Right,None,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Consistency,7
-Hansie Cronje,All-Rounder,83,82,76,False,27,Right,Right,Anchor,Middle Overs,Right-arm Medium,"Leadership,SA great",Controversy,5
-Gary Kirsten,Batsman,83,85,10,False,27,Left,Right,Anchor,Part-time,None,"SA opener,Concentration",Short-pitch pace,1
-Glenn Turner,Batsman,83,85,10,False,28,Right,Right,Anchor,Part-time,None,"NZ opener,Concentration",Scoring rate,1
-Richie Richardson,Batsman,83,85,10,False,26,Right,Right,Anchor,Part-time,None,"Technique,Confidence",Short-pitch pace,3
-Colin Croft,Bowler (Fast),83,12,86,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Angle",Batting,11
-Mohammad Hafeez,All-Rounder,83,82,78,False,29,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Consistent opener,Economy",Express pace,1
-Mahmudullah,All-Rounder,82,80,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Veteran experience,Finisher",Age management,5
-Taskin Ahmed,Bowler (Fast),82,18,85,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Death economy,10
-Roston Chase,All-Rounder,82,80,78,False,27,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Reliability,Utility",Express pace,4
-Carl Hooper,All-Rounder,82,82,76,False,26,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"All-round ability,Elegance",Consistency,4
-Rovman Powell,Batsman,82,84,10,False,27,Right,Right,Lower-order Hitter,Part-time,None,"Six hitting,Explosive",Consistency,5
-Blessing Muzarabani,Bowler (Fast),82,14,85,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Tall seam,Pace",Batting,11
-Evin Lewis,Batsman,82,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Spin on slow tracks,1
-Brendon Taylor,Batsman,82,84,12,False,25,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Technique",Short-pitch pace,1
-Paul Stirling,Batsman,82,83,12,False,26,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Consistency",Quality spin,1
-Angelo Mathews,All-Rounder,82,80,72,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Veteran experience,Technique",Age management,5
-Roy Fredericks,Batsman,82,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Short-pitch pace,1
-Jeffrey Dujon,Wicketkeeper,82,82,10,False,28,Right,None,Anchor,Part-time,None,"Keeping,Grit",Power hitting,7
-Andrew Strauss,Batsman,82,83,10,False,28,Left,Right,Anchor,Part-time,None,"Technique,Opening",Short-pitch pace,1
-Alastair Cook,Batsman,82,83,10,False,28,Left,None,Anchor,Part-time,None,"Technique,Patience",ODI strike rate,1
-Jonathan Trott,Batsman,82,83,10,False,28,Right,Right,Anchor,Part-time,Right-arm Medium,"Technique,Mental strength",Short-pitch pace,3
-Umesh Yadav,Bowler (Fast),82,18,85,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Economy,10
-Brad Hogg,Bowler (Spin),82,22,85,False,33,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist-spin,"Chinaman,Economy",Batting,10
-Daryll Cullinan,Batsman,82,84,10,False,28,Right,Right,Anchor,Part-time,None,"SA technique,Consistency",Short-pitch pace,4
-Chris Harris,All-Rounder,82,80,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Economy,NZ utility",Express pace,7
-Damien Fleming,Bowler (Fast),82,18,85,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Economy",Pace,10
-Lendl Simmons,Batsman,81,82,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"West Indian power,Experience",Short-pitch pace,1
-Dinesh Chandimal,Wicketkeeper,81,83,10,False,27,Right,None,Anchor,Part-time,None,"Grit,Glove work",Power hitting,5
-Ishant Sharma,Bowler (Fast),81,14,84,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Height,Bounce",Economy in ODIs,11
-Ian Harvey,All-Rounder,81,78,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Utility,All-round",Consistency,7
-Ajay Jadeja,Batsman,81,82,10,False,26,Right,Right,Anchor,Part-time,Right-arm Medium,"Finisher,Fielding",Short-pitch pace,5
-Akeal Hosein,Bowler (Spin),80,20,83,False,27,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,Death bowling",Batting,10
-Craig Ervine,Batsman,80,81,10,False,29,Left,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
-Ibrahim Zadran,Batsman,80,82,10,False,22,Right,None,Anchor,Part-time,None,"Technique,Consistency",Express pace,2
-Hashmatullah Shahidi,Batsman,80,82,10,False,27,Left,None,Anchor,Part-time,None,"Technique,Grit",Express pace,3
-Hashan Tillakaratne,Batsman,80,82,10,False,28,Left,Right,Anchor,Part-time,None,"Technique,Defence",Scoring rate,4
-Kevin O'Brien,All-Rounder,80,78,72,False,28,Right,Right,Aggressive Opener,Middle Overs,Right-arm Medium,"Six hitting,Experience",Age management,1
-Paul Collingwood,All-Rounder,80,78,72,False,30,Right,Right,Anchor,Middle Overs,Right-arm Medium,"Grit,Fielding",Power hitting,5
-Liton Das,Wicketkeeper,80,82,10,False,27,Right,None,Aggressive Opener,Part-time,None,"Explosive batting,Glove work",Consistency,2
-Shaun Tait,Bowler (Fast),80,12,83,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Economy,11
-Venkatesh Prasad,Bowler (Fast),80,14,83,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Line and length,Reverse swing",Batting,11
-Jimmy Adams,Batsman,80,82,10,False,26,Left,Right,Anchor,Part-time,None,"WI grit,Technique",Power hitting,4
-Wayne Daniel,Bowler (Fast),80,12,83,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Bounce",Batting,11
-Gudakesh Motie,Bowler (Spin),79,20,82,False,26,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,Consistency",Variations,10
-Asanka Gurusinha,Batsman,79,80,10,False,26,Left,Right,Anchor,Part-time,None,"Technique,Consistency",Short-pitch pace,3
-Andrew Balbirnie,Batsman,79,81,10,False,27,Right,Right,Anchor,Part-time,None,"Ireland captain,Technique",Express pace,3
-Najibullah Zadran,Batsman,79,81,10,False,25,Left,None,Lower-order Hitter,Part-time,None,"Six hitting,Finisher",Consistency,6
-Ryan Burl,All-Rounder,79,78,76,False,27,Right,Right,Middle-order Rotator,Middle Overs,Leg-spin,"Leg-spin,Utility",Express pace,7
-Dushmantha Chameera,Bowler (Fast),79,14,82,False,27,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Pace,Bounce",Batting,11
-Nick Knight,Batsman,79,80,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Fielding,Opener",Short-pitch pace,1
-Chris Lewis,All-Rounder,79,74,78,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Pace,All-round",Consistency,8
-Sean Williams,All-Rounder,79,78,76,False,27,Left,Left,Middle-order Rotator,Middle Overs,Left-arm Orthodox,"Zimbabwe utility,Left-arm spin",Express pace,5
-Neil McKenzie,Batsman,79,80,10,False,28,Right,Right,Anchor,Part-time,None,"Technique,Grit",Short-pitch pace,3
-John Reid,All-Rounder,79,78,72,False,28,Right,Right,Anchor,Part-time,Right-arm Fast-medium,"NZ captain,All-round",Bowling pace,5
-Tom Moody,All-Rounder,79,76,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Height,All-round",Consistency,7
-Naveen-ul-Haq,Bowler (Fast),78,18,81,False,22,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Death bowling,Yorkers",Economy,10
-Lorcan Tucker,Wicketkeeper,78,80,10,False,25,Right,None,Anchor,Part-time,None,"Grit,Keeping",Power hitting,5
-Azmatullah Omarzai,All-Rounder,78,74,76,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Utility,Youth",Experience,7
-Dilruwan Perera,Bowler (Spin),78,22,81,False,30,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Economy,Home spin",Away surfaces,10
-Kraigg Brathwaite,Batsman,78,80,10,False,26,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Grit,Technique",Scoring rate,1
-Asitha Fernando,Bowler (Fast),78,14,81,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"New-ball,Swing",Batting,11
-Lahiru Kumara,Bowler (Fast),78,14,81,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Fitness,10
-Collis King,All-Rounder,78,76,72,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"1979 WC hero,Power hitting",Consistency,6
-Regis Chakabva,Wicketkeeper,78,79,10,False,28,Right,None,Anchor,Part-time,None,"Grit,Glove work",Power hitting,2
-Nantie Hayward,Bowler (Fast),78,12,81,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Batting,11
-Robin Singh,All-Rounder,78,76,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Fielding,Utility",Age management,7
-Franklyn Rose,Bowler (Fast),78,12,81,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Accuracy",Batting,11
-Suranga Lakmal,Bowler (Fast),77,14,80,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Experience",Pace,10
-Elton Chigumbura,All-Rounder,77,74,74,False,25,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Experience,Utility",International class,7
-Tendai Chatara,Bowler (Fast),77,14,80,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Seam movement",Batting,11
-Nuwan Pradeep,Bowler (Fast),77,14,80,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Swing,Experience",Age management,11
-Samit Patel,All-Rounder,77,74,76,False,26,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,All-round",Express pace,9
-Gulbadin Naib,All-Rounder,76,72,74,False,25,Right,Right,Lower-order Hitter,Death,Right-arm Fast-medium,"Experience,Utility",International class,5
-Harry Tector,Batsman,76,78,10,False,23,Right,Right,Anchor,Part-time,None,"Technique,Youth",Express pace,3
-Mark Adair,All-Rounder,76,72,74,False,23,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"All-round,Youth",Experience,8
-Scott Edwards,Wicketkeeper,76,78,10,False,25,Right,None,Anchor,Part-time,None,"Leadership,Grit",Power hitting,5
-Max O'Dowd,Batsman,76,77,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Consistency",Express pace,1
-Pieter Seelaar,All-Rounder,76,68,76,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Netherlands captain,Economy",Express pace,8
-David Wiese,All-Rounder,76,74,74,False,28,Right,Right,Lower-order Hitter,Death,Right-arm Fast-medium,"Experience,All-round",Age management,6
-Nkrumah Bonner,Batsman,76,78,10,False,29,Right,Right,Anchor,Part-time,None,"Grit,Patience",Power hitting,4
-Dermot Reeve,All-Rounder,75,70,72,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Utility,Thinking",Pace,9
-Ryan Campbell,Wicketkeeper,75,76,10,False,28,Right,None,Aggressive Opener,Part-time,None,"Opener,Hong Kong",International class,1
-Ahmad Raza,All-Rounder,75,68,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"UAE captain,Economy",International class,8
-George Dockrell,All-Rounder,74,68,74,False,25,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Consistency",Pace,9
-Simi Singh,All-Rounder,74,68,74,False,26,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,Utility",Express pace,9
-Vikramjit Singh,Batsman,74,76,10,False,21,Left,Right,Aggressive Opener,Part-time,None,"Youth,Left-hand",Consistency,1
-Bas de Leede,All-Rounder,74,72,72,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"All-round,Youth",Experience,6
-Gerhard Erasmus,Batsman,74,76,10,False,27,Right,Right,Anchor,Part-time,None,"Namibia captain,Consistency",Express pace,3
-Ruben Trumpelmann,Bowler (Fast),74,14,77,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Left-arm angle,Swing",Batting,11
-Muhammad Waseem,Batsman,74,76,10,False,25,Right,Right,Aggressive Opener,Part-time,None,"UAE power hitter,Youth",Experience,1
-Innocent Kaia,Batsman,72,73,10,False,24,Right,Right,Anchor,Part-time,None,"Youth,Technique",Express pace,2
-Shahzad Mawali,Batsman,70,72,10,False,25,Right,Right,Anchor,Part-time,None,"Oman captain,Experience",International class,3
+Sechin Tindulkar,Batsman,98,99,68,False,24,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Consistency,Technique",Short-pitch pace,1
+Vyrat Kuhli,Batsman,97,98,12,False,27,Right,Right,Anchor,Part-time,None,"Chase mastery,Consistency",Short-pitch pace,3
+AB de Vylliers,Wicketkeeper,97,98,15,False,27,Right,None,Aggressive Opener,Part-time,None,"360-degree batting,Finishing",Short-pitch spin,4
+Vyv Rychards,Batsman,97,98,68,False,27,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Dominance",Short-pitch pace,3
+Jesprit Bomrah,Bowler (Fast),96,18,97,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Accuracy",Batting,11
+Jecques Kellis,All-Rounder,96,96,92,False,30,Right,Right,Anchor,Powerplay,Right-arm Fast-medium,"Consistency,All-round",Scoring rate,3
+MS Dhuni,Wicketkeeper,96,95,12,False,27,Right,None,Lower-order Hitter,Part-time,None,"Finishing,Keeping",Short-pitch pace,5
+Rycky Punting,Batsman,96,97,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
+Ruhit Sherma,Batsman,96,97,10,False,28,Right,Right,Aggressive Opener,Part-time,None,"Big hundreds,Six hitting",Early swing,1
+Komar Sengakkara,Wicketkeeper,95,97,10,False,29,Left,Right,Anchor,Part-time,None,"Glove work,Run scoring",Express pace,3
+Jue Ruot,Batsman,95,97,12,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Consistency,Adaptability",Short-pitch pace,4
+Bryan Lera,Batsman,95,97,10,False,27,Left,Right,Anchor,Part-time,None,"Technique,Elegance",Short-pitch pace,3
+Reshid Khen,All-Rounder,95,72,96,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
+Chrys Geyle,Batsman,94,95,72,False,26,Left,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Power hitting,Opening dominance",Swing bowling,1
+Adem Gylchrist,Wicketkeeper,94,95,10,False,29,Left,Right,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Short-pitch spin,1
+Wesim Akrem,Bowler (Fast),93,35,97,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Reverse swing",Batting,11
+Rehul Drevid,Batsman,93,95,10,False,30,Right,Right,Anchor,Part-time,None,"Technique,Patience",Scoring rate,3
+Glinn McGreth,Bowler (Fast),93,12,97,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Accuracy,Line and length",Batting,11
+Mottiah Moralitharan,Bowler (Spin),93,30,98,False,28,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Doosra,Economy",Batting,11
+Suurav Genguly,Batsman,93,94,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Technique,Leadership",Swing outside off,1
+Kegiso Rebada,Bowler (Fast),93,24,95,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Bounce",Economy in ODIs,10
+Stive Smyth,Batsman,93,95,10,False,27,Right,Right,Anchor,Part-time,Leg-spin,"Unconventional technique,Consistency",Short-pitch pace,4
+Bin Stukes,All-Rounder,93,87,90,False,27,Left,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Match-winning ability,Leadership",Fitness management,6
+Kene Wylliamson,Batsman,93,95,10,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Technique,Leadership",Aggressive periods,3
+Senath Jeyasuriya,All-Rounder,92,93,82,False,27,Left,Left,Aggressive Opener,Middle Overs,Left-arm Orthodox,"Explosive starts,Left-arm spin",Short-pitch pace,1
+Shene Wetson,All-Rounder,92,91,88,False,26,Right,Right,Aggressive Opener,Powerplay,Right-arm Fast-medium,"Power hitting,New-ball swing",Short-pitch pace,1
+Jus Bottler,Wicketkeeper,92,94,10,False,27,Right,None,Aggressive Opener,Part-time,None,"Explosive hitting,Glove work",Left-arm spin,4
+Bebar Azem,Batsman,92,93,10,False,26,Right,None,Anchor,Part-time,None,"Elegant technique,Consistency",Short-pitch pace,3
+Glinn Mexwell,All-Rounder,91,91,80,False,28,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Switch hitting,Fielding",Inconsistency with ball,5
+Weqar Yuunis,Bowler (Fast),91,14,96,False,23,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Reverse swing,Yorkers",Batting,11
+Anyl Komble,Bowler (Spin),91,22,96,False,28,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Wicket-taking,Accuracy",Batting,11
+Shene Werne,Bowler (Spin),91,25,97,False,28,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Bowling intelligence",Batting,11
+Kepil Div,All-Rounder,91,82,90,False,25,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Match-winning ability,Swing",Consistency,7
+Euin Murgan,Batsman,91,92,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Ramp shots,Reverse sweep",Short pitch from right-armers,4
+Vyrendra Sihwag,Batsman,91,93,20,False,28,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Demolition",Swing bowling,1
+Kyeron Pullard,All-Rounder,91,91,82,False,27,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Power hitting,Leadership",Spin on turning tracks,6
+Mertin Cruwe,Batsman,91,93,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
+Imren Khen,All-Rounder,91,84,92,False,32,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Swing,Leadership",Age,7
+Sheheen Sheh Afrydi,Bowler (Fast),91,20,93,False,22,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Batting,11
+Lesith Melinga,Bowler (Fast),91,14,96,False,26,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Yorkers,Slingy action",Batting,11
+Shuaib Akhter,Bowler (Fast),90,14,96,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Reverse swing",Batting,11
+Shekib Al Hesan,All-Rounder,90,84,91,False,26,Left,Left,Middle-order Rotator,Middle Overs,Left-arm Orthodox,"Greatest BAN cricketer,Utility",Age management,5
+Pet Commins,All-Rounder,90,26,93,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Accuracy,Reverse swing",Batting,11
+Herdik Pendya,All-Rounder,90,90,87,False,26,Right,Right,Lower-order Hitter,Death,Right-arm Fast,"Power hitting,Death pace",Fitness management,6
+Lence Klosener,All-Rounder,90,88,86,False,27,Left,Left,Lower-order Hitter,Death,Right-arm Fast-medium,"Death hitting,Death bowling",Consistency,8
+Trevis Hiad,Batsman,90,92,10,False,28,Left,None,Aggressive Opener,Part-time,None,"Explosive starts,Timing",Spin on turning tracks,1
+Qointon de Kuck,Wicketkeeper,90,92,10,False,26,Left,None,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Pace outside off,1
+Brindon McCollum,Wicketkeeper,90,91,10,False,30,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Leadership",Late swing,1
+Muhammed Shemi,Bowler (Fast),90,18,92,False,29,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Seam movement",Age management,10
+Kivin Pyetersen,Batsman,90,91,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"Switch hitting,Technique",Short-pitch pace,4
+Shobman Gyll,Batsman,90,92,10,False,23,Right,None,Anchor,Part-time,None,"Technique,Elegance",Hostile pace,1
+Yovraj Syngh,All-Rounder,90,91,82,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Six hitting,Left-arm spin",Short-pitch pace,4
+Greeme Pullock,Batsman,90,92,10,False,24,Left,Right,Anchor,Part-time,None,"SA legend,Technique",Short-pitch pace,3
+Berry Rychards,Batsman,90,92,10,False,24,Right,Right,Anchor,Part-time,None,"Brilliance,Technique",Short-pitch pace,1
+Sheun Pullock,All-Rounder,90,76,92,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"All-round,Accuracy",Batting,8
+Andriw Symunds,All-Rounder,89,89,78,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Power hitting,Fielding",Spin on turning tracks,5
+Russ Teylor,Batsman,89,91,10,False,30,Right,Right,Anchor,Part-time,None,"Middle-order mastery,Technique",Short-pitch pace,4
+Arevinda de Sylva,Batsman,89,91,12,False,28,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Attacking technique,Improvisation",Short-pitch pace,3
+Jeved Myandad,Batsman,89,90,10,False,23,Right,Right,Anchor,Part-time,Leg-spin,"Technique,Composure",Short-pitch pace,3
+Mehela Jeyawardene,Batsman,89,91,10,False,30,Right,Right,Anchor,Part-time,None,"Technique,Elegance",Short-pitch pace,3
+Myke Hossey,Batsman,89,91,10,False,29,Left,Right,Anchor,Part-time,None,"Finishing,Technique",Short-pitch pace,5
+Heshim Amle,Batsman,89,91,10,False,28,Right,Right,Anchor,Part-time,None,"Solid technique,Consistency",Short-pitch pace,1
+Anrych Nurtje,Bowler (Fast),89,18,92,False,27,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Fitness,10
+Herbhajan Syngh,Bowler (Spin),89,78,91,False,22,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Doosra,Home spin",Away tours,8
+Zeheer Khen,Bowler (Fast),89,18,91,False,28,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Reverse swing,Wicket-taking",Batting,11
+Revindra Jedeja,All-Rounder,89,80,89,False,29,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Fielding,Left-arm spin",Powerplay batting,8
+Shykhar Dhewan,Batsman,89,91,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Consistency",Short-pitch pace,1
+Metthew Heyden,Batsman,88,89,10,False,30,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Technique",Short-pitch pace,1
+Mychael Bivan,Batsman,88,90,10,False,28,Left,Right,Anchor,Part-time,None,"ODI finishing,Technique",Power,5
+Cheminda Veas,Bowler (Fast),88,20,92,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast-medium,"Swing,Left-arm angle",Batting,11
+Shehid Afrydi,All-Rounder,88,82,88,False,25,Right,Right,Aggressive Opener,Middle Overs,Leg-spin,"Six hitting,Leg-spin",Inconsistency,1
+Tyllakaratne Dylshan,Batsman,88,89,12,False,30,Right,Right,Aggressive Opener,Part-time,None,"Dilscoop,Improvisation",Short-pitch pace,1
+Andriw Flyntoff,All-Rounder,88,82,87,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Swing,Power hitting",Consistency,6
+Dweyne Brevo,All-Rounder,88,77,90,False,26,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Death bowling,Fielding",Spin on slow tracks,7
+Mytchell Sterc,Bowler (Fast),88,18,92,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Batting,11
+Herry Bruok,Batsman,88,90,10,False,24,Right,None,Aggressive Opener,Part-time,None,"Aggression,Technique",Spin on turning tracks,3
+Jufra Archir,Bowler (Fast),88,22,91,False,25,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Injury history,10
+Wenindu Hesaranga,All-Rounder,88,72,90,False,25,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Economy",Express pace,8
+Koldeep Yedav,Bowler (Spin),88,24,91,False,27,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist-spin,"Googly,Variations",Batting,10
+Ryshabh Pent,Wicketkeeper,88,90,10,False,24,Left,None,Aggressive Opener,Part-time,None,"Match-winning innings,Glove work",Wide outside off,6
+Inzemam-ul-Heq,Batsman,88,90,10,False,28,Right,Right,Anchor,Part-time,None,"Technique,Finishing",Running between wickets,4
+Andy Fluwer,Wicketkeeper,88,90,10,False,27,Left,Right,Anchor,Part-time,None,"Zimbabwe legend,Technique",Short-pitch pace,3
+Temim Iqbel,Batsman,87,88,10,False,26,Left,Right,Aggressive Opener,Part-time,None,"Explosive starts,Left-hand technique",Short-pitch pace,1
+Andri Rossell,All-Rounder,87,84,84,False,28,Right,Right,Lower-order Hitter,Death,Right-arm Fast,"Power hitting,Death bowling",Fitness management,6
+Ayden Merkram,All-Rounder,87,88,15,False,26,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Timing,Leadership",Short-pitch pace,3
+Jush Hezlewood,Bowler (Fast),87,18,90,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Line and length,Economy",Death overs,10
+Trint Buult,Bowler (Fast),87,20,90,False,27,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast-medium,"Swing,New-ball wickets",Death economy,11
+Mojeeb Ur Rehman,Bowler (Spin),87,18,90,False,21,Right,Right,Defensive Tailender,Powerplay,Right-arm Offbreak,"Mystery spin,Powerplay economy",Batting,10
+Kosal Mindis,Wicketkeeper,87,89,10,False,26,Right,Right,Anchor,Part-time,None,"Glove work,Attacking ability",Left-arm spin,4
+KL Rehul,Wicketkeeper,87,89,10,False,27,Right,None,Anchor,Part-time,None,"Technique,Versatility",Scoring rate,2
+Yozvendra Chehal,Bowler (Spin),87,18,92,False,27,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,Economy",Batting,11
+Sonil Nerine,All-Rounder,87,78,90,False,25,Right,Right,Aggressive Opener,Powerplay,Right-arm Offbreak,"Mystery spin,Power hitting",Express pace,1
+Seqlain Moshtaq,Bowler (Spin),87,22,91,False,22,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Doosra,Economy",Batting,11
+Evirton Wiekes,Batsman,87,89,10,False,26,Right,Right,Anchor,Part-time,None,"3Ws,5 consecutive hundreds",Short-pitch pace,3
+Jecob Orem,All-Rounder,86,82,84,False,28,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Height,Bat and ball",Injuries,7
+Shuaib Melik,All-Rounder,86,86,76,False,26,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Consistency,Adaptability",Express pace,5
+Ajentha Mindis,Bowler (Spin),86,14,90,False,25,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Mystery spin,Carrom ball",Batting,11
+Adyl Reshid,Bowler (Spin),86,28,88,False,29,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,White-ball economy",Batting,10
+Jeson Ruy,Batsman,86,87,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Fielding",Short-pitch pace,1
+Fef du Plissis,Batsman,86,87,10,False,29,Right,Right,Aggressive Opener,Part-time,None,"Power hitting,Technique",Spin off-stump,1
+Devid Myller,Batsman,86,88,10,False,27,Left,None,Lower-order Hitter,Part-time,None,"Six hitting,Finishing",Spin in early overs,6
+Adem Zempa,Bowler (Spin),86,22,89,False,26,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Economy",Short boundaries,10
+Axer Petel,All-Rounder,86,78,86,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Batting depth",Short-pitched deliveries,8
+Muhammed Asyf,Bowler (Fast),86,14,90,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Accuracy,Reverse swing",Batting,11
+Shriyas Iyir,Batsman,86,88,12,False,26,Right,None,Anchor,Part-time,None,"Leg-side play,Finisher",Short-pitch bowling,5
+Moshfiqur Rehim,Wicketkeeper,86,88,10,False,27,Right,None,Anchor,Part-time,None,"Prolific BAN batter,Grit",Age management,5
+Shei Hupe,Wicketkeeper,86,88,10,False,27,Right,None,Anchor,Part-time,None,"Prolific run-scorer,Leadership",Power in death,2
+Mernus Lebuschagne,Batsman,86,88,10,False,26,Right,Right,Anchor,Part-time,Leg-spin,"Concentration,Technique",Scoring rate in ODIs,4
+Divon Cunway,Wicketkeeper,86,88,10,False,28,Left,None,Anchor,Part-time,None,"Clean timing,Glove work",Short pitch,2
+Gurdon Grienidge,Batsman,86,88,10,False,27,Right,Right,Aggressive Opener,Part-time,None,"Power hitting,Dominance",Short-pitch pace,1
+Clyve Lluyd,Batsman,86,87,10,False,29,Left,Right,Anchor,Part-time,None,"Leadership,Power hitting",Short-pitch pace,5
+Hiath Striak,All-Rounder,86,70,86,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Zimbabwe legend,Pace",Batting,9
+Chrys Ceirns,All-Rounder,86,82,84,False,28,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"All-round,Power hitting",Fitness,7
+Muhammed Syraj,Bowler (Fast),85,18,88,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Accuracy",Death economy,10
+Pethum Nyssanka,Batsman,85,87,10,False,24,Right,None,Anchor,Part-time,None,"Consistency,Technique",Power in death,1
+Muhammad Ryzwan,Wicketkeeper,85,87,10,False,29,Right,None,Anchor,Part-time,None,"Grit,Glove work",Aggression,5
+Fekhar Zeman,Batsman,85,87,10,False,26,Left,None,Aggressive Opener,Part-time,None,"Big innings,Power",Age management,1
+Neseem Sheh,Bowler (Fast),85,18,88,False,19,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Raw pace,Bounce",Batting,10
+Bin Dockett,Batsman,85,87,10,False,27,Left,None,Aggressive Opener,Part-time,None,"Left-hand aggression,Sweep",Short-pitch pace,2
+Mostafizur Rehman,Bowler (Fast),85,18,88,False,23,Left,Left,Defensive Tailender,Death,Left-arm Fast-medium,"Cutter,Variations",Economy,10
+Kishav Meharaj,Bowler (Spin),85,24,87,False,28,Right,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,White-ball spin",Express pace wickets,10
+Mueen Aly,All-Rounder,85,83,83,False,30,Left,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Power hitting,Economy",Short-pitch pace,4
+Clydi Welcott,Wicketkeeper,85,87,10,False,27,Right,None,Anchor,Part-time,None,"3Ws,Power hitting",Short-pitch pace,3
+Frenk Wurrell,Batsman,85,87,10,False,27,Left,Right,Anchor,Part-time,None,"3Ws,Leadership",Short-pitch pace,3
+Stoart Bruad,Bowler (Fast),84,22,87,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Swing,Consistency",Batting,10
+Upol Theranga,Batsman,84,85,10,False,25,Left,Right,Aggressive Opener,Part-time,None,"Left-hand technique,Fluency",Short-pitch pace,1
+Jeson Hulder,All-Rounder,84,74,82,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Height,Leadership",Economy in ODIs,7
+Dhenanjaya de Sylva,All-Rounder,84,82,74,False,28,Right,Right,Anchor,Middle Overs,Right-arm Offbreak,"Technique,Utility",Express pace,5
+Kemindu Mindis,All-Rounder,84,80,76,False,24,Left,Left,Anchor,Middle Overs,Left-arm Orthodox,"Switch hitting,Ambidextrous spin",Bowling workload,7
+Cherith Aselanka,Batsman,84,86,10,False,25,Left,Left,Anchor,Part-time,Left-arm Orthodox,"Consistency,Leadership",Express pace,3
+Deryl Mytchell,All-Rounder,84,84,72,False,29,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Clutch performances,Grit",Bowling consistency,5
+Mytchell Sentner,All-Rounder,84,76,84,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Left-arm spin",Pace,7
+Luckie Firguson,Bowler (Fast),84,18,87,False,28,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Express pace,Bounce",Economy,11
+Rehmanullah Gorbaz,Wicketkeeper,84,86,10,False,20,Right,None,Anchor,Part-time,None,"Explosive starts,Youth",Consistency,1
+Muhammad Nebi,All-Rounder,84,74,82,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Experience,Utility",Age management,6
+Fezalhaq Ferooqi,Bowler (Fast),84,16,87,False,22,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Swing,Left-arm angle",Death economy,10
+Tym Suuthee,Bowler (Fast),84,20,87,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Experience",Pace,10
+Prebath Jeyasuriya,Bowler (Spin),84,18,87,False,28,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Home spin,Economy",Away surfaces,10
+Shymron Hitmyer,Batsman,84,86,10,False,24,Left,None,Lower-order Hitter,Part-time,None,"Power hitting,Left-hand",Availability,6
+Imren Tehir,Bowler (Spin),84,16,88,False,32,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Googly,Economy",Batting,11
+Ruhan Kenhai,Batsman,84,86,10,False,27,Right,Right,Anchor,Part-time,None,"Elegance,WI legend",Short-pitch pace,3
+Greeme Hyck,Batsman,84,85,10,False,28,Right,Right,Anchor,Part-time,Right-arm Offbreak,"County legend,Technique",Short-pitch pace,4
+Demien Mertyn,Batsman,84,85,10,False,29,Right,Right,Anchor,Part-time,None,"Elegance,Technique",Short-pitch pace,4
+Mekhaya Ntyni,Bowler (Fast),84,12,87,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Accuracy",Batting,11
+Jevagal Srynath,Bowler (Fast),84,14,87,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Batting,11
+Arjona Renatunga,Batsman,83,85,10,False,27,Left,Right,Anchor,Part-time,None,"Leadership,Tactical acumen",Fitness,5
+Ressie van der Dossen,Batsman,83,84,10,False,29,Right,Right,Middle-order Rotator,Part-time,None,"Technique,Finishing",Express pace,5
+Shedab Khen,All-Rounder,83,72,84,False,22,Right,Right,Lower-order Hitter,Middle Overs,Leg-spin,"Googly,Lower-order hitting",Economy in powerplay,8
+Mihidy Hesan Myraz,All-Rounder,83,72,82,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,All-round",Express pace,8
+Meheesh Thiekshana,Bowler (Spin),83,18,86,False,22,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Mystery spin,Economy",Away surfaces,10
+Merco Jensen,All-Rounder,83,72,83,False,22,Left,Left,Lower-order Hitter,Death,Left-arm Fast-medium,"Tall seam,Left-arm angle",Death economy,8
+Weshington Sondar,All-Rounder,83,72,82,False,22,Left,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,Utility",Pace in powerplay,8
+Chrys Wuakes,All-Rounder,83,70,83,False,27,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"Swing,Economy",Death bowling,9
+Alzerri Juseph,Bowler (Fast),83,20,86,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Wicket-taking",Fitness management,10
+Dismond Heynes,Batsman,83,84,10,False,27,Right,Right,Anchor,Part-time,None,"West Indian opener,Consistency",Short-pitch pace,1
+Sykandar Reza,All-Rounder,83,82,79,False,28,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Consistency,Utility",Express pace,4
+Greeme Swenn,Bowler (Spin),83,26,86,False,30,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Economy,Partnership breaking",Batting,10
+Moshtaq Ahmid,Bowler (Spin),83,18,86,False,25,Right,Right,Defensive Tailender,Middle Overs,Leg-spin,"Variations,Economy",Batting,11
+Mercus Triscothick,Batsman,83,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Short-pitch pace,1
+Nesser Hossain,Batsman,83,84,10,False,29,Right,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,4
+Bred Heddin,Wicketkeeper,83,84,10,False,29,Right,None,Aggressive Opener,Part-time,None,"Explosive starts,Glove work",Consistency,7
+Hensie Crunje,All-Rounder,83,82,76,False,27,Right,Right,Anchor,Middle Overs,Right-arm Medium,"Leadership,SA great",Controversy,5
+Gery Kyrsten,Batsman,83,85,10,False,27,Left,Right,Anchor,Part-time,None,"SA opener,Concentration",Short-pitch pace,1
+Glinn Torner,Batsman,83,85,10,False,28,Right,Right,Anchor,Part-time,None,"NZ opener,Concentration",Scoring rate,1
+Rychie Rychardson,Batsman,83,85,10,False,26,Right,Right,Anchor,Part-time,None,"Technique,Confidence",Short-pitch pace,3
+Culin Cruft,Bowler (Fast),83,12,86,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Angle",Batting,11
+Muhammad Hefeez,All-Rounder,83,82,78,False,29,Right,Right,Aggressive Opener,Middle Overs,Right-arm Offbreak,"Consistent opener,Economy",Express pace,1
+Mehmudullah,All-Rounder,82,80,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Veteran experience,Finisher",Age management,5
+Teskin Ahmid,Bowler (Fast),82,18,85,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Death economy,10
+Ruston Chese,All-Rounder,82,80,78,False,27,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"Reliability,Utility",Express pace,4
+Cerl Huoper,All-Rounder,82,82,76,False,26,Right,Right,Middle-order Rotator,Middle Overs,Right-arm Offbreak,"All-round ability,Elegance",Consistency,4
+Ruvman Puwell,Batsman,82,84,10,False,27,Right,Right,Lower-order Hitter,Part-time,None,"Six hitting,Explosive",Consistency,5
+Blissing Mozarabani,Bowler (Fast),82,14,85,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Tall seam,Pace",Batting,11
+Evyn Liwis,Batsman,82,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Spin on slow tracks,1
+Brindon Teylor,Batsman,82,84,12,False,25,Right,Right,Aggressive Opener,Part-time,None,"Explosive starts,Technique",Short-pitch pace,1
+Peul Styrling,Batsman,82,83,12,False,26,Right,Right,Aggressive Opener,Part-time,Right-arm Offbreak,"Power hitting,Consistency",Quality spin,1
+Angilo Methews,All-Rounder,82,80,72,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Veteran experience,Technique",Age management,5
+Ruy Fridericks,Batsman,82,84,10,False,27,Left,Right,Aggressive Opener,Part-time,None,"Power hitting,Left-hand",Short-pitch pace,1
+Jiffrey Dojon,Wicketkeeper,82,82,10,False,28,Right,None,Anchor,Part-time,None,"Keeping,Grit",Power hitting,7
+Andriw Streuss,Batsman,82,83,10,False,28,Left,Right,Anchor,Part-time,None,"Technique,Opening",Short-pitch pace,1
+Alestair Cuok,Batsman,82,83,10,False,28,Left,None,Anchor,Part-time,None,"Technique,Patience",ODI strike rate,1
+Junathan Trutt,Batsman,82,83,10,False,28,Right,Right,Anchor,Part-time,Right-arm Medium,"Technique,Mental strength",Short-pitch pace,3
+Umish Yedav,Bowler (Fast),82,18,85,False,28,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,New-ball",Economy,10
+Bred Hugg,Bowler (Spin),82,22,85,False,33,Left,Left,Defensive Tailender,Middle Overs,Left-arm Wrist-spin,"Chinaman,Economy",Batting,10
+Deryll Collinan,Batsman,82,84,10,False,28,Right,Right,Anchor,Part-time,None,"SA technique,Consistency",Short-pitch pace,4
+Chrys Herris,All-Rounder,82,80,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Economy,NZ utility",Express pace,7
+Demien Fliming,Bowler (Fast),82,18,85,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Economy",Pace,10
+Lindl Symmons,Batsman,81,82,10,False,26,Right,Right,Aggressive Opener,Part-time,None,"West Indian power,Experience",Short-pitch pace,1
+Dynesh Chendimal,Wicketkeeper,81,83,10,False,27,Right,None,Anchor,Part-time,None,"Grit,Glove work",Power hitting,5
+Ishent Sherma,Bowler (Fast),81,14,84,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Height,Bounce",Economy in ODIs,11
+Ien Hervey,All-Rounder,81,78,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Utility,All-round",Consistency,7
+Ajey Jedeja,Batsman,81,82,10,False,26,Right,Right,Anchor,Part-time,Right-arm Medium,"Finisher,Fielding",Short-pitch pace,5
+Akial Husein,Bowler (Spin),80,20,83,False,27,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,Death bowling",Batting,10
+Creig Ervyne,Batsman,80,81,10,False,29,Left,Right,Anchor,Part-time,None,"Technique,Leadership",Short-pitch pace,3
+Ibrehim Zedran,Batsman,80,82,10,False,22,Right,None,Anchor,Part-time,None,"Technique,Consistency",Express pace,2
+Heshmatullah Shehidi,Batsman,80,82,10,False,27,Left,None,Anchor,Part-time,None,"Technique,Grit",Express pace,3
+Heshan Tyllakaratne,Batsman,80,82,10,False,28,Left,Right,Anchor,Part-time,None,"Technique,Defence",Scoring rate,4
+Kivin O'Bryen,All-Rounder,80,78,72,False,28,Right,Right,Aggressive Opener,Middle Overs,Right-arm Medium,"Six hitting,Experience",Age management,1
+Peul Cullingwood,All-Rounder,80,78,72,False,30,Right,Right,Anchor,Middle Overs,Right-arm Medium,"Grit,Fielding",Power hitting,5
+Lyton Des,Wicketkeeper,80,82,10,False,27,Right,None,Aggressive Opener,Part-time,None,"Explosive batting,Glove work",Consistency,2
+Sheun Teit,Bowler (Fast),80,12,83,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Economy,11
+Vinkatesh Presad,Bowler (Fast),80,14,83,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Line and length,Reverse swing",Batting,11
+Jymmy Adems,Batsman,80,82,10,False,26,Left,Right,Anchor,Part-time,None,"WI grit,Technique",Power hitting,4
+Weyne Deniel,Bowler (Fast),80,12,83,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Bounce",Batting,11
+Godakesh Mutie,Bowler (Spin),79,20,82,False,26,Left,Left,Defensive Tailender,Middle Overs,Left-arm Orthodox,"Economy,Consistency",Variations,10
+Asenka Gorusinha,Batsman,79,80,10,False,26,Left,Right,Anchor,Part-time,None,"Technique,Consistency",Short-pitch pace,3
+Andriw Belbirnie,Batsman,79,81,10,False,27,Right,Right,Anchor,Part-time,None,"Ireland captain,Technique",Express pace,3
+Nejibullah Zedran,Batsman,79,81,10,False,25,Left,None,Lower-order Hitter,Part-time,None,"Six hitting,Finisher",Consistency,6
+Ryen Borl,All-Rounder,79,78,76,False,27,Right,Right,Middle-order Rotator,Middle Overs,Leg-spin,"Leg-spin,Utility",Express pace,7
+Doshmantha Chemeera,Bowler (Fast),79,14,82,False,27,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Pace,Bounce",Batting,11
+Nyck Knyght,Batsman,79,80,10,False,28,Left,Right,Aggressive Opener,Part-time,None,"Fielding,Opener",Short-pitch pace,1
+Chrys Liwis,All-Rounder,79,74,78,False,26,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast,"Pace,All-round",Consistency,8
+Sian Wylliams,All-Rounder,79,78,76,False,27,Left,Left,Middle-order Rotator,Middle Overs,Left-arm Orthodox,"Zimbabwe utility,Left-arm spin",Express pace,5
+Niil McKinzie,Batsman,79,80,10,False,28,Right,Right,Anchor,Part-time,None,"Technique,Grit",Short-pitch pace,3
+Juhn Riid,All-Rounder,79,78,72,False,28,Right,Right,Anchor,Part-time,Right-arm Fast-medium,"NZ captain,All-round",Bowling pace,5
+Tum Muody,All-Rounder,79,76,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Height,All-round",Consistency,7
+Neveen-ul-Heq,Bowler (Fast),78,18,81,False,22,Right,Right,Defensive Tailender,Death,Right-arm Fast,"Death bowling,Yorkers",Economy,10
+Lurcan Tocker,Wicketkeeper,78,80,10,False,25,Right,None,Anchor,Part-time,None,"Grit,Keeping",Power hitting,5
+Azmetullah Omerzai,All-Rounder,78,74,76,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"Utility,Youth",Experience,7
+Dylruwan Pirera,Bowler (Spin),78,22,81,False,30,Right,Right,Defensive Tailender,Middle Overs,Right-arm Offbreak,"Economy,Home spin",Away surfaces,10
+Kreigg Brethwaite,Batsman,78,80,10,False,26,Right,Right,Anchor,Part-time,Right-arm Offbreak,"Grit,Technique",Scoring rate,1
+Asytha Firnando,Bowler (Fast),78,14,81,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"New-ball,Swing",Batting,11
+Lehiru Komara,Bowler (Fast),78,14,81,False,24,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Fitness,10
+Cullis Kyng,All-Rounder,78,76,72,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"1979 WC hero,Power hitting",Consistency,6
+Rigis Chekabva,Wicketkeeper,78,79,10,False,28,Right,None,Anchor,Part-time,None,"Grit,Glove work",Power hitting,2
+Nentie Heyward,Bowler (Fast),78,12,81,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Express pace,Bounce",Batting,11
+Rubin Syngh,All-Rounder,78,76,74,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Fielding,Utility",Age management,7
+Frenklyn Ruse,Bowler (Fast),78,12,81,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Accuracy",Batting,11
+Soranga Lekmal,Bowler (Fast),77,14,80,False,27,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast-medium,"Swing,Experience",Pace,10
+Eltun Chygumbura,All-Rounder,77,74,74,False,25,Right,Right,Lower-order Hitter,Death,Right-arm Medium,"Experience,Utility",International class,7
+Tindai Chetara,Bowler (Fast),77,14,80,False,25,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Pace,Seam movement",Batting,11
+Nowan Predeep,Bowler (Fast),77,14,80,False,26,Right,Right,Defensive Tailender,Powerplay,Right-arm Fast,"Swing,Experience",Age management,11
+Semit Petel,All-Rounder,77,74,76,False,26,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,All-round",Express pace,9
+Golbadin Neib,All-Rounder,76,72,74,False,25,Right,Right,Lower-order Hitter,Death,Right-arm Fast-medium,"Experience,Utility",International class,5
+Herry Tictor,Batsman,76,78,10,False,23,Right,Right,Anchor,Part-time,None,"Technique,Youth",Express pace,3
+Merk Adeir,All-Rounder,76,72,74,False,23,Right,Right,Lower-order Hitter,Powerplay,Right-arm Fast-medium,"All-round,Youth",Experience,8
+Scutt Edwerds,Wicketkeeper,76,78,10,False,25,Right,None,Anchor,Part-time,None,"Leadership,Grit",Power hitting,5
+Mex O'Duwd,Batsman,76,77,10,False,27,Right,Right,Anchor,Part-time,None,"Technique,Consistency",Express pace,1
+Pyeter Sielaar,All-Rounder,76,68,76,False,27,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Netherlands captain,Economy",Express pace,8
+Devid Wyese,All-Rounder,76,74,74,False,28,Right,Right,Lower-order Hitter,Death,Right-arm Fast-medium,"Experience,All-round",Age management,6
+Nkromah Bunner,Batsman,76,78,10,False,29,Right,Right,Anchor,Part-time,None,"Grit,Patience",Power hitting,4
+Dirmot Rieve,All-Rounder,75,70,72,False,27,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Medium,"Utility,Thinking",Pace,9
+Ryen Cempbell,Wicketkeeper,75,76,10,False,28,Right,None,Aggressive Opener,Part-time,None,"Opener,Hong Kong",International class,1
+Ahmed Reza,All-Rounder,75,68,76,False,28,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"UAE captain,Economy",International class,8
+Giorge Duckrell,All-Rounder,74,68,74,False,25,Left,Left,Lower-order Hitter,Middle Overs,Left-arm Orthodox,"Economy,Consistency",Pace,9
+Symi Syngh,All-Rounder,74,68,74,False,26,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Offbreak,"Economy,Utility",Express pace,9
+Vykramjit Syngh,Batsman,74,76,10,False,21,Left,Right,Aggressive Opener,Part-time,None,"Youth,Left-hand",Consistency,1
+Bes de Liede,All-Rounder,74,72,72,False,23,Right,Right,Lower-order Hitter,Middle Overs,Right-arm Fast-medium,"All-round,Youth",Experience,6
+Girhard Eresmus,Batsman,74,76,10,False,27,Right,Right,Anchor,Part-time,None,"Namibia captain,Consistency",Express pace,3
+Roben Trompelmann,Bowler (Fast),74,14,77,False,24,Left,Left,Defensive Tailender,Powerplay,Left-arm Fast,"Left-arm angle,Swing",Batting,11
+Mohammad Weseem,Batsman,74,76,10,False,25,Right,Right,Aggressive Opener,Part-time,None,"UAE power hitter,Youth",Experience,1
+Innucent Keia,Batsman,72,73,10,False,24,Right,Right,Anchor,Part-time,None,"Youth,Technique",Express pace,2
+Shehzad Mewali,Batsman,70,72,10,False,25,Right,Right,Anchor,Part-time,None,"Oman captain,Experience",International class,3
