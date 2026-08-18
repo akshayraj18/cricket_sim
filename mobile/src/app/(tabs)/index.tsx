@@ -52,7 +52,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={styles.appbar}>
+        <View style={[styles.appbar, contentContainerStyle]}>
           <View style={styles.wordmark}>
             <ThemedText style={styles.mark}>🏏</ThemedText>
             <ThemedText style={styles.wordmarkText}>CricSim</ThemedText>
