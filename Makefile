@@ -1,4 +1,4 @@
-.PHONY: install test unit integration regression lint clean \
+.PHONY: install test test-all test-exhaustive unit integration regression lint clean \
 	backend-up backend-down backend-run backend-migrate backend-test gen-secret \
 	webapp \
 	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
@@ -7,9 +7,21 @@
 install:
 	uv sync
 
-# Run the full test suite (use `make test ARGS="-k impact_sub"` to filter).
+# The everyday run: basic user-facing behaviour plus intermediate/edge cases,
+# excluding the exhaustive `slow` tier. This is what you run while iterating.
+# Use `make test ARGS="-k impact_sub"` to filter.
 test:
+	uv run pytest -m "not slow" $(ARGS)
+
+# Everything, including the exhaustive `slow` tier (full Test matches, repeated
+# whole-season sims). This is what CI runs on every PR, so nothing reaches main
+# without it — run it locally too before pushing something risky.
+test-all:
 	uv run pytest $(ARGS)
+
+# Just the exhaustive tier, for when you're specifically poking at it.
+test-exhaustive:
+	uv run pytest -m slow $(ARGS)
 
 # Run only fast, isolated unit tests (helpers, models, engine, players_data).
 unit:

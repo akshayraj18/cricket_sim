@@ -65,6 +65,16 @@ def ordinal(number):
     return f"{number}{suffix}"
 
 
+def wickets_margin(wickets_remaining):
+    """Render a chase-win margin, e.g. 1 -> "won by 1 wicket", 7 -> "won by 7 wickets".
+
+    A side that successfully chases still has at least one wicket in hand, so a
+    margin of "0 wickets" is never a legitimate result — it only ever came from
+    counting wickets the wrong way round. Callers pass `10 - wickets_lost`.
+    """
+    return f"won by {wickets_remaining} wicket{'s' if wickets_remaining != 1 else ''}"
+
+
 def bowling_kind(player):
     """Classify a bowler's `bowling_type` as "spin", "pace", or "part-time" (no real bowling type)."""
     bowling_type = getattr(player, "bowling_type", "")

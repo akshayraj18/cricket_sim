@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from cricket_sim_engine.sim.helpers import is_bowling_role
+from cricket_sim_engine.sim.helpers import bowling_kind, is_bowling_role, wickets_margin
 
 from .conftest import (
     apply_smart_presets,
@@ -30,7 +30,13 @@ def _ready(seed):
     last_error = None
     for offset in range(10):
         try:
-            league = drafted_league(seed=seed + offset)
+            # One shared drafted squad for every test in this module: the draft
+            # is the expensive part (~1.6s) and none of these tests depend on
+            # *which* squad they get, only on the match that follows. The seed
+            # is applied after the draft so each test still drives a distinct
+            # match, while the draft itself is built once and deepcopied.
+            league = drafted_league()
+            random.seed(seed + offset)
             team = league.user_team()
             league.set_leadership(team.captain.name, team.vice_captain.name)
             presets = apply_smart_presets(league)
@@ -241,10 +247,15 @@ def test_resolve_dismissal_credits_keeper_on_stumping():
     bowling_team = match.score["bowling_team"]
     keeper = match.wicketkeepers[bowling_team.name]
     striker = match.score["batting_order"][0]
-    spin_bowler = next((p for p in match.score["bowling_pool"]
-                         if "Spin" in getattr(p, "bowling_type", "") or "Orthodox" in getattr(p, "bowling_type", "")), None)
-    if not spin_bowler:
-        pytest.skip("no spin bowler available in this XI")
+    # Stumpings only happen off spin, so this test needs a spinner. Use the
+    # engine's own classifier rather than substring-matching bowling_type: the
+    # real data spells spin as "Leg-spin", "Right-arm Offbreak", "Mystery Spin"
+    # and so on, so a naive `"Spin" in bowling_type` check misses most spinners
+    # and previously made this test skip itself instead of asserting anything.
+    spin_bowler = next((p for p in match.score["bowling_pool"] if bowling_kind(p) == "spin"), None)
+    if spin_bowler is None:
+        spin_bowler = next((p for p in bowling_team.roster if bowling_kind(p) == "spin"), None)
+    assert spin_bowler is not None, "squad has no spin bowler to test a stumping with"
     keeper_stumpings_before = keeper.stats["stumpings"]
     random.seed(1)  # roll < 0.14 -> stumped
     dismissal = match.resolve_dismissal(striker, spin_bowler)
@@ -568,10 +579,58 @@ def test_payload_total_balls_test():
 # ---------------------------------------------------------------------------
 
 
-def test_win_margin_never_says_won_by_0_wickets():
-    """Chase wins must never report 'won by 0 wickets' — the bug this fix addressed."""
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "wickets_lost, expected",
+    [
+        (9, "won by 1 wicket"),    # singular — the plural-agreement edge case
+        (8, "won by 2 wickets"),
+        (5, "won by 5 wickets"),
+        (1, "won by 9 wickets"),
+        (0, "won by 10 wickets"),  # unbeaten chase, the upper bound
+    ],
+)
+def test_wickets_margin_wording(wickets_lost, expected):
+    """The chase-win margin agrees in number and counts wickets *remaining*.
+
+    This used to be asserted by simulating ~130 whole matches across random
+    seeds and hoping a 1-wicket win turned up — which took ~4 minutes and still
+    only covered whichever margins chance produced. Calling the formatter
+    directly covers every interesting case deterministically and instantly.
+    """
+    assert wickets_margin(10 - wickets_lost) == expected
+
+
+@pytest.mark.unit
+def test_wickets_margin_never_reports_zero():
+    """'won by 0 wickets' was the original bug — it meant wickets were counted backwards.
+
+    A successful chase always ends with at least one wicket in hand, so for every
+    legal wickets-lost value the margin is >= 1. Asserts on the parsed number
+    rather than the raw text, because "won by 10 wickets" legitimately contains
+    the substring "0 wicket".
+    """
     import re
-    for seed in range(1, 30):
+
+    for wickets_lost in range(0, 10):
+        margin = wickets_margin(10 - wickets_lost)
+        parsed = re.fullmatch(r"won by (\d+) wickets?", margin)
+        assert parsed, f"unexpected margin format: {margin!r}"
+        assert int(parsed.group(1)) >= 1, f"invalid margin: {margin!r}"
+
+
+@pytest.mark.slow
+def test_win_margin_wiring_end_to_end():
+    """Guards that complete_match() actually routes through wickets_margin().
+
+    The unit tests above pin the wording; this one only has to prove the engine
+    calls the formatter, so a couple of seeds is enough. Marked slow: it plays
+    full matches, so it runs in CI rather than the local loop.
+    """
+    import re
+
+    seen_chase_win = False
+    for seed in (1, 2, 3):
         random.seed(seed)
         league = drafted_league(seed=seed)
         team = league.user_team()
@@ -581,33 +640,9 @@ def test_win_margin_never_says_won_by_0_wickets():
         card = match.auto_finish()
         if card and not card.get("draw"):
             margin = card.get("margin", "")
-            # "won by 0 wickets" is invalid; "won by 10 wickets" is fine
             assert not re.search(r"by 0 wickets?", margin), f"seed {seed}: got '{margin}'"
-
-
-def test_win_margin_uses_singular_for_1_wicket():
-    """A 1-wicket win must say '1 wicket' not '1 wickets'."""
-    from cricket_sim_engine.sim.live_match import LiveMatch
-
-    # Directly test the margin string logic by probing complete_match internals:
-    # Build a minimal innings scenario where chasing team loses 9 wickets.
-    for seed in range(1, 100):
-        random.seed(seed)
-        league = drafted_league(seed=seed)
-        team = league.user_team()
-        league.set_leadership(team.captain.name, team.vice_captain.name)
-        league.begin_match_day(interactive=True)
-        match = league.live_match
-        card = match.auto_finish()
-        if card and not card.get("draw"):
-            margin = card.get("margin", "")
-            if "wicket" in margin:
-                # Margin must be "N wicket" or "N wickets" — never "N wickets" when N==1
-                parts = margin.split()
-                # format: "won by N wicket(s)"
-                idx = parts.index("wicket") if "wicket" in parts else (parts.index("wickets") if "wickets" in parts else -1)
-                if idx >= 1:
-                    n = int(parts[idx - 1])
-                    word = parts[idx]
-                    assert (n == 1 and word == "wicket") or (n != 1 and word == "wickets"), \
-                        f"seed {seed}: plural mismatch in '{margin}'"
+            match_obj = re.search(r"won by (\d+) wickets?$", margin)
+            if match_obj:
+                seen_chase_win = True
+                assert margin == wickets_margin(int(match_obj.group(1)))
+    assert seen_chase_win, "no chase win in the sampled seeds — pick different seeds"

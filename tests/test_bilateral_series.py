@@ -3,7 +3,6 @@ import random
 import pytest
 
 from cricket_sim_engine.sim.league_state import LeagueState
-from cricket_sim_engine.sim.constants import INTERNATIONAL_TEAMS_LIST
 from cricket_sim_engine.players_data import get_initial_player_pool
 
 

@@ -26,6 +26,7 @@ markers = [
     "unit: fast, isolated tests of pure functions/classes (no LeagueState/match scaffolding)",
     "integration: tests that exercise LeagueState/LiveMatch flows together",
     "regression: slower end-to-end tests that guard whole-career/season behaviour",
+    "slow: takes multiple seconds on its own (full Test matches, multi-season sims). Excluded from `make test-fast`; always run in CI before merge.",
 ]
 
 [build-system]

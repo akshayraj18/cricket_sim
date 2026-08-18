@@ -17,6 +17,7 @@ from cricket_sim_engine.sim.helpers import (
     is_wicketkeeper_option,
     counts_as_batter,
     counts_as_bowler,
+    wickets_margin,
 )
 
 
@@ -1203,8 +1204,7 @@ class LiveMatch:
         if second["runs"] >= first["runs"] + 1:
             winner = self.inn1_bowl
             loser = self.inn1_bat
-            wkts_remaining = 10 - second["wickets"]
-            margin = f"won by {wkts_remaining} wicket{'s' if wkts_remaining != 1 else ''}"
+            margin = wickets_margin(10 - second["wickets"])
         elif first["runs"] > second["runs"]:
             winner = self.inn1_bat
             loser = self.inn1_bowl
@@ -1227,8 +1227,7 @@ class LiveMatch:
         defending_runs = team_b_runs if chasing_team == self.inn1_bat else team_a_runs
 
         if chasing_runs > defending_runs:
-            wkts_remaining = 10 - last["wickets"]
-            margin = f"won by {wkts_remaining} wicket{'s' if wkts_remaining != 1 else ''}"
+            margin = wickets_margin(10 - last["wickets"])
             self.finalize_match(chasing_team, defending_team, margin)
             return
         if len(self.innings) == 3 and self.followed_on and not self.match_time_expired():

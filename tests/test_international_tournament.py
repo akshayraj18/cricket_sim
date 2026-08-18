@@ -16,7 +16,6 @@ import pytest
 
 from cricket_sim_engine.sim.league_state import LeagueState
 from cricket_sim_engine.sim.constants import INTERNATIONAL_TEAMS_LIST
-from cricket_sim_engine.players_data import get_initial_player_pool
 
 
 # ------------------------------------------------------------------ helpers
@@ -24,28 +23,19 @@ from cricket_sim_engine.players_data import get_initial_player_pool
 def _intl_league(match_format="t20", seed=42):
     random.seed(seed)
     ls = LeagueState()
-    ls.new_international_tournament("Indicia", match_format=match_format)
+    ls.new_international_tournament("India", match_format=match_format)
     return ls
 
 
-def _seed_pool(ls):
-    """Populate player pool from the IPL player data so autodraft_to_end() doesn't crash.
+def _intl_ready(match_format="t20", seed=42):
+    """International league ready to play its league stage.
 
-    The international_current data files come in Stage 5; for now tests borrow
-    the IPL pool which is structurally identical. Existing player objects are
-    team-agnostic — only their name/stats matter during the draft.
+    For the `international_current` pool there is no draft: the constructor
+    assigns each nation its real current roster and calls start_regular_season()
+    directly, so the league opens in phase "season". (The all-time world-franchise
+    pools are the ones that still open in phase "draft".)
     """
-    ls.player_pool = get_initial_player_pool()
-    for p in ls.player_pool:
-        p.is_overseas = False  # no overseas cap for national teams
-
-
-def _intl_drafted(match_format="t20", seed=42):
-    """International league with draft completed and season started."""
-    ls = _intl_league(match_format=match_format, seed=seed)
-    _seed_pool(ls)
-    ls.autodraft_to_end()
-    return ls
+    return _intl_league(match_format=match_format, seed=seed)
 
 
 def _quick_season(ls):
@@ -83,11 +73,27 @@ def test_intl_constructor_team_names():
 
 def test_intl_constructor_user_team():
     ls = _intl_league()
-    assert ls.user_team_name == "Indicia"
+    assert ls.user_team_name == "India"
 
 
-def test_intl_constructor_phase_draft():
+def test_intl_current_roster_skips_draft_and_opens_in_season():
+    """A current-roster international career has no draft to run.
+
+    Each nation is handed its real squad and the league stage starts immediately,
+    so the user goes straight to playing rather than through a mega draft.
+    """
     ls = _intl_league()
+    assert ls.phase == "season"
+    assert all(team.roster for team in ls.teams), "every nation should be pre-squadded"
+
+
+def test_intl_alltime_pool_still_opens_in_draft():
+    """The all-time world-franchise pools keep the mega draft (the counterpart path)."""
+    random.seed(42)
+    ls = LeagueState()
+    ls.new_international_tournament(
+        "Mumbai Monsoons", match_format="t20", draft_pool="alltime_t20_intl"
+    )
     assert ls.phase == "draft"
 
 
@@ -141,7 +147,7 @@ def test_single_rr_no_pair_plays_twice():
 # ------------------------------------------------------------------ finish_league_stage
 
 def test_finish_league_stage_t20_message_qualified():
-    ls = _intl_drafted(match_format="t20", seed=1)
+    ls = _intl_ready(match_format="t20", seed=1)
     while ls.phase == "season":
         ls.simulate_current_round()
     assert ls.phase == "league_complete"
@@ -150,7 +156,7 @@ def test_finish_league_stage_t20_message_qualified():
 
 
 def test_finish_league_stage_test_top2_message():
-    ls = _intl_drafted(match_format="test", seed=1)
+    ls = _intl_ready(match_format="test", seed=1)
     while ls.phase == "season":
         ls.simulate_current_round()
     assert ls.phase == "league_complete"
@@ -326,9 +332,7 @@ def test_start_international_playoffs_requires_league_complete():
 def test_full_intl_tournament_reaches_season_end(match_format):
     random.seed(99)
     ls = LeagueState()
-    ls.new_international_tournament("Austrella", match_format=match_format)
-    _seed_pool(ls)
-    ls.autodraft_to_end()
+    ls.new_international_tournament("Australia", match_format=match_format)
     while ls.phase == "season":
         ls.simulate_current_round()
     assert ls.phase == "league_complete"
@@ -343,9 +347,7 @@ def test_full_intl_tournament_reaches_season_end(match_format):
 def test_full_intl_t20_has_3_playoff_matches_played():
     random.seed(77)
     ls = LeagueState()
-    ls.new_international_tournament("Indicia", match_format="t20")
-    _seed_pool(ls)
-    ls.autodraft_to_end()
+    ls.new_international_tournament("India", match_format="t20")
     while ls.phase == "season":
         ls.simulate_current_round()
     ls.start_international_playoffs()
@@ -358,9 +360,7 @@ def test_full_intl_t20_has_3_playoff_matches_played():
 def test_full_intl_test_has_1_playoff_match_played():
     random.seed(55)
     ls = LeagueState()
-    ls.new_international_tournament("Engoria", match_format="test")
-    _seed_pool(ls)
-    ls.autodraft_to_end()
+    ls.new_international_tournament("England", match_format="test")
     while ls.phase == "season":
         ls.simulate_current_round()
     ls.start_international_playoffs()
@@ -373,9 +373,7 @@ def test_full_intl_test_has_1_playoff_match_played():
 def test_full_intl_champion_name_nonempty():
     random.seed(33)
     ls = LeagueState()
-    ls.new_international_tournament("Windoria", match_format="t20")
-    _seed_pool(ls)
-    ls.autodraft_to_end()
+    ls.new_international_tournament("West Indies", match_format="t20")
     while ls.phase == "season":
         ls.simulate_current_round()
     ls.start_international_playoffs()
@@ -389,7 +387,6 @@ def test_full_intl_champion_name_nonempty():
 
 def test_ipl_new_league_still_works():
     random.seed(1)
-    from cricket_sim_engine.players_data import IPL_TEAMS_LIST
     ls = LeagueState()
     ls.new_league("Mumbai Mavericks")
     assert ls.competition == "ipl"

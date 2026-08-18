@@ -57,7 +57,9 @@ jobs:
         run: make lint
 
       - name: Run root test suite
-        run: make test
+        # test-all, not test: `make test` skips the exhaustive `slow` tier for
+        # a fast local loop, but nothing should reach main without it.
+        run: make test-all
 
       - name: Apply backend migrations
         run: make backend-migrate

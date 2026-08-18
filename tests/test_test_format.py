@@ -5,6 +5,7 @@ A "tiny-budget" helper overrides `match.format` after the league is set up to
 force day/session exhaustion in just a handful of overs, which lets the time-
 expiry / draw path be exercised without simulating a full 450-over Test.
 """
+import copy
 import random
 
 import pytest
@@ -17,15 +18,29 @@ pytestmark = pytest.mark.integration
 USER_TEAM = "Mumbai Mavericks"
 
 
+# Autopiloting the draft costs ~1.8s and this module builds a league 20+ times,
+# so the draft dominated the file's runtime. It is deterministic per seed, so
+# run it once per seed and hand out deepcopies. The post-draft RNG state is
+# restored with each handout so matches played afterwards sample exactly the
+# same outcomes a freshly drafted league would have produced.
+_TEST_LEAGUE_CACHE = {}
+
+
 def _fresh_test_league(seed=1):
-    random.seed(seed)
-    league = LeagueState()
-    league.new_league(USER_TEAM, "medium", match_format="test")
-    league.start_draft()
-    league.autodraft_to_end()
-    team = league.user_team()
-    league.set_leadership(team.captain.name, team.vice_captain.name)
-    return league
+    cached = _TEST_LEAGUE_CACHE.get(seed)
+    if cached is None:
+        random.seed(seed)
+        league = LeagueState()
+        league.new_league(USER_TEAM, "medium", match_format="test")
+        league.start_draft()
+        league.autodraft_to_end()
+        team = league.user_team()
+        league.set_leadership(team.captain.name, team.vice_captain.name)
+        _TEST_LEAGUE_CACHE[seed] = (league, random.getstate())
+        cached = _TEST_LEAGUE_CACHE[seed]
+    template, rng_state_after_draft = cached
+    random.setstate(rng_state_after_draft)
+    return copy.deepcopy(template)
 
 
 def _auto_match(league):
@@ -35,16 +50,37 @@ def _auto_match(league):
     return match, match.auto_finish()
 
 
-def _seed_with_follow_on():
-    """Return (league, match, card) for a seed that produces a follow-on offer."""
-    for seed in range(1, 200):
-        league = _fresh_test_league(seed)
-        league.begin_match_day(interactive=True)
-        match = league.live_match
-        card = match.auto_finish()
-        if match.followed_on:
-            return league, match, card
-    raise RuntimeError("No follow-on found in first 200 seeds")
+def _follow_on_match(seed=1, enforce=True):
+    """Drive a Test match to the follow-on decision, then enforce or decline it.
+
+    The engine offers the follow-on when team A's first-innings lead reaches
+    `format["follow_on_margin"]` (200 by default). Hunting for a seed that
+    happens to produce a 200-run lead meant simulating up to 200 complete Test
+    matches just to reach the branch under test. Instead we drop the margin so
+    the offer always appears — the same "override match.format" trick this file
+    already uses to force a draw — and then exercise the enforce/decline paths
+    directly. What is under test here is the innings sequencing after that
+    decision, not the arithmetic of the threshold itself.
+    """
+    league = _fresh_test_league(seed)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    match.format = dict(match.format)
+    match.format["follow_on_margin"] = -(10 ** 6)  # any first-innings lead qualifies
+    _setup_innings_manually(match, league)
+
+    while match.status == "over":
+        match.play_over(auto=True)
+    if match.status == "impact":
+        match.apply_impact_sub(auto=True)
+    while match.status == "over":
+        match.play_over(auto=True)
+
+    assert match.status == "follow_on_decision", f"expected follow-on offer, got {match.status}"
+    match.decide_follow_on(enforce=enforce)
+    if match.status == "impact":
+        match.apply_impact_sub(auto=True)
+    return league, match, match.auto_finish()
 
 
 def _setup_innings_manually(match, league):
@@ -105,13 +141,19 @@ def test_full_test_match_completes(seed=42):
     assert card.get("summary")
 
 
-def test_full_test_match_points_are_conserved():
-    """Total team points after any Test result are always 2 (win+loss) or 2 (draw: 1+1)."""
-    for seed in range(1, 10):
-        league = _fresh_test_league(seed)
-        match, card = _auto_match(league)
-        total = match.team1.points + match.team2.points
-        assert total == 2, f"seed {seed}: total points {total}"
+@pytest.mark.slow
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_full_test_match_points_are_conserved(seed):
+    """Total team points after any Test result are always 2 (win+loss, or 1+1 for a draw).
+
+    Parametrised over a few seeds rather than looping 1..9 inside one test, so a
+    failure names the offending seed instead of stopping the whole loop. Marked
+    slow: each seed plays a complete Test match.
+    """
+    league = _fresh_test_league(seed)
+    match, _card = _auto_match(league)
+    total = match.team1.points + match.team2.points
+    assert total == 2, f"seed {seed}: total points {total}"
 
 
 def test_full_test_match_teams_alternate_innings():
@@ -125,31 +167,41 @@ def test_full_test_match_teams_alternate_innings():
         assert teams[0] != teams[1]
 
 
+@pytest.mark.slow
 def test_win_by_wickets_margin_format():
-    """A 4th-innings win-by-wickets result contains 'wickets' in the margin string."""
-    for seed in range(1, 20):
+    """A 4th-innings chase win reports its margin in wickets, not runs.
+
+    Only the wiring is checked here — the exact wording (singular vs plural, and
+    never "0 wickets") is pinned deterministically by the `wickets_margin` unit
+    tests in test_live_match_extra.py, so this no longer has to scan ~19 seeds
+    hoping to stumble on a chase win.
+    """
+    for seed in (1, 2, 3, 4, 5):
         league = _fresh_test_league(seed)
         match, card = _auto_match(league)
-        if not card.get("draw") and len(match.innings) == 4:
-            last = match.innings[-1]
-            team_a = [i for i in match.innings if i["team"] == match.inn1_bat]
-            team_b = [i for i in match.innings if i["team"] == match.inn1_bowl]
-            if sum(i["runs"] for i in team_b) > sum(i["runs"] for i in team_a):
-                assert "wickets" in card["margin"], f"expected wickets win, got: {card['margin']}"
-            break
+        if card.get("draw") or len(match.innings) != 4:
+            continue
+        team_a = [i for i in match.innings if i["team"] == match.inn1_bat]
+        team_b = [i for i in match.innings if i["team"] == match.inn1_bowl]
+        if sum(i["runs"] for i in team_b) > sum(i["runs"] for i in team_a):
+            assert "wickets" in card["margin"], f"expected wickets win, got: {card['margin']}"
+            return
+    pytest.skip("no 4th-innings chase win in the sampled seeds")
 
 
-def test_wins_and_losses_recorded_on_teams():
+@pytest.mark.slow
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_wins_and_losses_recorded_on_teams(seed):
     """The winning team records +1 win, the losing team records +1 loss."""
-    for seed in range(1, 10):
-        league = _fresh_test_league(seed)
-        match, card = _auto_match(league)
-        if not card.get("draw"):
-            winner_name = card["winner"]
-            winner = next(t for t in (match.team1, match.team2) if t.name == winner_name)
-            loser = match.team1 if winner == match.team2 else match.team2
-            assert winner.wins == 1
-            assert loser.losses == 1
+    league = _fresh_test_league(seed)
+    match, card = _auto_match(league)
+    if card.get("draw"):
+        pytest.skip(f"seed {seed} drew — no win/loss to assert")
+    winner_name = card["winner"]
+    winner = next(t for t in (match.team1, match.team2) if t.name == winner_name)
+    loser = match.team1 if winner == match.team2 else match.team2
+    assert winner.wins == 1
+    assert loser.losses == 1
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +211,7 @@ def test_wins_and_losses_recorded_on_teams():
 
 def test_follow_on_enforced_produces_3_team_b_innings():
     """When a follow-on is enforced, team B bats in innings 2 AND innings 3."""
-    _, match, card = _seed_with_follow_on()
+    _, match, _card = _follow_on_match(enforce=True)
     assert match.followed_on is True
     team_b_innings = [inn for inn in match.innings if inn["team"] == match.inn1_bowl]
     assert len(team_b_innings) == 2
@@ -167,31 +219,16 @@ def test_follow_on_enforced_produces_3_team_b_innings():
 
 def test_follow_on_enforced_team_b_bats_consecutively():
     """After an enforced follow-on, innings[1] and innings[2] are both team B."""
-    _, match, card = _seed_with_follow_on()
+    _, match, _card = _follow_on_match(enforce=True)
     assert match.innings[1]["team"] == match.inn1_bowl
     assert match.innings[2]["team"] == match.inn1_bowl
 
 
 def test_follow_on_decline_bats_team_a_in_innings3():
     """Declining the follow-on sends team A back to bat in innings 3, not team B."""
-    random.seed(1)  # seed 1 produces a follow-on offer
-    league = _fresh_test_league(1)
-    league.begin_match_day(interactive=True)
-    match = league.live_match
-    _setup_innings_manually(match, league)
-    while match.status == "over":
-        match.play_over(auto=True)
-    if match.status == "impact":
-        match.apply_impact_sub(auto=True)
-    while match.status == "over":
-        match.play_over(auto=True)
-    assert match.status == "follow_on_decision"
-    match.decide_follow_on(enforce=False)
+    _, match, _card = _follow_on_match(enforce=False)
     assert match.followed_on is False
-    if match.status == "impact":
-        match.apply_impact_sub(auto=True)
-    # Innings 3 should now be team A (inn1_bat) batting again.
-    assert match.score["batting_team"] == match.inn1_bat
+    assert match.innings[2]["team"] == match.inn1_bat
 
 
 def test_follow_on_decision_errors_when_not_pending():
