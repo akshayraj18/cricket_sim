@@ -24,6 +24,9 @@ ACTIONS = (
     "next-batter",
     "super-over-lineup",
     "impact-sub",
+    "proceed-session",
+    "follow-on-decision",
+    "declare",
 )
 
 

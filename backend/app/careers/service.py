@@ -9,7 +9,7 @@ from cricket_sim_engine.sim.league_state import LeagueState
 from app.db.models.career import Career, Match as MatchRow, MatchBall as MatchBallRow, Player as PlayerRow, Team as TeamRow
 
 VALID_DIFFICULTIES = ("easy", "medium", "hard")
-VALID_DRAFT_POOL_TYPES = ("current", "alltime", "rosters2026")
+VALID_DRAFT_POOL_TYPES = ("current", "alltime", "rosters2026", "international_current", "alltime_t20_intl", "alltime_odi", "alltime_test")
 
 # `card["stage"]` values produced by the engine -> `matches.stage` values.
 STAGE_NAMES = {
@@ -17,6 +17,8 @@ STAGE_NAMES = {
     "Qualifier 1": "qualifier1",
     "Eliminator": "eliminator",
     "Qualifier 2": "qualifier2",
+    "Semifinal 1": "semifinal1",
+    "Semifinal 2": "semifinal2",
     "Final": "final",
 }
 
@@ -40,19 +42,54 @@ class CareerNotFoundError(CareerError):
     pass
 
 
-def build_league_state(user_team_name: str, difficulty: str, draft_pool_type: str) -> LeagueState:
-    if user_team_name not in IPL_TEAMS_LIST:
-        raise CareerError("Choose a valid cricket franchise.")
+def build_league_state(
+    user_team_name: str,
+    difficulty: str,
+    draft_pool_type: str,
+    competition: str = "ipl",
+    match_format: str = "t20",
+    career_mode: str = "league",
+    series_length: int | None = None,
+    opponent_name: str | None = None,
+) -> LeagueState:
     if difficulty not in VALID_DIFFICULTIES:
         raise CareerError(f"Difficulty must be one of {VALID_DIFFICULTIES}.")
     if draft_pool_type not in VALID_DRAFT_POOL_TYPES:
         raise CareerError(f"Draft pool type must be one of {VALID_DRAFT_POOL_TYPES}.")
+    if match_format not in ("t20", "odi", "test"):
+        raise CareerError("match_format must be t20, odi, or test.")
 
     league = LeagueState()
-    if draft_pool_type == "rosters2026":
-        league.new_league_with_rosters(user_team_name, difficulty)
+
+    if competition == "international":
+        if career_mode == "bilateral":
+            if not opponent_name:
+                raise CareerError("opponent_name is required for bilateral series.")
+            sl = series_length if series_length in (1, 3, 5) else 3
+            try:
+                league.new_bilateral_series(
+                    user_team_name, opponent_name,
+                    match_format=match_format, series_length=sl,
+                    difficulty=difficulty, draft_pool=draft_pool_type,
+                )
+            except ValueError as exc:
+                raise CareerError(str(exc)) from exc
+        else:
+            try:
+                league.new_international_tournament(
+                    user_team_name, match_format=match_format,
+                    career_mode=career_mode, difficulty=difficulty,
+                    draft_pool=draft_pool_type,
+                )
+            except ValueError as exc:
+                raise CareerError(str(exc)) from exc
     else:
-        league.new_league(user_team_name, difficulty, draft_pool=draft_pool_type)
+        if user_team_name not in IPL_TEAMS_LIST:
+            raise CareerError("Choose a valid cricket franchise.")
+        if draft_pool_type == "rosters2026":
+            league.new_league_with_rosters(user_team_name, difficulty)
+        else:
+            league.new_league(user_team_name, difficulty, draft_pool=draft_pool_type, match_format=match_format)
     return league
 
 
@@ -61,6 +98,10 @@ def _career_fields_from_state(league: LeagueState) -> dict:
         "user_team_name": league.user_team_name,
         "difficulty": league.difficulty,
         "draft_pool_type": league.draft_pool_type,
+        "competition": getattr(league, "competition", "ipl"),
+        "match_format": getattr(league, "match_format", "t20"),
+        "career_mode": getattr(league, "career_mode", "league"),
+        "series_length": getattr(league, "series_length", None),
         "phase": league.phase,
         "season_year": league.season_year,
         "completed_seasons": league.completed_seasons,
@@ -233,6 +274,11 @@ async def create_career(
     user_team_name: str,
     difficulty: str,
     draft_pool_type: str,
+    competition: str = "ipl",
+    match_format: str = "t20",
+    career_mode: str = "league",
+    series_length: int | None = None,
+    opponent_name: str | None = None,
 ) -> Career:
     name = name.strip()
     if not name:
@@ -242,7 +288,12 @@ async def create_career(
     if existing.scalar_one_or_none() is not None:
         raise CareerError(f'A career named "{name}" already exists.')
 
-    league = build_league_state(user_team_name, difficulty, draft_pool_type)
+    league = build_league_state(
+        user_team_name, difficulty, draft_pool_type,
+        competition=competition, match_format=match_format,
+        career_mode=career_mode, series_length=series_length,
+        opponent_name=opponent_name,
+    )
 
     career = Career(user_id=user_id, name=name, **_career_fields_from_state(league))
     db.add(career)

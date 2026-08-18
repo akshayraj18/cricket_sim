@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
+import { getContrastText, getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
@@ -95,11 +95,15 @@ export function LiveMatchHub({
         <NextBatterStage match={match} accent={accent} wrap={wrap} careerId={careerId} />
       )}
 
+      {match.status === 'follow_on_decision' && (
+        <FollowOnStage match={match} accent={accent} wrap={wrap} careerId={careerId} />
+      )}
+
       {match.status === 'complete' && (
         <FinalScorecardStage match={match} onComplete={completeMatch} canComplete accent={accent} />
       )}
 
-      {!['toss', 'lineup', 'batting_order', 'impact', 'super_over_setup', 'next_batter', 'complete'].includes(
+      {!['toss', 'lineup', 'batting_order', 'impact', 'super_over_setup', 'next_batter', 'follow_on_decision', 'complete'].includes(
         match.status
       ) && <OverHubStage match={match} accent={accent} wrap={wrap} careerId={careerId} />}
     </View>
@@ -134,8 +138,10 @@ function TossStage({
       <Card>
         <ThemedText style={styles.panelTitle}>Choose Decision</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
-          You&apos;ll confirm your Starting XI next. Bowl first starts your Impact Sub in place of a batter; you choose
-          the bowler for each over live in the hub.
+          You&apos;ll confirm your Starting XI next.
+          {match.match_format === 't20'
+            ? ' Bowl first starts your Impact Sub in place of a batter; you choose the bowler for each over live.'
+            : ' You choose the bowler for each over live in the hub.'}
         </ThemedText>
         <View style={styles.buttonRow}>
           <Button
@@ -230,8 +236,7 @@ function LineupStage({
           </ThemedText>
         ) : (
           <ThemedText themeColor="textDim" style={styles.helpText}>
-            {match.message} Tap a slot to assign or swap a player. Slots are grouped by where each player naturally
-            bats — openers, middle order, death overs, tail.
+            {match.message} Tap a slot to assign or swap a player. Slots are grouped by batting position — openers, middle order, lower order, tail.
           </ThemedText>
         )}
         {validationError && (
@@ -557,6 +562,51 @@ function NextBatterStage({
 }
 
 // ---------------------------------------------------------------------------
+// Follow-on decision (Test only)
+// ---------------------------------------------------------------------------
+
+function FollowOnStage({
+  match,
+  accent,
+  wrap,
+  careerId,
+}: {
+  match: LiveMatchPayload;
+  accent?: string;
+  wrap: (fn: () => Promise<LiveMatchPayload>) => Promise<void>;
+  careerId: string;
+}) {
+  return (
+    <View style={styles.stage}>
+      <View style={[styles.scoreboard, { backgroundColor: accent ?? '#3a3f4b' }]}>
+        <ThemedText style={styles.scoreboardSmall}>{match.team1} vs {match.team2}</ThemedText>
+        <ThemedText style={styles.scoreboardLine}>Follow-on</ThemedText>
+        <ThemedText style={styles.scoreboardMessage}>{match.message}</ThemedText>
+      </View>
+      <Card>
+        <ThemedText style={styles.panelTitle}>Enforce Follow-on?</ThemedText>
+        <ThemedText themeColor="textDim" style={styles.helpText}>
+          The team batting second is still well behind. You can make them bat again immediately (follow-on), or bat again yourself to set a bigger target.
+        </ThemedText>
+        <View style={styles.buttonRow}>
+          <Button
+            label="Enforce Follow-on"
+            variant="primary"
+            accentColor={accent}
+            onPress={() => wrap(() => liveMatchApi.followOnDecision(careerId, true))}
+          />
+          <Button
+            label="Bat Again"
+            variant="secondary"
+            onPress={() => wrap(() => liveMatchApi.followOnDecision(careerId, false))}
+          />
+        </View>
+      </Card>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Over hub — main ball-by-ball control screen
 // ---------------------------------------------------------------------------
 
@@ -617,6 +667,22 @@ function OverHubStage({
 
       {section === 'controls' && (
         <>
+      {match.match_format === 'test' && match.pending_session_break && (
+        <Card>
+          <ThemedText style={styles.panelTitle}>
+            Session Over
+          </ThemedText>
+          <ThemedText themeColor="textDim" style={styles.helpText}>
+            Stumps or lunch break — Day {match.current_day ?? 1}, Session {match.current_session ?? 1} of {match.sessions_per_day ?? 3}.
+          </ThemedText>
+          <Button
+            label="Proceed to Next Session"
+            variant="primary"
+            accentColor={accent}
+            onPress={() => wrap(() => liveMatchApi.proceedSession(careerId))}
+          />
+        </Card>
+      )}
       <Card>
         <ThemedText style={styles.panelTitle}>Ball Controls</ThemedText>
         <ThemedText themeColor="textDim" style={styles.helpText}>
@@ -652,8 +718,20 @@ function OverHubStage({
         <View style={styles.buttonRow}>
           <Button label="Skip 5 Overs" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 30, stop_on_wicket: false }))} />
           <Button label="Skip 10 Overs" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 60, stop_on_wicket: false }))} />
-          <Button label="End Innings" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: 120, stop_on_wicket: false }))} />
+          {match.match_format === 'test'
+            ? <Button label="Skip Session" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: (match.overs_remaining_in_session ?? 30) * 6, stop_on_wicket: false }))} />
+            : <Button label="End Innings" variant="ghost" accentColor={accent} small onPress={() => runAction(() => liveMatchApi.playUntil(careerId, { balls: match.total_balls ?? 120, stop_on_wicket: false }))} />
+          }
         </View>
+        {match.can_declare && (
+          <View style={[styles.buttonRow, { marginTop: 4 }]}>
+            <Button
+              label="Declare Innings"
+              variant="secondary"
+              onPress={() => wrap(() => liveMatchApi.declare(careerId))}
+            />
+          </View>
+        )}
       </Card>
 
       <Card>
@@ -763,55 +841,58 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
   const nonStriker = score.bat_stats.find((p) => p.name === score.non_striker);
   const bowler = score.bowl_stats.find((p) => p.name === score.active_bowler);
   const neededRuns = score.target ? Math.max(0, score.target - score.runs) : 0;
-  const ballsLeft = Math.max(0, 120 - score.balls);
+  const totalBalls = match.total_balls ?? 120;
+  const ballsLeft = Math.max(0, totalBalls - score.balls);
+  const scoreBg = score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team);
+  const scoreText = getContrastText(scoreBg);
 
   return (
-    <View style={[styles.scoreboard, { backgroundColor: score.batting_team_color || getTeamBackground(teamMetaByName(score.batting_team), score.batting_team) }]}>
-      <ThemedText style={styles.scoreboardTeam} numberOfLines={1}>
+    <View style={[styles.scoreboard, { backgroundColor: scoreBg }]}>
+      <ThemedText style={[styles.scoreboardTeam, { color: scoreText }]} numberOfLines={1}>
         {score.batting_team}
       </ThemedText>
       <View style={styles.scoreboardScoreRow}>
-        <ThemedText style={styles.scoreboardLine}>
+        <ThemedText style={[styles.scoreboardLine, { color: scoreText }]}>
           {score.runs}/{score.wickets}
         </ThemedText>
-        <ThemedText style={styles.scoreboardOvers}>({overs} ov)</ThemedText>
+        <ThemedText style={[styles.scoreboardOvers, { color: scoreText, opacity: 0.85 }]}>({overs} ov)</ThemedText>
       </View>
       {score.target ? (
-        <ThemedText style={styles.scoreboardSmall}>Target {score.target}</ThemedText>
+        <ThemedText style={[styles.scoreboardSmall, { color: scoreText }]}>Target {score.target}</ThemedText>
       ) : null}
 
       {score.striker ? (
         <View style={styles.batterLine}>
-          <ThemedText style={styles.strikeMark}>{'>'}</ThemedText>
-          <ThemedText style={styles.batterName} numberOfLines={1}>
+          <ThemedText style={[styles.strikeMark, { color: scoreText }]}>{'>'}</ThemedText>
+          <ThemedText style={[styles.batterName, { color: scoreText }]} numberOfLines={1}>
             {score.striker}
           </ThemedText>
-          <ThemedText style={styles.batterFigs}>
+          <ThemedText style={[styles.batterFigs, { color: scoreText, opacity: 0.85 }]}>
             {striker?.runs ?? 0} ({striker?.balls ?? 0})
           </ThemedText>
         </View>
       ) : null}
       {score.non_striker ? (
         <View style={styles.batterLine}>
-          <ThemedText style={styles.strikeMark}> </ThemedText>
-          <ThemedText style={styles.batterName} numberOfLines={1}>
+          <ThemedText style={[styles.strikeMark, { color: scoreText }]}> </ThemedText>
+          <ThemedText style={[styles.batterName, { color: scoreText, opacity: 0.75 }]} numberOfLines={1}>
             {score.non_striker}
           </ThemedText>
-          <ThemedText style={styles.batterFigs}>
+          <ThemedText style={[styles.batterFigs, { color: scoreText, opacity: 0.75 }]}>
             {nonStriker?.runs ?? 0} ({nonStriker?.balls ?? 0})
           </ThemedText>
         </View>
       ) : null}
 
       {score.partnership ? (
-        <View style={styles.scoreboardDivider}>
-          <ThemedText style={styles.scoreboardSmall}>Partnership</ThemedText>
-          <ThemedText style={[styles.scoreboardSmall, styles.scoreboardSmallStrong]}>{score.partnership}</ThemedText>
+        <View style={[styles.scoreboardDivider, { borderTopColor: scoreText === '#ffffff' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)' }]}>
+          <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]}>Partnership</ThemedText>
+          <ThemedText style={[styles.scoreboardSmall, styles.scoreboardSmallStrong, { color: scoreText }]}>{score.partnership}</ThemedText>
         </View>
       ) : null}
 
       <View style={styles.currentOverBlock}>
-        <ThemedText style={styles.scoreboardSmall} numberOfLines={1}>
+        <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]} numberOfLines={1}>
           {abbreviateName(score.active_bowler ?? 'No bowler')}
           {bowler ? ` · ${bowler.wickets ?? 0}-${bowler.runs ?? 0} (${bowler.overs})` : ''}
         </ThemedText>
@@ -822,9 +903,12 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
         </View>
       </View>
 
-      <ThemedText style={styles.scoreboardSmall}>
-        {score.phase}
-        {score.target ? ` · ${neededRuns} needed off ${ballsLeft}` : ` · ${ballsLeft} balls left`}
+      <ThemedText style={[styles.scoreboardSmall, { color: scoreText, opacity: 0.85 }]}>
+        {match.match_format === 'test'
+          ? `Day ${match.current_day ?? 1} · Session ${match.current_session ?? 1} · ${match.overs_remaining_in_session ?? 0} ov left in session`
+          : match.match_format === 'odi'
+          ? `${score.phase}${score.target ? ` · ${neededRuns} needed off ${Math.ceil(ballsLeft / 6)} ov` : ` · ${Math.ceil(ballsLeft / 6)} ov left`}`
+          : `${score.phase}${score.target ? ` · ${neededRuns} needed off ${ballsLeft}` : ` · ${ballsLeft} balls left`}`}
       </ThemedText>
     </View>
   );

@@ -1,8 +1,9 @@
 """Shared fixtures and helpers for the cricket-sim test suite.
 
-Tests drive `LeagueState`/`LiveMatch` directly (the same objects `ui_server.py`
-wraps with HTTP) so they exercise real game logic without a server process.
+Tests drive `LeagueState`/`LiveMatch` directly, exercising real game logic
+without a server process.
 """
+import copy
 import random
 
 import pytest
@@ -20,12 +21,33 @@ def fresh_league(user_team=USER_TEAM, difficulty="medium", seed=12345):
     return league
 
 
+# Autopiloting the mega-draft costs ~1.8s, and dozens of tests need a drafted
+# league, so a cold draft per test dominated the suite runtime. The draft is
+# deterministic for a given (team, difficulty, seed), so we run it once and
+# hand out `deepcopy`s instead (~0.012s — roughly 150x cheaper).
+#
+# Callers get a fully independent LeagueState, so mutation-heavy tests stay
+# isolated exactly as before. We also snapshot the global RNG state as it was
+# immediately after the draft and restore it on every handout: the draft
+# consumes randomness, and tests that go on to play matches depend on the
+# generator continuing from that post-draft position. Without this, cached
+# leagues would silently diverge from freshly drafted ones.
+_DRAFTED_CACHE: dict[tuple[str, str, int], tuple[LeagueState, tuple]] = {}
+
+
 def drafted_league(user_team=USER_TEAM, difficulty="medium", seed=12345):
     """A league with the mega-draft fully autopiloted — every team has a full 21-player roster and the season is open."""
-    league = fresh_league(user_team, difficulty, seed)
-    league.start_draft()
-    league.autodraft_to_end()
-    return league
+    key = (user_team, difficulty, seed)
+    cached = _DRAFTED_CACHE.get(key)
+    if cached is None:
+        league = fresh_league(user_team, difficulty, seed)
+        league.start_draft()
+        league.autodraft_to_end()
+        _DRAFTED_CACHE[key] = (league, random.getstate())
+        cached = _DRAFTED_CACHE[key]
+    template, rng_state_after_draft = cached
+    random.setstate(rng_state_after_draft)
+    return copy.deepcopy(template)
 
 
 def player(team, name):

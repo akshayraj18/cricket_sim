@@ -244,3 +244,65 @@ def get_alltime_player_pool():
                 p.preferred_position = natural_slot
             pool.append(p)
     return pool
+
+
+def get_international_rosters(match_format: str = "t20"):
+    """Return (rosters_dict, all_players_pool) for the given format.
+
+    Delegates to `international_data.get_international_rosters` so the engine
+    can call it via the same players_data import path used elsewhere.
+    """
+    from cricket_sim_engine.international_data import get_international_rosters as _get
+    return _get(match_format)
+
+
+def _load_alltime_csv(filename: str):
+    """Load a CSV of all-time greats from DATA_DIR. Returns the player pool."""
+    csv_path = os.path.join(DATA_DIR, filename)
+    if not os.path.exists(csv_path):
+        return []
+    pool = []
+    with open(csv_path, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = row['name'].strip()
+            role = row['role'].strip()
+            base_ovr = int(row['base_ovr'])
+            batting_ovr = int(row['batting_ovr'])
+            bowling_ovr = int(row['bowling_ovr'])
+            is_overseas = row['is_overseas'].strip().lower() == 'true'
+            age = int(row['age'])
+            batting_hand = row.get('batting_hand', 'Right').strip()
+            bowling_hand = row.get('bowling_hand', 'Right').strip()
+            batting_archetype = row.get('batting_archetype', 'Middle-over Rotator').strip()
+            bowling_phase = row.get('bowling_phase', 'Flexible').strip()
+            bowling_type = row.get('bowling_type', 'None').strip()
+            strengths = row.get('strengths', '').strip()
+            weaknesses = row.get('weaknesses', '').strip()
+            natural_slot_raw = row.get('natural_slot', '').strip()
+            natural_slot = int(natural_slot_raw) if natural_slot_raw.isdigit() else None
+            p = Player(name, role, base_ovr, batting_ovr, bowling_ovr, is_overseas, age,
+                       batting_hand, bowling_hand, batting_archetype, bowling_phase,
+                       bowling_type, strengths, weaknesses)
+            if natural_slot is not None:
+                p.preferred_position = natural_slot
+            pool.append(p)
+    return pool
+
+
+def get_alltime_t20_intl_pool():
+    """350+ all-time T20I greats for the international all-time mega draft."""
+    pool = _load_alltime_csv("players_alltime_t20_intl.csv")
+    return pool if pool else get_alltime_player_pool()
+
+
+def get_alltime_odi_pool():
+    """350+ all-time ODI greats for the international all-time mega draft."""
+    pool = _load_alltime_csv("players_alltime_odi.csv")
+    return pool if pool else get_initial_player_pool()
+
+
+def get_alltime_test_pool():
+    """350+ all-time Test greats for the international all-time mega draft."""
+    pool = _load_alltime_csv("players_alltime_test.csv")
+    return pool if pool else get_initial_player_pool()

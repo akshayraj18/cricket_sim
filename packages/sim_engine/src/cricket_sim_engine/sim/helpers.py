@@ -42,8 +42,18 @@ def counts_as_batter(player):
 
 
 def counts_as_bowler(player):
-    """Whether this player can be selected into a bowling plan at all (role-wise)."""
-    return "Bowler" in player.role or player.role == "All-Rounder"
+    """Whether this player can be selected into a bowling plan.
+
+    Primary bowlers/all-rounders always qualify. Batsmen and wicketkeepers
+    with bowling_ovr >= 65 also qualify as genuine part-time options (e.g.
+    Sachin Tendulkar 65-68, Chris Gayle 68-72, Viv Richards 68). The
+    phase-fit score naturally deprioritises them vs specialist bowlers. The
+    65 floor keeps out players who essentially never bowl (Kohli, Dhoni,
+    Root etc. sit at 10-20).
+    """
+    if "Bowler" in player.role or player.role == "All-Rounder":
+        return True
+    return getattr(player, "bowling_ovr", 0) >= 65
 
 
 def ordinal(number):
@@ -53,6 +63,16 @@ def ordinal(number):
     else:
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
     return f"{number}{suffix}"
+
+
+def wickets_margin(wickets_remaining):
+    """Render a chase-win margin, e.g. 1 -> "won by 1 wicket", 7 -> "won by 7 wickets".
+
+    A side that successfully chases still has at least one wicket in hand, so a
+    margin of "0 wickets" is never a legitimate result — it only ever came from
+    counting wickets the wrong way round. Callers pass `10 - wickets_lost`.
+    """
+    return f"won by {wickets_remaining} wicket{'s' if wickets_remaining != 1 else ''}"
 
 
 def bowling_kind(player):
@@ -94,11 +114,12 @@ def ensure_stat_fields(player):
         player.stats.setdefault(key, value)
 
 
-def innings_phase(over_num):
-    """Classify a (zero-indexed) over number into the standard T20 phase: Powerplay (overs 1-6), Middle Overs (7-15), or Death Overs (16-20)."""
-    if over_num < 6:
+def innings_phase(over_num, phase_boundaries=(6, 15)):
+    """Classify a (zero-indexed) over number into Powerplay/Middle Overs/Death Overs using `phase_boundaries` (start-of-middle, start-of-death) — defaults to the standard T20 cutoffs (6, 15)."""
+    powerplay_end, death_start = phase_boundaries
+    if over_num < powerplay_end:
         return "Powerplay"
-    if over_num < 15:
+    if over_num < death_start:
         return "Middle Overs"
     return "Death Overs"
 

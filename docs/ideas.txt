@@ -1,0 +1,168 @@
+CricSim — Feature Backlog & Roadmap
+Last updated: August 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER DATA SNAPSHOT — 17 Aug 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pulled from PostHog (project 469107) + the Railway production Postgres.
+Re-measure before re-prioritising; these numbers drive the sections below.
+
+Scale (bigger than the "4 downloads" we had been assuming):
+  - 74 people seen in PostHog, 49 "Application Installed", 48 registered users
+  - 48 careers, 10,648 matches simulated, 2.4M balls bowled
+  - Growth is accelerating: 8 / 11 / 12 new careers in the last three full weeks
+  - 100% of users are on app version 1.0.0 — we have never shipped an update
+
+The core problem is RETENTION, not acquisition:
+  - 47 of 74 people (64%) used the app on exactly ONE day and never returned
+  - only 9 people were ever active on 4+ separate days
+  - 23 of 48 careers are stale (untouched for 14+ days); 17 active in last 7 days
+  - 13 users deleted their account outright
+
+But engaged users are VERY engaged (the game itself is working):
+  - 27 of 48 careers have played 71+ matches; 16 have played 200+
+  - deepest careers have completed 20, 19, and 14 seasons
+  - so the retention cliff is in the FIRST SESSION, not in the core loop
+
+First-run funnel leaks, in order of size:
+  - 8 of 48 registered users never created a career at all
+  - 10 careers never played a single match; 5 of those were created and
+    abandoned within ~1 minute, sitting in the mega-draft
+  - tutorial: 47 started, only 29 completed, 24 skipped
+  - NOTE: careers sitting in phase='draft' are NOT all stuck beginners — that
+    cohort averages 330 matches (they are between-season re-drafts). Only the
+    zero-match ones are true drop-offs. Don't confuse the two.
+
+Platform mix (justifies the iPad work):
+  - 9 of 74 users are on iPadOS (~12%)
+  - ~5 users still on iOS 16/17 — keep the deployment target low
+  - device model is NOT captured; we cannot segment by iPhone model yet
+
+BIGGEST INSTRUMENTATION GAP: there are no gameplay events at all. The last
+event in the funnel is career_created. We cannot see draft completion, matches
+played, seasons finished, or where a session ends — all match data has to be
+reverse-engineered from Postgres. Fixing this is prerequisite to measuring
+whether any retention change actually worked.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Phase 0  — FastAPI backend, Postgres/Redis, JWT auth
+Phase 1  — React Native / Expo mobile app, full career flow
+Phase 2  — Auth & cloud save (Apple/Google sign-in, guest accounts, refresh tokens)
+Phase 3  — Telemetry (Sentry crash reporting, PostHog analytics, backend logging)
+Phase 4  — Local notifications (re-engagement reminders)
+Phase 5  — App Store submission, EAS Build, TestFlight, legal pages
+Phase 8A — Multi-format engine (T20 / ODI / Test) — format configs, phase system,
+            Test day/session pacing, follow-on, declarations, draws
+Phase 8B — All-time ODI and Test draft pools
+Phase 8C — International careers (tournament + bilateral), world city franchises,
+            current national team rosters, real country/city names
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IN PROGRESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- international_data.py: real current 2026 squads for 10 nations × 3 formats
+- players_alltime_t20_intl.csv / players_alltime_odi.csv / players_alltime_test.csv:
+  research and verify correct natural_slot for each all-time great
+- Backend service.py: wire skip-draft path for international_current careers
+- Bilateral series: fix 500 errors on simulate-round during Test/ODI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEXT PRIORITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Analytics & Instrumentation  ** do this first — everything else is unmeasurable
+                                without it **
+  - Gameplay funnel events (the whole missing middle of the funnel):
+      draft_started / draft_pick_made / draft_completed / draft_abandoned
+      match_started / match_completed / match_quick_simmed
+      season_completed / playoffs_reached / trophy_won
+      career_deleted (and WHY, if we can capture a reason)
+  - Capture $device_model / $device_type properly — right now every user
+    reports as "Mobile" with no model, so we cannot segment iPhone vs iPad
+    beyond the OS name, and cannot validate device-specific layout bugs.
+  - Screen-view events per tab so we can see where a first session dies.
+  - Tag events with app version — every user is on 1.0.0 today, so the moment
+    we ship, version becomes the key comparison dimension.
+  - Sentry: generate a read auth token and wire crash-free-session rate into
+    the release checklist. We currently ship blind to crash rates. (The DSNs
+    in secrets/ids.txt are ingest-only; they cannot read issues back.)
+
+Retention — first session  ** the 64% one-and-done problem **
+  - The mega-draft is the most likely first-run wall: it is long, it is the
+    default for new careers, and 5 careers were abandoned inside it within a
+    minute. Options: a "quick draft / auto-draft my squad" escape hatch, a
+    visible progress indicator, and the ability to resume a draft later.
+  - Make "2026 Rosters (No Draft)" the recommended/default option for a first
+    career so a brand-new user reaches an actual match fast, and offer the
+    mega-draft as the deliberate, richer choice.
+  - Tutorial completion is only 62% — shorten it, make skipping non-terminal,
+    and let users replay it from Settings.
+  - Get the user to their first MATCH within the first session; that is the
+    moment the product proves itself (people who reach it play 71+ matches).
+  - Re-engagement: we have local notifications, but 23 careers are stale.
+    A "your season is waiting — N matches left" nudge is worth testing.
+
+App Store rating & feedback
+  - In-app rating prompt via StoreKit's SKStoreReviewController
+    (expo-store-review). Trigger it on a genuine high point — winning a
+    trophy, completing a first season, or a milestone century — never on
+    launch and never during a match. iOS caps prompts at 3/year per user,
+    so spend them only on users who have already shown engagement.
+  - Gate the prompt behind a positive signal (e.g. 2+ seasons completed) so
+    we bias the sample toward users likely to leave 4-5 stars.
+  - Add an in-app "send feedback" path that is NOT the App Store, so unhappy
+    users have somewhere to go other than a 1-star review.
+  - Ask for the rating only after the app has been updated at least once, so
+    reviews reflect the current build rather than 1.0.0.
+
+Gameplay / Format Quality
+  - Verify and fix all-time great player natural_slot values per format
+  - IPL → "Indian T20 League" rename in mobile UI text
+  - NRR column in international standings (Test: W/D/L/Points table)
+  - Day summary card after stumps in Test (runs, wickets, highlights)
+  - Required rate display in ODI chase (current RR vs required RR)
+  - Partnership tracker (runs + balls for current stand)
+  - Milestone alerts: 50/100 for batters, 5-wicket hauls for bowlers
+  - Phase color coding in T20 scoreboard (green powerplay, amber middle, red death)
+
+Bug Fixes (from KNOWN_ISSUES.md)
+  - Account data bleed: scope active_career_id storage key per user id
+  - "How to Play" tutorial error before career exists
+  - Team color fallback to green on match hub + fixtures row
+  - iPhone display: squad tab overflow, scorecard spacing, text size scaling
+
+Draft Improvements
+  - Format filter in draft: Test draft shows Test specialists first (endurance/technique)
+  - Stats column: show batting avg / bowling avg in addition to OVR for ODI/Test drafts
+  - "Best available" pick suggestion per format priority
+
+Phase 6 — Monetisation
+  - StoreKit (iOS) + Google Play Billing
+  - "Pro" subscription tier — feature gate: advanced analytics, full history, rename packs
+  - Auction mode (alternative to snake draft — bid-based squad building)
+  - One-time content pack purchases
+
+Phase 7 — Engagement
+  - Commentary / flavor-text feed during matches
+  - Achievements / badges (first century, 5-wicket haul, unbeaten season, etc.)
+  - Daily / weekly challenges
+  - Advanced analytics screens (Pro)
+
+Phase 8D — Auction Mode
+  - Bid-based squad building as an alternative to snake/mega draft
+  - Format-agnostic; can ship independently of format work
+
+Phase 9 — Social / Multiplayer  (Pro flagship)
+  - Multiplayer leagues (friends, shared simulation)
+  - Global leaderboards / ranked seasons
+  - Trade system between human-managed franchises
+
+Phase 10 — v1.0 Stable
+  - Full QA across devices (iPhone 15/16/17, iPad, various Android)
+  - Localization (EN first; consider Hindi/Urdu for India market)
+  - App Store optimization
+  - Launch marketing

@@ -1,28 +1,33 @@
-.PHONY: install run kill test unit integration regression lint clean \
+.PHONY: install test test-all test-exhaustive unit integration regression lint clean \
 	backend-up backend-down backend-run backend-migrate backend-test gen-secret \
+	webapp \
 	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
 	uv sync
 
-# Start the legacy stdlib web UI at http://localhost:8765
-run:
-	uv run python3 legacy/ui_server.py
-
-# Kill any running legacy/ui_server.py processes.
-kill:
-	pkill -f legacy/ui_server.py || true
-
-# Run the full test suite (use `make test ARGS="-k impact_sub"` to filter).
+# The everyday run: basic user-facing behaviour plus intermediate/edge cases,
+# excluding the exhaustive `slow` tier. This is what you run while iterating.
+# Use `make test ARGS="-k impact_sub"` to filter.
 test:
+	uv run pytest -m "not slow" $(ARGS)
+
+# Everything, including the exhaustive `slow` tier (full Test matches, repeated
+# whole-season sims). This is what CI runs on every PR, so nothing reaches main
+# without it — run it locally too before pushing something risky.
+test-all:
 	uv run pytest $(ARGS)
+
+# Just the exhaustive tier, for when you're specifically poking at it.
+test-exhaustive:
+	uv run pytest -m slow $(ARGS)
 
 # Run only fast, isolated unit tests (helpers, models, engine, players_data).
 unit:
 	uv run pytest -m unit $(ARGS)
 
-# Run only integration tests (draft/lineup/match-flow/league-state/ui_server).
+# Run only integration tests (draft/lineup/match-flow/league-state flows).
 integration:
 	uv run pytest -m integration $(ARGS)
 
@@ -32,7 +37,7 @@ regression:
 
 # Static-check for undefined names, unused imports, etc.
 lint:
-	uv run pyflakes packages/sim_engine/src/cricket_sim_engine legacy tests backend/app backend/tests
+	uv run pyflakes packages/sim_engine/src/cricket_sim_engine tests backend/app backend/tests
 
 # Remove cached bytecode.
 clean:
@@ -53,9 +58,9 @@ backend-down:
 backend-migrate:
 	cd backend && uv run alembic upgrade head
 
-# Start the FastAPI dev server at http://localhost:8000
+# Start the FastAPI dev server at http://0.0.0.0:8000 (reachable by iOS Simulator via LAN IP)
 backend-run:
-	cd backend && uv run uvicorn app.main:app --reload --port 8000
+	cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --reload --port 8000
 
 # Run backend tests against the local Postgres container (requires backend-up).
 backend-test:
@@ -71,6 +76,13 @@ gen-secret:
 		existing = p.read_text() if p.exists() else ''; \
 		print('Refusing to overwrite an existing JWT_SECRET in .env.local — delete it first to rotate.') if 'JWT_SECRET=' in existing else \
 		(p.open('a').write(('\n' if existing and not existing.endswith('\n') else '') + 'JWT_SECRET=' + secrets.token_urlsafe(48) + '\n'), print('Wrote a new JWT_SECRET to backend/.env.local (gitignored).'))"
+
+# --- Browser web app (webapp/) -------------------------------------------------
+
+# Serve the static browser UI against the local FastAPI backend.
+# Run `make backend-run` first in another shell, then open http://localhost:8765.
+webapp:
+	uv run python3 -m http.server 8765 --directory webapp
 
 # --- Expo mobile app (mobile/) -------------------------------------------------
 

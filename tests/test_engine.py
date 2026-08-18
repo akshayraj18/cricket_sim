@@ -307,3 +307,65 @@ def test_eval_match_performances_falls_back_to_player_stats_when_no_match_stats_
     p.stats["balls_faced"] = 50
     engine.eval_match_performances_for_form([p], [], batter_stats=None, bowler_stats=None)
     assert p.form > 5
+
+
+# --- format-aware form thresholds (ODI and Test) --------------------------------
+
+def test_odi_30_runs_above_sr115_boosts_form():
+    """ODI: 30 runs at SR > 115 counts as a good performance (threshold: SR > 115)."""
+    engine = MatchEngine()
+    engine.match_format = "odi"
+    p = make_player(name="Batter", age=27)
+    p.form = 5
+    # 30 runs off 25 balls = SR 120 > 115
+    stats = {"Batter": {"runs": 30, "balls": 25}}
+    engine.eval_match_performances_for_form([p], [], batter_stats=stats, bowler_stats={})
+    assert p.form > 5
+
+
+def test_odi_30_runs_below_sr115_does_not_boost_form():
+    """ODI: 30 runs at SR < 115 does NOT meet the threshold — form unchanged."""
+    engine = MatchEngine()
+    engine.match_format = "odi"
+    p = make_player(name="Batter", age=27)
+    p.form = 5
+    # 30 runs off 30 balls = SR 100 < 115
+    stats = {"Batter": {"runs": 30, "balls": 30}}
+    engine.eval_match_performances_for_form([p], [], batter_stats=stats, bowler_stats={})
+    assert p.form == 5
+
+
+def test_test_30_runs_above_sr60_boosts_form():
+    """Test: 30 runs at SR > 60 counts as a good innings (patient accumulation threshold)."""
+    engine = MatchEngine()
+    engine.match_format = "test"
+    p = make_player(name="Batter", age=27)
+    p.form = 5
+    # 30 runs off 45 balls = SR 66.7 > 60
+    stats = {"Batter": {"runs": 30, "balls": 45}}
+    engine.eval_match_performances_for_form([p], [], batter_stats=stats, bowler_stats={})
+    assert p.form > 5
+
+
+def test_test_30_runs_below_sr60_does_not_boost_form():
+    """Test: 30 runs at SR < 60 is too slow to earn a form boost."""
+    engine = MatchEngine()
+    engine.match_format = "test"
+    p = make_player(name="Batter", age=27)
+    p.form = 5
+    # 30 runs off 60 balls = SR 50 < 60
+    stats = {"Batter": {"runs": 30, "balls": 60}}
+    engine.eval_match_performances_for_form([p], [], batter_stats=stats, bowler_stats={})
+    assert p.form == 5
+
+
+def test_test_50_runs_boosts_form_regardless_of_sr():
+    """Test: 50 runs always earns a boost regardless of strike rate."""
+    engine = MatchEngine()
+    engine.match_format = "test"
+    p = make_player(name="Batter", age=27)
+    p.form = 5
+    # 50 runs off 120 balls = SR 41.7 (very slow, but 50 is the primary threshold)
+    stats = {"Batter": {"runs": 50, "balls": 120}}
+    engine.eval_match_performances_for_form([p], [], batter_stats=stats, bowler_stats={})
+    assert p.form > 5

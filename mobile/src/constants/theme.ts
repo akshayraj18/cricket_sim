@@ -1,6 +1,6 @@
 /**
- * Design tokens translated from docs/mockups/phase1-mockups.html.
- * Mirrors the CSS custom properties defined there for dark (default) and light themes.
+ * Design tokens: spacing, radii, typography, and per-team color palettes.
+ * Dark theme is the default; light theme swaps surface/text colors.
  */
 
 import '@/global.css';
@@ -16,7 +16,6 @@ export const Colors = {
     backgroundElement: '#ffffff',
     backgroundSelected: '#e3e6ed',
     textSecondary: '#6b7589',
-    // mockup tokens
     bg: '#f4f5f8',
     bgElevated: '#ffffff',
     bgCard: '#ffffff',
@@ -35,7 +34,6 @@ export const Colors = {
     backgroundElement: '#1a2233',
     backgroundSelected: '#2a3346',
     textSecondary: '#8e9bb3',
-    // mockup tokens
     bg: '#0b0f17',
     bgElevated: '#141a26',
     bgCard: '#1a2233',
@@ -85,7 +83,7 @@ export const Spacing = {
   six: 64,
 } as const;
 
-/** Corner radius used for cards, buttons, and badges (--radius in mockups). */
+/** Corner radius used for cards, buttons, and badges. */
 export const Radius = {
   sm: 8,
   md: 14,
@@ -137,6 +135,46 @@ export const TeamColors: Record<string, { abbr: string; primary: string; accent:
 export const TEAM_NAMES = Object.keys(TeamColors);
 
 /**
+ * Per-nation primary/accent colors for international teams (bilateral/tournament current roster).
+ * Matches INTERNATIONAL_TEAM_META in constants.py.
+ */
+export const InternationalTeamColors: Record<string, { abbr: string; primary: string; accent: string }> = {
+  'India':        { abbr: 'IND', primary: '#0a63b0', accent: '#f0821e' },
+  'Australia':    { abbr: 'AUS', primary: '#f4d000', accent: '#004f9e' },
+  'England':      { abbr: 'ENG', primary: '#003e8e', accent: '#d4001a' },
+  'New Zealand':  { abbr: 'NZL', primary: '#000000', accent: '#c8102e' },
+  'South Africa': { abbr: 'SA',  primary: '#007c45', accent: '#f4b942' },
+  'Pakistan':     { abbr: 'PAK', primary: '#005d2e', accent: '#ffffff' },
+  'Sri Lanka':    { abbr: 'SL',  primary: '#00338d', accent: '#f1c40f' },
+  'West Indies':  { abbr: 'WI',  primary: '#7b0000', accent: '#f7c94e' },
+  'Bangladesh':   { abbr: 'BAN', primary: '#006a4e', accent: '#f42a41' },
+  'Afghanistan':  { abbr: 'AFG', primary: '#003580', accent: '#d32011' },
+};
+
+export const INTERNATIONAL_TEAM_NAMES = Object.keys(InternationalTeamColors);
+
+/**
+ * Fictional city-franchise teams for the World Tournament mega draft.
+ * One franchise per international cricket nation, named after a city in that
+ * country — same alliterative city + animal/element convention as IPL teams.
+ * These are used when career_mode="tournament" with draft_pool="alltime_world".
+ */
+export const WorldTeamColors: Record<string, { abbr: string; primary: string; accent: string }> = {
+  'Mumbai Monsoons':    { abbr: 'MBM', primary: '#7c00d4', accent: '#00f5c8' },  // electric violet + mint
+  'Sydney Sharks':      { abbr: 'SYD', primary: '#ff5f1f', accent: '#1af0ff' },  // hot coral + cyan
+  'London Lions':       { abbr: 'LON', primary: '#d400a8', accent: '#ffe600' },  // magenta + electric yellow
+  'Auckland Alpines':   { abbr: 'AKL', primary: '#00b8a0', accent: '#ff3864' },  // deep teal + hot pink
+  'Cape Town Cobras':   { abbr: 'CPT', primary: '#ff9500', accent: '#1a0066' },  // vivid amber + deep indigo
+  'Karachi Komets':     { abbr: 'KAR', primary: '#00d4ff', accent: '#8b00ff' },  // sky cyan + grape
+  'Colombo Cyclones':   { abbr: 'CMB', primary: '#c8f500', accent: '#1a0033' },  // electric lime + dark plum
+  'Kingston Kings':     { abbr: 'KNG', primary: '#ff0066', accent: '#f5f500' },  // hot pink + lemon
+  'Dhaka Dragons':      { abbr: 'DHA', primary: '#5c00c8', accent: '#ff8c00' },  // deep purple + burnt orange
+  'Kabul Kestrels':     { abbr: 'KBL', primary: '#00e676', accent: '#c4003c' },  // neon green + crimson
+};
+
+export const WORLD_TEAM_NAMES = Object.keys(WorldTeamColors);
+
+/**
  * Minimal team branding shape needed by the color helpers below. Pass the
  * actual `TeamDict` from the API payload (or any subset of these fields)
  * rather than a team name — names can be changed via the rename flow, so a
@@ -159,7 +197,7 @@ export interface TeamMeta {
  * instead so a renamed team keeps its color.
  */
 export function teamMetaByName(teamName: string): TeamMeta {
-  return TeamColors[teamName] ?? { abbr: '', primary: '#3a3f4b', accent: '#9aa0a6' };
+  return TeamColors[teamName] ?? InternationalTeamColors[teamName] ?? WorldTeamColors[teamName] ?? { abbr: '', primary: '#3a3f4b', accent: '#9aa0a6' };
 }
 
 /**
@@ -229,8 +267,7 @@ function mixHex(hex: string, towardHex: string, amount: number): string {
 
 /**
  * Returns a legible "accent text" color for a team in the given scheme,
- * matching --team-accent-text in the mockups (vivid in dark mode,
- * blended 65/35 toward body text in light mode).
+ * Vivid in dark mode, blended 65/35 toward body text in light mode.
  */
 export function getTeamAccentText(team: TeamMeta, scheme: 'light' | 'dark'): string {
   const vivid = vividTeamColor(team);

@@ -8,7 +8,12 @@ class CareerCreateRequest(BaseModel):
     name: str
     user_team_name: str
     difficulty: str = "medium"
-    draft_pool_type: str = "rosters2026"  # "rosters2026" | "current" | "alltime"
+    draft_pool_type: str = "rosters2026"  # "rosters2026" | "current" | "alltime" | "international_current"
+    competition: str = "ipl"             # "ipl" | "international"
+    match_format: str = "t20"            # "t20" | "odi" | "test"
+    career_mode: str = "league"          # "league" | "tournament" | "bilateral"
+    series_length: int | None = None     # 1 | 3 | 5 (bilateral only)
+    opponent_name: str | None = None     # bilateral opponent
 
 
 class CareerSummary(BaseModel):
@@ -17,6 +22,10 @@ class CareerSummary(BaseModel):
     user_team_name: str
     difficulty: str
     draft_pool_type: str
+    competition: str
+    match_format: str
+    career_mode: str
+    series_length: int | None
     phase: str
     season_year: int
     completed_seasons: int

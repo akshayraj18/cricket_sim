@@ -1,6 +1,6 @@
-"""Application/state layer for the Cricket franchise sim's web UI.
+"""Application/state layer for the Cricket franchise sim.
 
-This package is the bridge between `ui_server`'s HTTP handler and the domain
+This package is the bridge between the FastAPI backend and the domain
 model in `models`/`engine`/`players_data`. Two classes do almost all the work:
 
 - `LiveMatch` ([live_match](live_match.py)) drives a single match end-to-end —

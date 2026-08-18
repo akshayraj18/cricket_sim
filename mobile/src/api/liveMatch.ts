@@ -47,4 +47,14 @@ export const liveMatchApi = {
 
   applyImpactSub: (careerId: string, body: ImpactSubActionBody) =>
     apiClient.post<LiveMatchPayload>(`${base(careerId)}/impact-sub`, body),
+
+  // Test-only actions
+  proceedSession: (careerId: string) =>
+    apiClient.post<LiveMatchPayload>(`${base(careerId)}/proceed-session`, {}),
+
+  followOnDecision: (careerId: string, enforce: boolean) =>
+    apiClient.post<LiveMatchPayload>(`${base(careerId)}/follow-on-decision`, { enforce }),
+
+  declare: (careerId: string) =>
+    apiClient.post<LiveMatchPayload>(`${base(careerId)}/declare`, {}),
 };

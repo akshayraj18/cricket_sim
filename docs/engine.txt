@@ -1,0 +1,284 @@
+Cricket Simulation Engine — Reference
+Last updated: July 2026
+
+All values reflect the current code in engine.py, live_match.py, and constants.py.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FORMAT CONFIGURATION  (constants.py — MATCH_FORMAT_CONFIG)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+T20:
+  overs_per_innings:  20  (120 balls)
+  bowler_overs_cap:   4
+  phase_boundaries:   (6, 15)  — Powerplay overs 1-6, Middle 7-15, Death 16-20
+  innings_per_side:   1
+  days / sessions:    1 / 1
+
+ODI:
+  overs_per_innings:  50  (300 balls)
+  bowler_overs_cap:   10
+  phase_boundaries:   (10, 40)  — Powerplay overs 1-10, Middle 11-40, Slog 41-50
+  innings_per_side:   1
+  days / sessions:    1 / 1
+
+Test:
+  overs_per_innings:  90  (540 balls — soft cap; innings end on all-out or declaration)
+  bowler_overs_cap:   90  (effectively uncapped; rotation enforced by fatigue)
+  phase_boundaries:   (10, 70)
+  innings_per_side:   2  (follow-on eligible; up to 4 innings total)
+  follow_on_margin:   200 runs
+  allows_draw:        True
+  days:               5
+  sessions_per_day:   3
+  overs_per_session:  30
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BASE PROBABILITIES  (engine.py — _FORMAT_BASE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each tuple: (wicket, dot, single, double, triple, four, six)
+Calibrated to target run rates at neutral skill, default aggression per format.
+
+  T20  (agg=3): (0.045, 0.290, 0.300, 0.080, 0.005, 0.148, 0.082)
+  ODI  (agg=2): (0.028, 0.415, 0.350, 0.068, 0.004, 0.110, 0.025)
+  Test (agg=1): (0.022, 0.565, 0.330, 0.050, 0.003, 0.026, 0.003)
+
+Verified run rates at neutral skill (10,000-ball sample):
+  T20:  9.77 r/o   (target 9.5–10.0)
+  ODI:  6.20 r/o   (target 5.8–6.3)
+  Test: 3.04 r/o   (target 3.0–3.5)
+
+Expected match totals at neutral skill:
+  T20:  ~195 per innings
+  ODI:  ~310 per innings
+  Test: ~335 per innings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SKILL DELTA  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+skill_delta = (batter.current_batting - bowler.current_bowling) / 100.0
+
+Positive = batter advantage; negative = bowler advantage.
+
+Format-specific scaling of skill_delta into outcome probabilities:
+
+  Test:  p_wicket -= delta*0.020;  p_dot -= delta*0.060;  p_four += delta*0.040;  p_six += delta*0.020
+  ODI:   p_wicket -= delta*0.022;  p_dot -= delta*0.070;  p_four += delta*0.055;  p_six += delta*0.035
+  T20:   p_wicket -= delta*0.025;  p_dot -= delta*0.080;  p_four += delta*0.070;  p_six += delta*0.060
+
+A 20-point batter edge shifts wicket probability by:  Test 0.004, ODI 0.0044, T20 0.005
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIFFICULTY  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Applied as an additional skill_delta offset for the user's team:
+  Easy:   +0.18 batting, -0.18 bowling
+  Medium: +0.09 / -0.09
+  Hard:   0.0 (no edge)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BATTING AGGRESSION  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Default per format:
+  T20: agg=3    ODI: agg=2    Test: agg=1
+
+Auto-ramp during innings (live_match.py):
+  ODI:  agg 1 (overs 0-9) → 2 (overs 10-39) → 3 (overs 40+)
+  Test: agg stays 1; later innings may ramp to 2 at over 60+ if behind on run rate
+
+Effect on probabilities (ODI/Test use gentler multipliers than T20):
+  bat_push = batting_aggression - 3
+  bowl_push = bowling_aggression - 2
+
+  ODI/Test:
+    p_wicket *= 1 + (bat_push × 0.12) + (bowl_push × 0.11)
+    p_four   *= 1 + (bat_push × 0.10)
+    p_six    *= 1 + (bat_push × 0.12)
+    p_dot    *= 1 - (bat_push × 0.04)
+    p_single *= 1 - (max(0, bat_push) × 0.03)
+
+  T20:
+    p_wicket *= 1 + (bat_push × 0.16) + (bowl_push × 0.14)
+    p_four   *= 1 + (bat_push × 0.13)
+    p_six    *= 1 + (bat_push × 0.16)
+    p_dot    *= 1 - (bat_push × 0.05)
+    p_single *= 1 - (max(0, bat_push) × 0.04)
+
+Intent override (applied after aggression):
+  Aggressive: p_wicket ×1.60, p_six ×1.50, p_four ×1.30, p_dot ×0.70
+  Defensive:  p_wicket ×0.40, p_dot ×1.40, p_six ×0.20, p_four ×0.40, p_single ×1.10
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BATTING ARCHETYPE vs PHASE  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+T20 / ODI only (phase bonuses suppressed for Test):
+  Aggressor / Aggressive Opener / Pace Specialist in Powerplay:  +0.035
+  Finisher in Death Overs:                                        +0.040
+  Anchor in Powerplay:                                            -0.015
+  Strike Rotator / Middle-over Rotator / Spin Specialist in Middle Overs: +0.020
+  Lower-order Hitter / Lower-order Power Hitter outside Death Overs: -0.025
+
+Test only (role-based, not phase-based):
+  Opener / Aggressive Opener / Anchor / Test Specialist:  +0.015
+  Finisher / Lower-order Hitter / Lower-order Power Hitter: -0.020
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOWLING TYPE vs PHASE  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+T20 / ODI:
+  Bowling phase matches current phase:               -0.035
+  Flexible bowling phase:                            -0.012
+  Swing in Powerplay:                                -0.020
+  Spin/Orthodox in Middle Overs:                     -0.018
+  Variations/Fast in Death Overs:                    -0.018
+  Aggressor vs Swing in Powerplay:                   -0.012
+  Anchor vs Spin in Middle Overs:                    +0.012
+  Finisher vs Variations in Death Overs:             -0.010
+  Strike Rotator vs Fast in Middle Overs:            +0.008
+
+Test (role-based):
+  New Ball / pace bowler:                            -0.025
+  Middle Overs / spin bowler:                        -0.018
+  Flexible:                                          -0.008
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRENGTH / WEAKNESS TAGS  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Batter strengths/weaknesses (lowercase comma-separated strings on Player):
+  "powerplay", "middle", "death" phase tags (T20/ODI only):  ±0.010
+  "pace" vs pace bowler:  ±0.012
+  "spin" vs spin bowler:  ±0.012
+
+Left/Right matchup multiplier (applied to full skill_delta):
+  Left batter vs Right Spin:  multiplier += 0.06
+  Right batter vs Left Fast:  multiplier -= 0.04
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BATTER SETTLING-IN  (engine.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+New batters in ODI/Test are vulnerable in their first 8 balls:
+  balls_faced < 8, format in (odi, test):
+    skill_delta -= 0.04 × (1 - balls_faced / 8)
+  Max penalty ball 1: -0.04. Fully settled after 8 balls.
+
+Set batter bonus in Test (confidence builds over a long innings):
+  balls_faced >= 30, format == test:
+    skill_delta += 0.015
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOWLER FATIGUE & ROTATION  (engine.py + live_match.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+bowler_consecutive_overs: increments each over the same bowler continues; resets to 0 when rotated.
+
+Engine penalty (skill_delta, engine.py):
+  consecutive >= 2:
+    fatigue_penalty = min(0.18, (consecutive - 1) × 0.03)
+    skill_delta += fatigue_penalty  (bowler tires → batter benefits)
+
+CPU bowler-selection penalty (bowler_phase_score, live_match.py):
+  consecutive >= 2:
+    score -= (consecutive - 1) × penalty_per_over
+    penalty_per_over: Test=10, ODI=7, T20=4
+
+Hard consecutive-over ceiling (available_bowlers):
+  Test: 4 consecutive overs max before forced rotation
+  ODI:  5 consecutive overs max before forced rotation
+  T20:  no ceiling (4-over cap handles it naturally)
+
+Workload distribution (Test/ODI only, bowler_phase_score):
+  overuse = my_overs - team_average_overs
+  if overuse > 0:
+    score -= overuse × workload_penalty
+    workload_penalty: Test=6, ODI=4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOWLER SELECTION  (live_match.py — available_bowlers + bowler_phase_score)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CPU picks highest-scoring eligible bowler each over.
+
+bowler_phase_score() base: player.current_bowling
+  +8  if bowling_phase matches current match phase
+  +5  if Pace/Swing/Medium/Seam in Powerplay or Death Overs
+  +6  if Spin/Orthodox/Leg/Off in Middle Overs
+  +5  if Variations in Death Overs
+  − fatigue penalty (see above)
+  − workload distribution penalty (see above)
+
+Eligibility (available_bowlers()):
+  1. Has not reached bowler_overs_cap
+  2. Did not bowl the previous over (no back-to-back overs by same bowler)
+  3. Has not exceeded consecutive-over ceiling
+  Falls back progressively: relax ceiling → allow prev bowler → allow capped bowlers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISMISSAL MECHANICS  (live_match.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When outcome = "W" (wicket):
+  Stumping  (~14% if spinner, keeper present):  keeper credited, bowler gets wicket
+  Run Out   (base 18% + (agg-3)×4%):           fielder credited, bowler does NOT get wicket
+  Caught    (default):                          keeper 2× weight vs other fielders, bowler gets wicket
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FORM EVALUATION  (engine.py — eval_match_performances_for_form)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Batter form boost thresholds (format-aware):
+  Test: runs ≥ 50, OR runs ≥ 30 AND SR > 60
+  ODI:  runs ≥ 50, OR runs ≥ 30 AND SR > 115
+  T20:  runs ≥ 50, OR runs ≥ 25 AND SR > 160
+  Duck (0 runs): form drops -1
+
+Bowler form:
+  3+ wickets: form boost +1
+  0 wickets AND 45+ runs conceded: form drops -1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST-SPECIFIC MECHANICS  (live_match.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Day/session pacing:
+  current_day (1-5), current_session (1-3), overs_bowled_in_session tracked.
+  After 30 overs in a session: advance to next session (tea/lunch/stumps break).
+  pending_session_break = True → user must tap "Proceed to Next Session".
+  After session 3 on day 5: match ends in draw if neither side has won.
+  overs_remaining_in_session emitted in payload for scoreboard display.
+
+Follow-on:
+  Available after innings 2 if trailing team is 200+ runs behind.
+  User (if leading) chooses "Enforce Follow-on" or "Bat Again".
+  CPU auto-enforces if it's the CPU's decision and conditions are met.
+
+Chase target:
+  _compute_test_target() calculates chase target before innings 3 and 4 start.
+
+Result types:
+  Win by N wickets, Win by N runs, Win by an innings and N runs, Match drawn.
+  "Won by 1 wicket" uses correct singular form.
+
+Impact Sub: IPL-only (competition == "ipl"). Never fires for international careers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CAREER MODES & LEAGUE STATE  (league_state.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+career_mode:
+  "league"      — IPL 14-round league + 4-stage playoffs
+  "tournament"  — International 9-round round-robin + semis/final (T20/ODI) or straight final (Test)
+  "bilateral"   — Best-of-N series (N = 1, 3, or 5); all N matches always played
+
+Bilateral series: bilateral_series_complete() returns True only when
+bilateral_match_num >= series_length. There is no early exit on clinching wins —
+all matches play out regardless of score.
+
+Serialization: competition, match_format, career_mode, series_length,
+bilateral_wins, bilateral_match_num all round-trip through to_dict()/from_dict().

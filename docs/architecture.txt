@@ -1,21 +1,222 @@
-┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│  Web frontend    │      │  Mobile (Phase1)  │      │  Future clients │
-│  (existing JS)   │      │  React Native     │      │                 │
-└────────┬─────────┘      └────────┬──────────┘      └────────┬────────┘
-         │                         │                           │
-         └─────────────────────────┴───────────────────────────┘
-                                    │ HTTPS / JSON (REST) + WebSocket
-                                    ▼
-                         ┌─────────────────────┐
-                         │   FastAPI app        │
-                         │  - auth (JWT)         │
-                         │  - /api/v1/* routes   │
-                         │  - websocket /ws/match│
-                         └──────────┬────────────┘
-                  ┌──────────────────┼───────────────────┐
-                  ▼                  ▼                    ▼
-          ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐
-          │  Postgres     │   │   Redis       │   │  Sim engine       │
-          │  (durable     │   │  (live match  │   │  (existing        │
-          │  career data) │   │  session state)│   │  Python modules)  │
-          └──────────────┘   └──────────────┘   └──────────────────┘
+CricSim — Architecture Reference
+Last updated: July 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Three layers, talking over HTTPS/JSON:
+
+  React Native app (mobile/)
+      ↓  REST API calls
+  FastAPI backend (backend/)
+      ↓  Python function calls
+  Sim engine (packages/sim_engine/)
+
+The sim engine is a pure Python package with no database or network dependencies.
+The backend owns all persistence: Postgres for durable career data, Redis for
+in-progress live-match state. The mobile app is the only supported frontend.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SIM ENGINE  (packages/sim_engine/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Installable Python package: cricket_sim_engine
+
+engine.py — MatchEngine
+  Per-ball probability sampler. Stateless per ball: takes a batter + bowler object,
+  adjusts base outcome probabilities by skill gap, format, phase, aggression, fatigue,
+  archetypes, matchups, and intent. Returns one of: "W", "0"-"6".
+
+models.py — Player, Team
+  Data classes. Player holds batting/bowling ratings, form, age, archetype tags,
+  aggression, intent, and match-session state (balls_faced_this_innings, etc.).
+  Team holds squad, points, NRR accumulators.
+
+players_data.py
+  Loads players.csv (IPL 2026 rosters), players_alltime.csv (IPL all-time T20),
+  players_alltime_t20_intl.csv, players_alltime_odi.csv, players_alltime_test.csv
+  into lists of Player objects. Functions: get_player_pool(), get_alltime_pool(),
+  get_international_rosters(), get_alltime_t20_intl_pool(), etc.
+
+international_data.py
+  Per-nation current rosters for all 10 international teams, keyed by format
+  (t20/odi/test). Each entry is a list of player dicts mirroring the CSV schema.
+
+sim/constants.py — MATCH_FORMAT_CONFIG
+  Single source of truth for format parameters (overs, balls, bowler cap, phase
+  boundaries, follow-on margin, days/sessions). All engine/match code reads from
+  here; nothing is hardcoded to T20 in the sim engine.
+
+sim/helpers.py
+  innings_phase(over_num, phase_boundaries): T20/ODI phase classification.
+  Role classification (is_specialist_bat, bowling_kind, expanded_bowling_phase).
+  phase_fit_label: UI tag generation for draft screens.
+
+sim/league_state.py — LeagueState
+  Top-level career state machine. Owns: teams, schedule, standings, playoffs,
+  bilateral series tracking, retention window, draft flow, save/load.
+  Key methods: new_league(), new_international_tournament(), new_bilateral_series(),
+  simulate_current_round(), start_live_match(), complete_live_match(),
+  setup_playoffs(), setup_international_playoffs(), open_retention(), to_dict(),
+  from_dict().
+
+sim/live_match.py — LiveMatch
+  Single-match driver. Owns the status machine:
+    toss → lineup → (batting_order) → over → (next_batter) → (impact) →
+    (follow_on_decision) → complete
+  For Test: also tracks day/session, session breaks, overs_bowled_in_session.
+  Key methods: toss(), set_user_xi(), play_ball(), play_over(), play_until(),
+  auto_finish(), declare(), follow_on_decision(), apply_impact_sub().
+  payload(): serializes full match state for the API response.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND  (backend/app/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FastAPI service. All routes prefixed /api/. Auth via JWT (access + rotating refresh).
+
+Postgres schema (SQLAlchemy, Alembic migrations):
+  users       — id, email, provider, created_at
+  careers     — id, user_id, name, competition, match_format, career_mode,
+                state (JSON blob of full LeagueState), created_at, updated_at
+  (No separate match/player/team tables — all state lives in the careers.state blob)
+
+Redis:
+  Live-match state cached under key career:{career_id}:match during active play.
+  Cleared when match is completed and career state is written back to Postgres.
+  Rate limiting for /auth/* routes (fails open if Redis is down).
+
+Route modules:
+  auth/         — POST /auth/login, /auth/refresh, /auth/link-apple, /auth/link-google,
+                  DELETE /auth/me (account deletion)
+  careers/      — GET/POST /careers/, GET/PATCH/DELETE /careers/{id}
+                  POST /careers/{id}/begin-match, /careers/{id}/simulate-round
+  live_match/   — GET /careers/{id}/match
+                  POST /careers/{id}/match/{action}
+                  Actions: toss, lineup, play-ball, play-over, play-until, aggression,
+                           next-batter, super-over-lineup, impact-sub,
+                           proceed-session, follow-on-decision, declare
+  season/       — GET /careers/{id}/season  (standings, schedule, playoffs)
+
+Career state flow:
+  1. POST /careers/ → creates Postgres row, runs new_league() or new_international_*(),
+     writes initial LeagueState blob to careers.state.
+  2. POST /careers/{id}/begin-match → loads state, calls start_live_match(),
+     caches LiveMatch in Redis, returns payload().
+  3. POST /careers/{id}/match/{action} → loads from Redis, dispatches action,
+     saves updated LiveMatch back to Redis, returns payload().
+  4. POST /careers/{id}/match/complete (via complete_live_match route) →
+     loads from Redis, calls complete_live_match() on LeagueState (records result),
+     clears Redis key, writes updated LeagueState to Postgres.
+  5. POST /careers/{id}/simulate-round → loads from Postgres, calls
+     simulate_current_round(), writes result back, returns round summary.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MOBILE APP  (mobile/src/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+React Native / Expo app. File-based routing via expo-router.
+
+Screens (app/):
+  new-career.tsx       — career creation wizard (competition → options → team → difficulty)
+  (tabs)/home.tsx      — career select, season overview
+  (tabs)/squad.tsx     — squad management, lineup/batting order/bowling plan editor
+  (tabs)/season.tsx    — standings, schedule, playoff bracket, round controls
+  (tabs)/stats.tsx     — leaderboards, player stats
+  (tabs)/history.tsx   — season archive
+  _layout.tsx          — root layout, tab bar, auth guard
+
+Key components (components/):
+  live-match-hub.tsx   — full match control UI: toss, lineup, over hub, scorecard
+  draft-hub.tsx        — pick-by-pick draft UI with filters and autodraft
+  retention-hub.tsx    — retention window + draft pool view
+  match-scorecard.tsx  — final scorecard display
+  player-profile-sheet.tsx  — bottom sheet with full player stats
+
+Context providers (context/):
+  AuthContext         — auth state (user, tokens, sign-in/out)
+  CareerContext       — active career selection, career list
+  LeagueContext       — current league state (standings, schedule, phase)
+  ThemeContext        — light/dark mode, color scheme
+
+API client (api/):
+  auth.ts, careers.ts, liveMatch.ts, season.ts
+  Typed wrappers around fetch. Auth header injection. Token refresh on 401.
+
+Theme (constants/theme.ts):
+  TeamColors           — 10 IPL franchise palettes
+  InternationalTeamColors — 10 national team palettes
+  WorldTeamColors      — 10 world city franchise palettes (for All-Time tournament)
+  teamMetaByName()     — resolves any team name → {abbr, primary, accent}
+  Spacing, Radius, typography constants.
+
+Utilities (utils/):
+  lineup.ts    — ORDER_ZONES (Openers/Middle/Lower/Tail), bowler scoring, XI validation
+  names.ts     — abbreviateName(), abbreviateDismissal()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEY DESIGN DECISIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Career state as a single JSON blob
+  The entire LeagueState (squads, schedule, standings, in-progress match) lives in
+  one Postgres column (careers.state). No joins, no migrations for new engine fields
+  (new keys just appear in the blob). The tradeoff: no cross-career SQL queries.
+
+Redis for live-match, not Postgres
+  A match produces hundreds of state transitions in minutes. Writing each to Postgres
+  would saturate the DB. Redis absorbs the churn; the final state is committed once.
+  If Redis is lost mid-match, the match must be restarted (acceptable at this scale).
+
+LeagueState owns LiveMatch
+  LiveMatch is created by LeagueState.start_live_match() and owned as self.live_match.
+  This keeps all serialization in one place (to_dict/from_dict on LeagueState handles
+  both). The backend never instantiates LiveMatch directly.
+
+No WebSockets
+  Each ball action is a POST → response cycle. Polling is fine for a single-player
+  sim where the user is the only actor; WebSockets would add complexity for no gain.
+
+Format-agnostic engine
+  MATCH_FORMAT_CONFIG in constants.py is the single source of truth. No hardcoded
+  "120" or "20" anywhere in the engine. The T20/ODI/Test divergence in phase bonuses,
+  aggression, and form evaluation is all gated on match_format checks.
+
+Impact Sub is IPL-only
+  The entire impact sub flow (status="impact", payload fields, apply_impact_sub) is
+  gated on competition == "ipl". International careers (bilateral/tournament) never
+  enter the impact sub state.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEAM LISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IPL Franchises (competition="ipl"):
+  Chennai Cholas, Mumbai Mavericks, Bengaluru Bulls, Kolkata Knights,
+  Hyderabad Hawks, Rajasthan Raptors, Delhi Dynamos, Gujarat Gladiators,
+  Lucknow Lions, Punjab Panthers
+
+National Teams (competition="international", any format):
+  India, Australia, England, New Zealand, South Africa,
+  Pakistan, Sri Lanka, West Indies, Bangladesh, Afghanistan
+
+World City Franchises (competition="international", alltime draft, tournament):
+  Mumbai Monsoons, Sydney Sharks, London Lions, Auckland Alpines,
+  Cape Town Cobras, Karachi Komets, Colombo Cyclones,
+  Kingston Kings, Dhaka Dragons, Kabul Kestrels
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PLAYER DATA SCHEMA  (CSV columns)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All player CSV files share the same schema:
+  name, team, role, bat, bowl, ovr, age, batting_hand, bowling_hand,
+  batting_archetype, bowling_phase, bowling_type, strengths, weaknesses,
+  natural_slot, preferred_position, is_overseas, wicketkeeper
+
+  batting_archetypes: Aggressor, Aggressive Opener, Anchor, Strike Rotator,
+    Middle-over Rotator, Spin Specialist, Finisher, Lower-order Hitter,
+    Lower-order Power Hitter, Pace Specialist, Test Specialist, Opener
+  bowling_phase:  New Ball, Powerplay, Middle Overs, Death Overs, Part-time, Flexible
+  natural_slot:   1-11 (batting position in the order)

@@ -279,6 +279,7 @@ class Team:
         self.points = 0
         self.wins = 0
         self.losses = 0
+        self.draws = 0
         self.runs_scored = 0
         self.balls_faced = 0
         self.runs_conceded = 0

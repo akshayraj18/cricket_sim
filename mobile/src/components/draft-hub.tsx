@@ -136,7 +136,7 @@ export function DraftHub({
         <Card>
           <ThemedText style={styles.title}>Mega Draft Setup</ThemedText>
           <ThemedText themeColor="textDim" style={styles.helpText}>
-            You selected {payload.user_team} as a blank franchise. The draft order is set, and you are drafting{' '}
+            You selected {payload.user_team}. The draft order is set, and you are drafting{' '}
             {ordinal(draft.user_pick_position || 0)} in a snake draft with premier cricket players.
           </ThemedText>
           <Button

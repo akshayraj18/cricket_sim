@@ -8,7 +8,7 @@ super overs, impact substitutions, and the final scorecard payload.
 import random
 
 from cricket_sim_engine.engine import MatchEngine
-from cricket_sim_engine.sim.constants import team_meta
+from cricket_sim_engine.sim.constants import team_meta, format_config
 from cricket_sim_engine.sim.helpers import (
     ensure_stat_fields,
     innings_phase,
@@ -17,6 +17,7 @@ from cricket_sim_engine.sim.helpers import (
     is_wicketkeeper_option,
     counts_as_batter,
     counts_as_bowler,
+    wickets_margin,
 )
 
 
@@ -36,7 +37,10 @@ class LiveMatch:
         self.team1 = team1
         self.team2 = team2
         self.stage = stage
+        self.match_format = getattr(league, "match_format", "t20")
+        self.format = format_config(self.match_format)
         self.engine = MatchEngine(league.user_team_name, getattr(league, "difficulty", "hard"))
+        self.engine.match_format = self.match_format
         self.toss_winner = random.choice([team1, team2])
         self.decision = None
         self.status = "toss"
@@ -56,6 +60,16 @@ class LiveMatch:
         self.card = None
         self.super_over = None
         self.impact_subs = []
+        # Test-only day/session pacing. Unused (and never read) by any
+        # T20/ODI match — `self.format["days"] == 1` for those, so none of
+        # the day/session branches in play_over/close_current_over ever fire.
+        self.current_day = 1
+        self.current_session = 1
+        self.overs_bowled_in_session = 0
+        self.pending_session_break = False
+        self.follow_on_available = False
+        self.followed_on = False
+        self.declared = {}
         if self.toss_winner.name != league.user_team_name:
             self.choose_toss(random.choice(["bat", "bowl"]))
 
@@ -130,20 +144,48 @@ class LiveMatch:
         self.start_first_innings_if_ready()
         if self.status == "batting_order" and self.league.user_team().name in self.xis:
             self.start_second_innings()
-        while self.status == "next_batter" and self.score and self.score.get("pending_next_batter"):
-            order = self.score["batting_order"]
-            idx = self.score["striker_idx"]
-            self.select_next_batter(order[idx].name)
+        while self.status not in ("complete", "super_over_setup"):
+            # Auto-clear session/stumps breaks so auto_finish runs to completion
+            # without stalling. Interactive play shows the break prompt to the
+            # user; autopilot just acknowledges it immediately.
+            if self.pending_session_break:
+                self.pending_session_break = False
+            while self.status == "next_batter" and self.score and self.score.get("pending_next_batter"):
+                order = self.score["batting_order"]
+                idx = self.score["striker_idx"]
+                self.select_next_batter(order[idx].name)
+                while self.status == "over":
+                    self.play_over(auto=True)
+                if self.pending_session_break:
+                    self.pending_session_break = False
             while self.status == "over":
                 self.play_over(auto=True)
-        while self.status == "over":
-            self.play_over(auto=True)
-        if self.status == "impact":
-            user_team = self.league.user_team()
-            swap_out, swap_in = self.pending_swaps.get(user_team.name, (None, None))
-            self.apply_impact_sub(out_name=swap_out, in_name=swap_in, auto=True)
-        while self.status == "over":
-            self.play_over(auto=True)
+                if self.pending_session_break:
+                    self.pending_session_break = False
+            if self.status == "follow_on_decision":
+                # Autopilot always enforces the follow-on when it's on offer —
+                # matches a CPU captain's default real-world choice.
+                self.decide_follow_on(enforce=True)
+            if self.status == "impact":
+                user_team = self.league.user_team()
+                # The 11+1 Impact Player swap is a one-time-per-match
+                # allowance (`pending_swaps` models exactly one pairing), so a
+                # Test match's later innings breaks (it can have up to three)
+                # decline the swap rather than incorrectly reapplying the same
+                # pairing again.
+                if self.current_innings <= 2:
+                    swap_out, swap_in = self.pending_swaps.get(user_team.name, (None, None))
+                else:
+                    swap_out, swap_in = None, None
+                self.apply_impact_sub(out_name=swap_out, in_name=swap_in, auto=True)
+            while self.status == "over":
+                self.play_over(auto=True)
+                if self.pending_session_break:
+                    self.pending_session_break = False
+            if self.status == "batting_order" and self.league.user_team().name in self.xis:
+                self.start_second_innings()
+            elif self.status not in ("next_batter", "over", "follow_on_decision", "impact"):
+                break
         if self.status == "super_over_setup":
             self.auto_missing_super_over_lineups()
             self.play_super_over()
@@ -263,16 +305,20 @@ class LiveMatch:
         self.start_first_innings_if_ready()
 
     def set_bowling_plan(self, team, names):
-        """Store a pre-planned 20-over bowling order for `team` if `names` forms a valid one (20 entries, each bowler appearing at most 4 times — the IPL per-bowler over cap); otherwise clear the plan and fall back to per-over bowler selection."""
+        """Store a pre-planned bowling order for `team` if `names` forms a valid one (one entry per over of the innings, each bowler appearing at most the format's per-bowler over cap); otherwise clear the plan and fall back to per-over bowler selection."""
         valid = [p.name for p in self.bowling_pools.get(team.name, [])]
         clean = [name for name in names if name in valid]
-        if len(clean) == 20 and all(clean.count(name) <= 4 for name in set(clean)):
+        overs = self.format["overs_per_innings"]
+        cap = self.format["bowler_overs_cap"]
+        if len(clean) == overs and all(clean.count(name) <= cap for name in set(clean)):
             self.bowling_plan_for[team.name] = clean
         else:
             self.bowling_plan_for[team.name] = []
 
     def start_first_innings_if_ready(self):
-        """Once both teams have a confirmed XI, begin the first innings."""
+        """Once both teams have a confirmed XI (and no innings has yet begun), begin the first innings."""
+        if self.innings or self.score:
+            return
         if self.team1.name in self.xis and self.team2.name in self.xis:
             self.start_innings(self.inn1_bat, self.inn1_bowl, self.batting_orders[self.inn1_bat.name], self.bowling_pools[self.inn1_bowl.name])
 
@@ -298,33 +344,60 @@ class LiveMatch:
             "over_log": [],
             "current_over_events": [],
             "active_bowler": None,
-            "batting_aggression": {p.name: 3 for p in batting_order},
+            # Default aggression is format-specific: ODI batters start
+            # conservatively (2) and ramp up; Test batters are very cautious (1).
+            # T20 stays at 3 (the existing baseline).
+            "batting_aggression": {p.name: (1 if self.match_format == "test" else 2 if self.match_format == "odi" else 3) for p in batting_order},
             "bowling_aggression": {p.name: 2 for p in bowling_pool},
             "pending_next_batter": False,
         }
+        # Per-batter balls-faced this innings (for settling-in / fatigue tracking).
+        for p in batting_order:
+            p.balls_faced_this_innings = 0
+        # Per-bowler consecutive overs without rest (for fatigue tracking).
+        for p in bowling_pool:
+            p.bowler_consecutive_overs = 0
         self.status = "over"
         self.message = f"{batting_team.name} innings started. Pick the next bowler."
 
     def available_bowlers(self):
         """Bowlers eligible to bowl the next over, best phase-fit first.
 
-        Excludes anyone who has already bowled their 4-over IPL allowance and
+        Excludes anyone who has already bowled their format's per-bowler over
+        allowance (4 for T20, 10 for ODI, effectively uncapped for Test) and
         (when possible) whoever bowled the previous over, since the same
         bowler can't deliver consecutive overs. Falls back to progressively
         looser pools (allow the previous bowler, then allow capped bowlers)
         if no one else is left — keeps the match playable in edge cases like
         a side carrying very few specialist bowlers.
+
+        For Test/ODI, a hard consecutive-over ceiling forces rotation: no
+        bowler can bowl more than 4 consecutive overs (Test) or 5 (ODI) —
+        mirroring real captaincy, where even a dominant bowler gets rested
+        after a spell to manage fatigue and maintain pace.
         """
         if self.status != "over" or not self.score:
             return []
         tracked = self.score["overs_tracked"]
         last = self.score["last_bowler"]
-        options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < 4 and p != last]
+        cap = self.format["bowler_overs_cap"]
+        match_format = getattr(self, "match_format", "t20")
+        # Hard consecutive-over ceiling: Test=4, ODI=5, T20=uncapped (over cap handles it)
+        consec_ceil = {"test": 4, "odi": 5}.get(match_format, 999)
+        options = [
+            p for p in self.score["bowling_pool"]
+            if tracked.get(p.name, 0) < cap
+            and p != last
+            and getattr(p, "bowler_consecutive_overs", 0) < consec_ceil
+        ]
         if not options:
-            options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < 4]
+            # Relax consecutive ceiling but still exclude same bowler and capped
+            options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < cap and p != last]
+        if not options:
+            options = [p for p in self.score["bowling_pool"] if tracked.get(p.name, 0) < cap]
         if not options:
             options = list(self.score["bowling_pool"])
-        phase = innings_phase(self.score["balls"] // 6)
+        phase = innings_phase(self.score["balls"] // 6, self.format["phase_boundaries"])
         return sorted(options, key=lambda p: self.bowler_phase_score(p, phase), reverse=True)
 
     def cpu_bowler(self):
@@ -334,9 +407,9 @@ class LiveMatch:
     def bowler_phase_score(self, player, phase):
         """Heuristic score for how well this bowler suits the given match phase, used to rank/select CPU bowling options.
 
-        Starts from the bowler's rating and adds bonuses for matching their
-        specialised `bowling_phase`, and for pace/swing in the powerplay or
-        death, spin in the middle overs, and variations at the death.
+        Starts from the bowler's rating, adds bonuses for phase specialisation,
+        and subtracts a fatigue penalty for bowlers who have bowled many
+        consecutive overs without rest (Test/ODI cricket mandates rotation).
         """
         score = player.current_bowling
         bowling_type = getattr(player, "bowling_type", "")
@@ -349,6 +422,30 @@ class LiveMatch:
             score += 6
         if phase == "Death Overs" and "Variations" in bowling_type:
             score += 5
+        # Fatigue penalty for consecutive overs (harder in Test/ODI):
+        consecutive = getattr(player, "bowler_consecutive_overs", 0)
+        if consecutive >= 2:
+            match_format = getattr(self, "match_format", "t20")
+            penalty_per_over = {"test": 10, "odi": 7}.get(match_format, 4)
+            score -= (consecutive - 1) * penalty_per_over
+
+        # Workload distribution: in Test/ODI, the CPU should spread overs across
+        # all available bowlers so no one dominates just by having a higher base
+        # rating. Over-bowled bowlers get a scaled-down score so fillers become
+        # more attractive as the innings progresses.
+        match_format = getattr(self, "match_format", "t20")
+        if match_format in ("test", "odi") and self.score:
+            tracked = self.score.get("overs_tracked", {})
+            pool = self.score.get("bowling_pool", [])
+            pool_bowlers = [p for p in pool if getattr(p, "current_bowling", 0) > 0]
+            if pool_bowlers:
+                total_overs = sum(tracked.get(p.name, 0) for p in pool_bowlers)
+                my_overs = tracked.get(player.name, 0)
+                avg_overs = total_overs / len(pool_bowlers) if pool_bowlers else 0
+                overuse = my_overs - avg_overs
+                if overuse > 0:
+                    workload_penalty = {"test": 6, "odi": 4}.get(match_format, 0)
+                    score -= overuse * workload_penalty
         return score
 
     def ensure_active_bowler(self, bowler_name=None, auto=False):
@@ -378,10 +475,16 @@ class LiveMatch:
         else:
             bowler = self.cpu_bowler()
 
+        prev_bowler = self.score.get("last_bowler")
         self.score["last_bowler"] = bowler
         self.score["overs_tracked"][bowler.name] = self.score["overs_tracked"].get(bowler.name, 0) + 1
         self.score["active_bowler"] = bowler
         self.score["current_over_events"] = []
+        # Fatigue tracking: reset consecutive count for any bowler who just had a
+        # break, then increment for whoever is bowling now.
+        if prev_bowler and prev_bowler != bowler:
+            prev_bowler.bowler_consecutive_overs = 0
+        bowler.bowler_consecutive_overs = getattr(bowler, "bowler_consecutive_overs", 0) + 1
         return bowler
 
     def play_over(self, bowler_name=None, auto=False, max_balls=6, stop_on_wicket=True):
@@ -401,7 +504,8 @@ class LiveMatch:
             return
         bowler = self.ensure_active_bowler(bowler_name, auto)
         start_balls = self.score["balls"]
-        end_ball = min(((start_balls // 6) + 1) * 6, start_balls + max_balls, 120)
+        balls_cap = self.format["balls_per_innings"]
+        end_ball = min(((start_balls // 6) + 1) * 6, start_balls + max_balls, balls_cap)
         self.score["last_event_wicket"] = False
         while self.score["balls"] < end_ball and not self.innings_is_over():
             if self.target and self.score["runs"] >= self.target:
@@ -409,7 +513,7 @@ class LiveMatch:
             event = self.play_ball(bowler)
             self.score["current_over_events"].append(event)
             self.score["last_event_wicket"] = event["kind"] == "wicket"
-            if event["kind"] == "wicket" and stop_on_wicket and not auto and self.score["batting_team"].name == self.league.user_team_name and self.score["wickets"] < 10 and self.score["balls"] < 120:
+            if event["kind"] == "wicket" and stop_on_wicket and not auto and self.score["batting_team"].name == self.league.user_team_name and self.score["wickets"] < 10 and self.score["balls"] < balls_cap:
                 self.score["pending_next_batter"] = True
                 self.status = "next_batter"
                 self.message = f"{event['description']}. Choose who comes in next."
@@ -417,10 +521,10 @@ class LiveMatch:
             if event["kind"] == "wicket" and stop_on_wicket and not auto and self.score["batting_team"].name == self.league.user_team_name:
                 break
 
-        if self.score["balls"] % 6 == 0 or self.score["balls"] >= 120 or self.innings_is_over() or (self.target and self.score["runs"] >= self.target):
+        if self.score["balls"] % 6 == 0 or self.score["balls"] >= balls_cap or self.innings_is_over() or (self.target and self.score["runs"] >= self.target):
             self.close_current_over()
 
-        if self.score["balls"] >= 120 or self.innings_is_over() or (self.target and self.score["runs"] >= self.target):
+        if self.score["balls"] >= balls_cap or self.innings_is_over() or (self.target and self.score["runs"] >= self.target) or self.match_time_expired():
             self.finish_innings()
         else:
             marker = "End of over" if self.score["balls"] % 6 == 0 else "Ball complete"
@@ -434,6 +538,21 @@ class LiveMatch:
         all_out_wickets = min(10, max(0, order_len - 1))
         return self.score.get("wickets", 0) >= all_out_wickets
 
+    def match_time_expired(self):
+        """Whether a Test match has used up its scheduled days/sessions (the real-cricket "stumps on the final day" cutoff), independent of any single innings' all-out/balls-cap state.
+
+        Always `False` for T20/ODI (`self.format["innings_per_side"] == 1`, so
+        the match is never time-limited — only the per-innings balls cap
+        matters there). For Test, true once the final scheduled session's
+        overs quota has been used up — this is what lets a 4th-innings chase
+        end in a draw instead of grinding on to the engine's 90-over-per-innings
+        ceiling.
+        """
+        if self.format["innings_per_side"] <= 1:
+            return False
+        on_final_session = self.current_day >= self.format["days"] and self.current_session >= self.format["sessions_per_day"]
+        return on_final_session and self.overs_bowled_in_session >= self.format["overs_per_session"]
+
     def close_current_over(self):
         """Append the just-finished over's bowler/events/runs to `over_log` and clear the active-over tracking state."""
         bowler = self.score.get("active_bowler")
@@ -444,6 +563,41 @@ class LiveMatch:
             self.score["over_log"].append({"over": over_number, "bowler": bowler.name, "events": events, "runs": over_runs})
         self.score["active_bowler"] = None
         self.score["current_over_events"] = []
+        if self.format["innings_per_side"] > 1:
+            self.advance_test_session()
+
+    def advance_test_session(self):
+        """Track Test-match day/session progress: one over just closed, so tick the session's over counter and flag a stumps/session break once it hits the format's overs-per-session quota.
+
+        Does nothing once the match has reached its final scheduled day/session
+        (the innings-end / balls-cap logic in `play_over` is what actually
+        stops play there) — this only manages the *break* between sessions
+        within an ongoing innings.
+        """
+        self.overs_bowled_in_session += 1
+        if self.overs_bowled_in_session >= self.format["overs_per_session"]:
+            on_final_session = self.current_day >= self.format["days"] and self.current_session >= self.format["sessions_per_day"]
+            if on_final_session:
+                # Time's up for the whole match — leave overs_bowled_in_session
+                # at its maxed-out value so match_time_expired() can see it;
+                # play_over's innings-end check (not a session-break prompt)
+                # is what actually stops play here.
+                return
+            self.overs_bowled_in_session = 0
+            if self.current_session < self.format["sessions_per_day"]:
+                self.current_session += 1
+            else:
+                self.current_day += 1
+                self.current_session = 1
+            self.pending_session_break = True
+
+    def proceed_session(self):
+        """Acknowledge a stumps/session break and resume play. Raises `ValueError` if no break is currently pending."""
+        if not self.pending_session_break:
+            raise ValueError("No session break is pending.")
+        self.pending_session_break = False
+        label = "Stumps" if self.current_session == 1 else "Session break"
+        self.message = f"{label}. Day {self.current_day}, Session {self.current_session} of {self.format['sessions_per_day']}. {self.scoreline() if self.score else ''}"
 
     def set_aggression(self, batting=None, bowling=None):
         """Update per-player batting/bowling aggression dials (clamped to 1-5) for whichever named players are part of the current innings; ignored if no innings is live."""
@@ -508,11 +662,40 @@ class LiveMatch:
         self.score["bat_stats"].setdefault(striker.name, {"runs": 0, "balls": 0, "fours": 0, "sixes": 0})
         self.score["bowl_stats"].setdefault(bowler.name, {"runs": 0, "wickets": 0, "balls": 0})
         over_num = self.score["balls"] // 6
-        phase = innings_phase(over_num)
+        phase = innings_phase(over_num, self.format["phase_boundaries"])
         striker.match_phase = phase
         bowler.match_phase = phase
         striker.batting_aggression = self.score["batting_aggression"].get(striker.name, 3)
         bowler.bowling_aggression = self.score["bowling_aggression"].get(bowler.name, 2)
+        # ODI/Test: auto-ramp CPU batting aggression over the innings so the
+        # run rate naturally lifts in the middle and death overs (mimics how
+        # real batters shift from conservative to attacking as the innings
+        # progresses). Only applies to CPU-batted-for teams; the user controls
+        # aggression explicitly via the set_aggression API.
+        if self.match_format in ("odi", "test"):
+            is_cpu_batter = self.score["batting_team"].name != self.league.user_team_name
+            if is_cpu_batter or self.score["batting_team"].name == self.league.user_team_name:
+                # Apply auto-ramp for all batters; user can override via set_aggression.
+                saved_agg = self.score["batting_aggression"].get(striker.name)
+                default_agg = 1 if self.match_format == "test" else 2
+                if saved_agg == default_agg:
+                    # Only ramp if still at the initial default (user hasn't manually adjusted).
+                    if self.match_format == "odi":
+                        if over_num >= 40:
+                            striker.batting_aggression = 4
+                        elif over_num >= 35:
+                            striker.batting_aggression = 3
+                        elif over_num >= 20:
+                            striker.batting_aggression = 2
+                        # else stays at 2 (conservative)
+                    elif self.match_format == "test":
+                        if over_num >= 70:
+                            striker.batting_aggression = 3
+                        elif over_num >= 40:
+                            striker.batting_aggression = 2
+                        # else stays at 1 (very conservative)
+        # Expose per-innings balls faced to the engine for settling-in logic.
+        striker.balls_faced_this_innings = self.score["bat_stats"].get(striker.name, {}).get("balls", 0)
         outcome = self.engine.simulate_ball(striker, bowler)
         self.score["balls"] += 1
         self.score["partnership_balls"] += 1
@@ -614,15 +797,36 @@ class LiveMatch:
     def finish_innings(self):
         """Close out the current innings: roll up career milestones (highest score, fifties/hundreds), update both teams' season run/ball totals (for NRR), archive the innings card, and either set the chase target and move to the second innings or complete the match.
 
-        All-out innings count as a full 120 balls faced for NRR purposes
-        (the standard cricket convention — a side bowled out is treated as
-        having "used" its full quota).
+        All-out innings count as the format's full balls-per-innings faced for
+        NRR purposes (the standard cricket convention — a side bowled out is
+        treated as having "used" its full quota). Test matches (more than one
+        innings per side) are handled separately by `finish_test_innings`,
+        since they have follow-on/declaration/draw paths a limited-overs
+        match never reaches.
         """
+        if self.format["innings_per_side"] > 1:
+            self.finish_test_innings()
+            return
         batting_team = self.score["batting_team"]
         bowling_team = self.score["bowling_team"]
         runs = self.score["runs"]
         wickets = self.score["wickets"]
         balls = self.score["balls"]
+        self.archive_milestones(batting_team, bowling_team, wickets, balls, runs)
+        if self.current_innings == 1:
+            self.current_innings = 2
+            self.target = runs + 1
+            if getattr(self.league, "competition", "ipl") == "ipl":
+                self.status = "impact"
+                self.message = f"Innings break. Target is {self.target}. Use one Impact Player sub if you want."
+            else:
+                self.message = f"Innings break. Target is {self.target}."
+                self.prepare_second_innings()
+        else:
+            self.complete_match()
+
+    def archive_milestones(self, batting_team, bowling_team, wickets, balls, runs):
+        """Shared by both the limited-overs and Test innings-close paths: roll up career milestones, update both teams' season run/ball totals (for NRR), and archive the innings card onto `self.innings`."""
         for name, data in self.score["bat_stats"].items():
             player = next((p for p in self.score["batting_order"] if p.name == name), None)
             if not player:
@@ -634,7 +838,7 @@ class LiveMatch:
                 player.stats["hundreds"] += 1
             elif data["runs"] >= 50:
                 player.stats["fifties"] += 1
-        final_balls = 120 if wickets == 10 else balls
+        final_balls = self.format["balls_per_innings"] if wickets == 10 else balls
         batting_team.runs_scored += runs
         batting_team.balls_faced += final_balls
         bowling_team.runs_conceded += runs
@@ -651,13 +855,98 @@ class LiveMatch:
             "dismissals": dict(self.score.get("dismissals", {})),
             "over_log": list(self.score.get("over_log", [])),
         })
+
+    def finish_test_innings(self):
+        """Close out a Test innings and advance to whatever comes next: the follow-on decision (after innings 2, if the criteria are met), the next innings, or the match result.
+
+        Innings sequence: 1 = team A bats, 2 = team B bats, then either a
+        follow-on decision (if A leads by `follow_on_margin`+) or a normal
+        innings break; innings 3 and 4 follow from there. The match completes
+        once 4 innings are done, the fourth-innings chase succeeds, or no
+        further play is possible (handled by `complete_test_match`).
+        """
+        batting_team = self.score["batting_team"]
+        bowling_team = self.score["bowling_team"]
+        runs = self.score["runs"]
+        wickets = self.score["wickets"]
+        balls = self.score["balls"]
+        self.archive_milestones(batting_team, bowling_team, wickets, balls, runs)
+
+        ipl = getattr(self.league, "competition", "ipl") == "ipl"
+
         if self.current_innings == 1:
             self.current_innings = 2
-            self.target = runs + 1
-            self.status = "impact"
-            self.message = f"Innings break. Target is {self.target}. Use one Impact Player sub if you want."
+            if ipl:
+                self.status = "impact"
+                self.message = "Innings break. Use one Impact Player sub if you want."
+            else:
+                self.message = "Innings break."
+                self.start_second_innings()
+            return
+
+        if self.current_innings == 2:
+            team_a_runs = self.innings[0]["runs"]
+            team_b_runs = self.innings[1]["runs"]
+            lead = team_a_runs - team_b_runs
+            margin = self.format["follow_on_margin"]
+            if margin and lead >= margin:
+                self.follow_on_available = True
+                self.current_innings = 3
+                self.status = "follow_on_decision"
+                self.message = f"{self.inn1_bat.name} lead by {lead} runs and can enforce the follow-on."
+                return
+            self.current_innings = 3
+            if ipl:
+                self.status = "impact"
+                self.message = "Innings break. Use one Impact Player sub if you want."
+            else:
+                self.message = "Innings break."
+                self.start_second_innings()
+            return
+
+        if self.current_innings == 3:
+            if self.followed_on and self.innings[2]["team"] == self.inn1_bowl and self.innings[2]["runs"] < (self.innings[0]["runs"] - self.innings[1]["runs"]):
+                # Follow-on enforced and the follow-on side's 2nd innings
+                # still falls short of team A's 1st-innings lead — an innings
+                # win, no 4th innings needed.
+                self.complete_test_match()
+                return
+            self.current_innings = 4
+            if ipl:
+                self.status = "impact"
+                self.message = "Innings break. Use one Impact Player sub if you want."
+            else:
+                self.message = "Innings break."
+                self.start_second_innings()
+            return
+
+        self.complete_test_match()
+
+    def decide_follow_on(self, enforce=True):
+        """Resolve the follow-on decision after Test innings 2: enforce it (team B bats again straight away) or decline it (team A bats again normally)."""
+        if self.status != "follow_on_decision":
+            raise ValueError("No follow-on decision is pending.")
+        self.followed_on = bool(enforce)
+        ipl = getattr(self.league, "competition", "ipl") == "ipl"
+        if self.followed_on:
+            msg = f"{self.inn1_bowl.name} follow on."
         else:
-            self.complete_match()
+            msg = f"{self.inn1_bat.name} bat again."
+        if ipl:
+            self.status = "impact"
+            self.message = msg + " Use one Impact Player sub if you want."
+        else:
+            self.message = msg
+            self.start_second_innings()
+
+    def declare_innings(self):
+        """End the batting side's innings early by their own choice (Test only). Raises `ValueError` if it isn't currently the user's innings live, or the format doesn't allow declarations."""
+        if self.format["innings_per_side"] <= 1:
+            raise ValueError("Declarations are only available in Test matches.")
+        if self.status != "over" or not self.score:
+            raise ValueError("No innings is in progress to declare.")
+        self.declared[self.current_innings] = True
+        self.finish_innings()
 
     def setup_super_over(self):
         """Initialise a Super Over tiebreaker after a tied match: the side that bowled first innings bats first, CPU lineups are pre-picked, and `status` moves to "super_over_setup" awaiting the user's selection."""
@@ -846,18 +1135,67 @@ class LiveMatch:
         else:
             self.prepare_second_innings()
 
-    def prepare_second_innings(self):
-        """Move to the second innings: if the user is chasing, pause for them to set a batting order first; otherwise start the innings immediately."""
-        user_team = self.league.user_team()
-        if user_team == self.inn1_bowl:
-            self.status = "batting_order"
-            self.message = "Set your batting order for the chase."
+    def next_innings_batting_team(self):
+        """Which team bats in the innings about to start, given `current_innings` and (for Test) the follow-on decision.
+
+        T20/ODI only ever reach innings 2 (the chase, always `inn1_bowl`).
+        Test alternates normally — A, B, A, B (innings 3 is `inn1_bat` again,
+        innings 4 is `inn1_bowl`) — unless team A enforced the follow-on, in
+        which case innings 3 is `inn1_bowl` batting straight away again and
+        innings 4 is `inn1_bat` chasing.
+        """
+        if self.current_innings == 2:
+            return self.inn1_bowl
+        if self.current_innings == 3:
+            return self.inn1_bowl if self.followed_on else self.inn1_bat
+        return self.inn1_bat if self.followed_on else self.inn1_bowl
+
+    def _compute_test_target(self):
+        """Compute and set `self.target` for the current Test innings if it's a genuine run-chase.
+
+        In a standard 4-innings Test, the 4th innings is always a chase.
+        After a follow-on the 3rd innings is also a chase (the team that
+        followed on must overhaul the deficit to win).  In all other innings
+        the target is irrelevant (no chase in progress), so we clear it.
+        """
+        if self.format["innings_per_side"] <= 1:
+            return  # Not a Test match — target is set by finish_innings() already.
+        n = self.current_innings
+        if n <= 2:
+            self.target = None
             return
-        self.start_innings(self.inn1_bowl, self.inn1_bat, self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name])
+        # Who is chasing in innings 3/4?
+        chasing = self.next_innings_batting_team()
+        chasing_innings = [inn for inn in self.innings if inn["team"] == chasing]
+        defending_innings = [inn for inn in self.innings if inn["team"] != chasing]
+        chasing_runs = sum(inn["runs"] for inn in chasing_innings)
+        defending_runs = sum(inn["runs"] for inn in defending_innings)
+        deficit = defending_runs - chasing_runs
+        if deficit > 0:
+            # Chasing side still needs to overhaul the defending side.
+            self.target = defending_runs + 1
+        else:
+            # Chasing side already leads — this innings extends the lead, no target.
+            self.target = None
+
+    def prepare_second_innings(self):
+        """Move to the next innings: if the user is about to bat, pause for them to set a batting order first; otherwise start the innings immediately."""
+        self._compute_test_target()
+        user_team = self.league.user_team()
+        batting_team = self.next_innings_batting_team()
+        bowling_team = self.inn1_bowl if batting_team == self.inn1_bat else self.inn1_bat
+        if user_team == batting_team:
+            self.status = "batting_order"
+            self.message = "Set your batting order."
+            return
+        self.start_innings(batting_team, bowling_team, self.batting_orders[batting_team.name], self.bowling_pools[bowling_team.name])
 
     def start_second_innings(self):
-        """Begin the chase: the side that bowled first now bats against the target."""
-        self.start_innings(self.inn1_bowl, self.inn1_bat, self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name])
+        """Begin the next innings on autopilot: whichever side is due to bat next (see `next_innings_batting_team`) does so against the other."""
+        self._compute_test_target()
+        batting_team = self.next_innings_batting_team()
+        bowling_team = self.inn1_bowl if batting_team == self.inn1_bat else self.inn1_bat
+        self.start_innings(batting_team, bowling_team, self.batting_orders[batting_team.name], self.bowling_pools[bowling_team.name])
 
     def complete_match(self):
         """Decide the match result from both innings' totals — chase succeeds (win by wickets), chase falls short (win by runs), or scores level triggers a Super Over — then finalize."""
@@ -866,7 +1204,7 @@ class LiveMatch:
         if second["runs"] >= first["runs"] + 1:
             winner = self.inn1_bowl
             loser = self.inn1_bat
-            margin = f"won by {10 - second['wickets']} wickets"
+            margin = wickets_margin(10 - second["wickets"])
         elif first["runs"] > second["runs"]:
             winner = self.inn1_bat
             loser = self.inn1_bowl
@@ -876,53 +1214,102 @@ class LiveMatch:
             return
         self.finalize_match(winner, loser, margin)
 
-    def finalize_match(self, winner, loser, margin):
+    def complete_test_match(self):
+        """Decide a Test match's result once play has stopped: a chase that overhauls the target wins by wickets, a side bowled out (or out of overs) short of the target loses by runs, a side bowled out a final time without the other batting again loses by an innings, and anything else (overs/days exhausted mid-chase) is a draw."""
+        team_a_innings = [inn for inn in self.innings if inn["team"] == self.inn1_bat]
+        team_b_innings = [inn for inn in self.innings if inn["team"] == self.inn1_bowl]
+        team_a_runs = sum(inn["runs"] for inn in team_a_innings)
+        team_b_runs = sum(inn["runs"] for inn in team_b_innings)
+        last = self.innings[-1]
+        chasing_team = last["team"]
+        defending_team = self.inn1_bowl if chasing_team == self.inn1_bat else self.inn1_bat
+        chasing_runs = team_a_runs if chasing_team == self.inn1_bat else team_b_runs
+        defending_runs = team_b_runs if chasing_team == self.inn1_bat else team_a_runs
+
+        if chasing_runs > defending_runs:
+            margin = wickets_margin(10 - last["wickets"])
+            self.finalize_match(chasing_team, defending_team, margin)
+            return
+        if len(self.innings) == 3 and self.followed_on and not self.match_time_expired():
+            # Follow-on enforced and team B's 2nd innings (3rd overall) still
+            # fell short of team A's 1st-innings lead — an innings win for
+            # team A, no 4th innings needed.
+            margin = f"won by an innings and {team_a_runs - team_b_runs} runs"
+            self.finalize_match(self.inn1_bat, self.inn1_bowl, margin)
+            return
+        chasing_all_out = self.innings_is_over() or self.score.get("balls", 0) >= self.format["balls_per_innings"]
+        if len(self.innings) == 4 and chasing_all_out and not self.match_time_expired():
+            margin = f"won by {defending_runs - chasing_runs} runs"
+            self.finalize_match(defending_team, chasing_team, margin)
+            return
+        # Either the chasing side was bowled out/used its full overs exactly
+        # as time ran out, or time ran out with wickets and overs still in
+        # hand — either way, no side achieved a winning position in time: a
+        # draw, the standard Test outcome for a stopped, undecided match.
+        self.finalize_draw()
+
+    def finalize_draw(self):
+        """Record a Test match as drawn: no win/loss, a shared point each (1-1, the standard Test points convention), still tallies games-played/form/bowling-bests from whatever innings were completed."""
+        self.inn1_bat.points += 1
+        self.inn1_bowl.points += 1
+        self.inn1_bat.draws += 1
+        self.inn1_bowl.draws += 1
+        self.finalize_match(None, None, "Match drawn", draw=True)
+
+    def finalize_match(self, winner, loser, margin, draw=False):
         """Record the match result everywhere it needs to land: team W/L and points, every involved player's games-played/team-wins tally, Man of the Match, season bowling-best updates, post-match form adjustments, and the final scorecard appended to the league's match log.
 
-        "Involved" players are derived from both innings' batting orders and
-        bowlers actually used — not full squads — so bench players don't get
-        credited with a game they didn't play. `seen_players` prevents
-        double-counting a player who, in principle, could appear in both
-        teams' involvement sets.
+        "Involved" players are derived from every completed innings' batting
+        orders and bowlers actually used — not full squads — so bench players
+        don't get credited with a game they didn't play. `seen_players`
+        prevents double-counting a player across multiple innings or, in
+        principle, both teams' involvement sets. When `draw` is set, `winner`/
+        `loser` are `None` and win/loss tallies (already applied by
+        `finalize_draw`) are skipped, but every other bookkeeping step — stats,
+        MOTM, the scorecard — still runs the same way.
         """
-        first = self.innings[0]
-        second = self.innings[1]
-        winner.wins += 1
-        winner.points += 2
-        loser.losses += 1
-        involved_by_team = {winner.name: set(), loser.name: set()}
-        for innings in (first, second):
+        if not draw:
+            winner.wins += 1
+            winner.points += 2
+            loser.losses += 1
+        team1, team2 = self.inn1_bat, self.inn1_bowl
+        involved_by_team = {team1.name: set(), team2.name: set()}
+        for innings in self.innings:
             involved_by_team.setdefault(innings["team"].name, set()).update(innings.get("batting_order", []))
             involved_by_team.setdefault(innings["bowling_team"].name, set()).update(innings.get("bowl_stats", {}).keys())
         seen_players = set()
-        for name in involved_by_team.get(winner.name, set()):
-            player = self.league.find_player_anywhere(name)
-            if not player:
-                continue
-            ensure_stat_fields(player)
-            player.stats["games"] += 1
-            player.stats["team_wins"] += 1
-            seen_players.add(player.name)
-        for name in involved_by_team.get(loser.name, set()):
-            player = self.league.find_player_anywhere(name)
-            if not player:
-                continue
-            ensure_stat_fields(player)
-            if player.name not in seen_players:
+        win_team_name = winner.name if winner else None
+        for team_name, names in involved_by_team.items():
+            for name in names:
+                player = self.league.find_player_anywhere(name)
+                if not player or player.name in seen_players:
+                    continue
+                ensure_stat_fields(player)
                 player.stats["games"] += 1
-        all_bat = {**first["bat_stats"], **second["bat_stats"]}
-        all_bowl = {**first["bowl_stats"], **second["bowl_stats"]}
+                if win_team_name and team_name == win_team_name:
+                    player.stats["team_wins"] += 1
+                seen_players.add(player.name)
+        all_bat = {}
+        all_bowl = {}
+        for innings in self.innings:
+            all_bat.update(innings["bat_stats"])
+            all_bowl.update(innings["bowl_stats"])
         players = [
             p for name in set().union(*involved_by_team.values())
             for p in [self.league.find_player_anywhere(name)] if p
         ]
-        motm = self.league.select_motm(all_bat, all_bowl, players, winner)
+        motm_against = winner if winner else team1
+        motm = self.league.select_motm(all_bat, all_bowl, players, motm_against)
         ensure_stat_fields(motm)
         motm.stats["motm"] += 1
-        self.league.update_bowling_bests(self.bowling_pools[self.inn1_bowl.name], first["bowl_stats"], self.inn1_bat.name)
-        self.league.update_bowling_bests(self.bowling_pools[self.inn1_bat.name], second["bowl_stats"], self.inn1_bowl.name)
-        self.engine.eval_match_performances_for_form(self.batting_orders[self.inn1_bat.name], self.bowling_pools[self.inn1_bowl.name], first["bat_stats"], first["bowl_stats"])
-        self.engine.eval_match_performances_for_form(self.batting_orders[self.inn1_bowl.name], self.bowling_pools[self.inn1_bat.name], second["bat_stats"], second["bowl_stats"])
+        for innings in self.innings:
+            self.league.update_bowling_bests(self.bowling_pools.get(innings["bowling_team"].name, []), innings["bowl_stats"], innings["team"].name)
+            self.engine.eval_match_performances_for_form(
+                self.batting_orders.get(innings["team"].name, []),
+                self.bowling_pools.get(innings["bowling_team"].name, []),
+                innings["bat_stats"],
+                innings["bowl_stats"],
+            )
         self.card = {
             "round": self.league.round_num,
             "stage": self.stage,
@@ -930,11 +1317,12 @@ class LiveMatch:
             "team2": self.team2.name,
             "venue": team_meta(self.team1)["home"],
             "toss": f"{self.toss_winner.name} chose to {self.decision}",
-            "winner": winner.name,
+            "winner": winner.name if winner else "",
+            "draw": draw,
             "margin": margin,
-            "summary": f"{winner.name} {margin}",
+            "summary": f"{winner.name} {margin}" if winner else margin,
             "motm": motm.name,
-            "innings": [self.league.innings_card(first), self.league.innings_card(second)],
+            "innings": [self.league.innings_card(inn) for inn in self.innings],
             "impact_subs": list(self.impact_subs),
             "super_over": self.super_over_card(),
         }
@@ -985,9 +1373,10 @@ class LiveMatch:
         # confirming preserves) the correct lineup.
         if self.status == "batting_order" and user_team.name in self.batting_orders:
             lineup_xi = [p.name for p in self.batting_orders[user_team.name]]
-        impact_sub_name = getattr(user_team, "saved_impact_sub_name", "") or self.league.smart_impact_sub(user_team, lineup_xi)
+        ipl = getattr(self.league, "competition", "ipl") == "ipl"
+        impact_sub_name = (getattr(user_team, "saved_impact_sub_name", "") or self.league.smart_impact_sub(user_team, lineup_xi)) if ipl else ""
         swap_notice = ""
-        if self.lineup_context() == "bowling":
+        if ipl and self.lineup_context() == "bowling" and swap_out:
             swap_notice = f"{swap_out} (impact sub) starts in place of {swap_in}. {swap_in} returns at the innings break."
         return {
             "status": self.status,
@@ -1014,6 +1403,16 @@ class LiveMatch:
             "super_over": self.super_over_payload(),
             "innings": innings_payload,
             "card": self.card,
+            "match_format": self.match_format,
+            "total_balls": self.format["balls_per_innings"],
+            "current_day": self.current_day,
+            "current_session": self.current_session,
+            "sessions_per_day": self.format["sessions_per_day"],
+            "overs_remaining_in_session": max(0, self.format["overs_per_session"] - self.overs_bowled_in_session),
+            "pending_session_break": self.pending_session_break,
+            "follow_on_available": self.status == "follow_on_decision",
+            "followed_on": self.followed_on,
+            "can_declare": self.format["innings_per_side"] > 1 and self.status == "over" and bool(self.score) and self.score["batting_team"].name == user_team.name,
         }
 
     def live_bowler_dict(self, player):
@@ -1043,7 +1442,8 @@ class LiveMatch:
         if self.status != "impact":
             return ""
         user = self.league.user_team()
-        return "bat_to_bowl" if user == self.inn1_bat else "bowl_to_bat"
+        just_batted = self.score["batting_team"] if self.score else self.inn1_bat
+        return "bat_to_bowl" if user == just_batted else "bowl_to_bat"
 
     def live_score_payload(self):
         """The full live-scoreboard JSON for the active innings: scoreline, target, both batters and bowler on strike, partnership, current over, and recent over history — or `None` if no innings is in progress."""
@@ -1069,7 +1469,7 @@ class LiveMatch:
             "striker": striker_name,
             "non_striker": non_striker_name,
             "partnership": f"{self.score['partnership_runs']} off {self.score['partnership_balls']}",
-            "phase": innings_phase(self.score["balls"] // 6),
+            "phase": innings_phase(self.score["balls"] // 6, self.format["phase_boundaries"]),
             "active_bowler": self.score["active_bowler"].name if self.score.get("active_bowler") else "",
             "pending_next_batter": self.score.get("pending_next_batter", False),
             "striker_aggression": self.score["batting_aggression"].get(striker_name, 3),
