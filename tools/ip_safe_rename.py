@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -487,6 +488,475 @@ PLAYER_MAP = {
     "Zaheer Khan": "Zeheer Khen",
     "Zak Foulkes": "Zek Fuulkes",
     "Zeeshan Ansari": "Zieshan Anseri",
+    # --- Phase 8 additions: the all-time ODI/Test/T20I pools and the current
+    # national squads, which shipped with real names. Derived via
+    # derive_ip_safe_name() and recorded here so the mapping is auditable
+    # and stable across runs.
+    "Aamer Jamal": "Aemer Jemal",
+    "Aaron Hardie": "Aeron Herdie",
+    "Abdul Qadir": "Abdol Qedir",
+    "Abdullah Shafique": "Abdollah Shefique",
+    "Abrar Ahmed": "Abrer Ahmid",
+    "Adam Zampa": "Adem Zempa",
+    "Adil Rashid": "Adyl Reshid",
+    "Afif Hossain": "Afyf Hussain",
+    "Ahmad Raza": "Ahmed Reza",
+    "Ahmed Daniyal": "Ahmid Deniyal",
+    "Ahmed Shahzad": "Ahmid Shehzad",
+    "Ajantha Mendis": "Ajentha Mindis",
+    "Ajay Jadeja": "Ajey Jedeja",
+    "Alastair Cook": "Alestair Cuok",
+    "Alec Bedser": "Alic Bidser",
+    "Alec Stewart": "Alic Stiwart",
+    "Alex Carey": "Alix Cerey",
+    "Alex Hales": "Alix Heles",
+    "Alick Athanaze": "Alyck Athenaze",
+    "Allan Border": "Allen Burder",
+    "Allan Donald": "Allen Dunald",
+    "Alvin Kallicharran": "Alvyn Kellicharran",
+    "Amir Hamza": "Amyr Hemza",
+    "Amir Jangoo": "Amyr Jengoo",
+    "Andre Botha": "Andri Butha",
+    "Andre Fletcher": "Andri Flitcher",
+    "Andrew Balbirnie": "Andriw Belbirnie",
+    "Andrew Strauss": "Andriw Streuss",
+    "Andy Bichel": "Andy Bychel",
+    "Andy Flower": "Andy Fluwer",
+    "Andy Roberts": "Andy Ruberts",
+    "Angelo Mathews": "Angilo Methews",
+    "Angelo Perera": "Angilo Pirera",
+    "Arafat Minhas": "Arefat Mynhas",
+    "Aravinda de Silva": "Arevinda de Sylva",
+    "Arjuna Ranatunga": "Arjona Renatunga",
+    "Arthur Morris": "Arthor Murris",
+    "Aryan Dutt": "Aryen Dott",
+    "Asad Shafiq": "Ased Shefiq",
+    "Asanka Gurusinha": "Asenka Gorusinha",
+    "Asif Iqbal": "Asyf Iqbel",
+    "Asitha Fernando": "Asytha Firnando",
+    "Babar Azam": "Bebar Azem",
+    "Bahir Shah": "Behir Sheh",
+    "Barry Richards": "Berry Rychards",
+    "Bas de Leede": "Bes de Liede",
+    "Beau Webster": "Biau Wibster",
+    "Ben McDermott": "Bin McDirmott",
+    "Ben Sears": "Bin Siars",
+    "Bert Sutcliffe": "Birt Sotcliffe",
+    "Bhagwath Chandrasekhar": "Bhegwath Chendrasekhar",
+    "Bill Lawry": "Byll Lewry",
+    "Bill O'Reilly": "Byll O'Riilly",
+    "Bill Ponsford": "Byll Punsford",
+    "Bishan Bedi": "Byshan Bidi",
+    "Blessing Muzarabani": "Blissing Mozarabani",
+    "Bob Simpson": "Bub Sympson",
+    "Bob Willis": "Bub Wyllis",
+    "Brad Haddin": "Bred Heddin",
+    "Brad Hogg": "Bred Hugg",
+    "Brandon King": "Brendon Kyng",
+    "Brendan Doggett": "Brindan Duggett",
+    "Brendon Taylor": "Brindon Teylor",
+    "Brian Lara": "Bryan Lera",
+    "Brian McMillan": "Bryan McMyllan",
+    "Brian Statham": "Bryan Stetham",
+    "Campbell Cowan": "Cempbell Cuwan",
+    "Carl Hooper": "Cerl Huoper",
+    "Chamika Karunaratne": "Chemika Kerunaratne",
+    "Chaminda Vaas": "Cheminda Veas",
+    "Charith Asalanka": "Cherith Aselanka",
+    "Charlie Griffith": "Cherlie Gryffith",
+    "Chris Cairns": "Chrys Ceirns",
+    "Chris Harris": "Chrys Herris",
+    "Chris Jordan": "Chrys Jurdan",
+    "Chris Lewis": "Chrys Liwis",
+    "Chris Woakes": "Chrys Wuakes",
+    "Clarrie Grimmett": "Clerrie Grymmett",
+    "Clive Lloyd": "Clyve Lluyd",
+    "Clive Rice": "Clyve Ryce",
+    "Clyde Walcott": "Clydi Welcott",
+    "Colin Cowdrey": "Culin Cuwdrey",
+    "Colin Croft": "Culin Cruft",
+    "Colin McDonald": "Culin McDunald",
+    "Colin Munro": "Culin Monro",
+    "Collis King": "Cullis Kyng",
+    "Conrad Hunte": "Cunrad Honte",
+    "Courtney Walsh": "Cuurtney Welsh",
+    "Craig Ervine": "Creig Ervyne",
+    "Curtly Ambrose": "Cortly Ambruse",
+    "Damien Fleming": "Demien Fliming",
+    "Damien Martyn": "Demien Mertyn",
+    "Dan Christian": "Den Chrystian",
+    "Danish Kaneria": "Denish Keneria",
+    "Darren Gough": "Derren Guugh",
+    "Darwish Rasooli": "Derwish Resooli",
+    "Daryll Cullinan": "Deryll Collinan",
+    "David Bedingham": "Devid Bidingham",
+    "David Boon": "Devid Buon",
+    "David Gower": "Devid Guwer",
+    "David Wiese": "Devid Wyese",
+    "David Willey": "Devid Wylley",
+    "Dawid Malan": "Dewid Melan",
+    "Dawlat Zadran": "Dewlat Zedran",
+    "Dean Elgar": "Dian Elger",
+    "Denis Compton": "Dinis Cumpton",
+    "Dennis Lillee": "Dinnis Lyllee",
+    "Derek Underwood": "Direk Undirwood",
+    "Dermot Reeve": "Dirmot Rieve",
+    "Desmond Haynes": "Dismond Heynes",
+    "Devon Thomas": "Divon Thumas",
+    "Dhananjaya de Silva": "Dhenanjaya de Sylva",
+    "Dilhara Fernando": "Dylhara Firnando",
+    "Dilip Vengsarkar": "Dylip Vingsarkar",
+    "Dilruwan Perera": "Dylruwan Pirera",
+    "Dinesh Chandimal": "Dynesh Chendimal",
+    "Don Bradman": "Dun Bredman",
+    "Doug Walters": "Duug Welters",
+    "Dunith Wellalage": "Donith Willalage",
+    "Dushan Hemantha": "Doshan Himantha",
+    "Elton Chigumbura": "Eltun Chygumbura",
+    "Everton Weekes": "Evirton Wiekes",
+    "Evin Lewis": "Evyn Liwis",
+    "Fabian Allen": "Febian Allin",
+    "Faheem Ashraf": "Feheem Ashref",
+    "Fakhar Zaman": "Fekhar Zeman",
+    "Farokh Engineer": "Ferokh Engyneer",
+    "Fidel Edwards": "Fydel Edwerds",
+    "Frank Worrell": "Frenk Wurrell",
+    "Franklyn Rose": "Frenklyn Ruse",
+    "Fred Trueman": "Frid Troeman",
+    "Garfield Sobers": "Gerfield Subers",
+    "Gary Kirsten": "Gery Kyrsten",
+    "Gary Wilson": "Gery Wylson",
+    "Geoff Boycott": "Gioff Buycott",
+    "Geoff Howarth": "Gioff Huwarth",
+    "George Dockrell": "Giorge Duckrell",
+    "George Headley": "Giorge Hiadley",
+    "George Linde": "Giorge Lynde",
+    "Gerhard Erasmus": "Girhard Eresmus",
+    "Glenn McGrath": "Glinn McGreth",
+    "Glenn Turner": "Glinn Torner",
+    "Gordon Greenidge": "Gurdon Grienidge",
+    "Graeme Cremer": "Greeme Crimer",
+    "Graeme Hick": "Greeme Hyck",
+    "Graeme Pollock": "Greeme Pullock",
+    "Graeme Swann": "Greeme Swenn",
+    "Graham Gooch": "Greham Guoch",
+    "Graham Thorpe": "Greham Thurpe",
+    "Greg Chappell": "Grig Cheppell",
+    "Gudakesh Motie": "Godakesh Mutie",
+    "Gulbadin Naib": "Golbadin Neib",
+    "Gundappa Viswanath": "Gondappa Vyswanath",
+    "Hanif Mohammad": "Henif Muhammad",
+    "Hansie Cronje": "Hensie Crunje",
+    "Haris Rauf": "Heris Reuf",
+    "Harold Larwood": "Herold Lerwood",
+    "Harry Brook": "Herry Bruok",
+    "Harry Tector": "Herry Tictor",
+    "Hasan Ali": "Hesan Aly",
+    "Hasan Mahmud": "Hesan Mehmud",
+    "Hashan Tillakaratne": "Heshan Tyllakaratne",
+    "Hashim Amla": "Heshim Amle",
+    "Hashmatullah Shahidi": "Heshmatullah Shehidi",
+    "Hazratullah Zazai": "Hezratullah Zezai",
+    "Heath Streak": "Hiath Striak",
+    "Henry Nicholls": "Hinry Nycholls",
+    "Herschelle Gibbs": "Hirschelle Gybbs",
+    "Ian Botham": "Ien Butham",
+    "Ian Chappell": "Ien Cheppell",
+    "Ian Harvey": "Ien Hervey",
+    "Ian Healy": "Ien Hialy",
+    "Ian Smith": "Ien Smyth",
+    "Ibrahim Zadran": "Ibrehim Zedran",
+    "Iftikhar Ahmed": "Iftykhar Ahmid",
+    "Ikram Ali Khil": "Ikrem Aly Khyl",
+    "Imad Wasim": "Imed Wesim",
+    "Imam-ul-Haq": "Imem-ul-Heq",
+    "Imran Khan": "Imren Khen",
+    "Innocent Kaia": "Innucent Keia",
+    "Inzamam-ul-Haq": "Inzemam-ul-Heq",
+    "Irfan Khan Niazi": "Irfen Khen Nyazi",
+    "Ish Sodhi": "Ish Sudhi",
+    "Isitha Wijesundara": "Isytha Wyjesundara",
+    "Jacob Oram": "Jecob Orem",
+    "Jake Weatherald": "Jeke Wiatherald",
+    "Jaker Ali": "Jeker Aly",
+    "James Anderson": "Jemes Andirson",
+    "James Rew": "Jemes Riw",
+    "Jan Nicol Loftie-Eaton": "Jen Nycol Luftie-Eeton",
+    "Janith Liyanage": "Jenith Lyyanage",
+    "Jason Gillespie": "Jeson Gyllespie",
+    "Jason Roy": "Jeson Ruy",
+    "Jatinder Singh": "Jetinder Syngh",
+    "Javagal Srinath": "Jevagal Srynath",
+    "Javed Miandad": "Jeved Myandad",
+    "Jayden Seales": "Jeyden Siales",
+    "Jeff Thomson": "Jiff Thumson",
+    "Jeffrey Dujon": "Jiffrey Dojon",
+    "Jeffrey Vandersay": "Jiffrey Vendersay",
+    "Jeremy Coney": "Jiremy Cuney",
+    "Jerome Taylor": "Jirome Teylor",
+    "Jim Laker": "Jym Leker",
+    "Jimmy Adams": "Jymmy Adems",
+    "Joe Root": "Jue Ruot",
+    "Joel Garner": "Juel Gerner",
+    "John Campbell": "Juhn Cempbell",
+    "John Reid": "Juhn Riid",
+    "John Wright": "Juhn Wryght",
+    "Johnson Charles": "Juhnson Cherles",
+    "Jonathan Trott": "Junathan Trutt",
+    "Jonty Rhodes": "Junty Rhudes",
+    "Jordan Hermann": "Jurdan Hirmann",
+    "Josh Tongue": "Jush Tungue",
+    "Justin Greaves": "Jostin Griaves",
+    "Justin Kemp": "Jostin Kimp",
+    "Justin Langer": "Jostin Lenger",
+    "Kamil Mishara": "Kemil Myshara",
+    "Kamran Ghulam": "Kemran Gholam",
+    "Kapil Dev": "Kepil Div",
+    "Karim Janat": "Kerim Jenat",
+    "Keacy Carty": "Kiacy Certy",
+    "Keith Miller": "Kiith Myller",
+    "Ken Barrington": "Kin Berrington",
+    "Keshav Maharaj": "Kishav Meharaj",
+    "Kevin O'Brien": "Kivin O'Bryen",
+    "Kevin Sinclair": "Kivin Synclair",
+    "Khaled Ahmed": "Kheled Ahmid",
+    "Khawaja Mohammad Nafay": "Khewaja Muhammad Nefay",
+    "Khurram Shahzad": "Khorram Shehzad",
+    "Khushdil Shah": "Khoshdil Sheh",
+    "Kim Hughes": "Kym Hoghes",
+    "Kraigg Brathwaite": "Kreigg Brethwaite",
+    "Kusal Mendis": "Kosal Mindis",
+    "Kusal Perera": "Kosal Pirera",
+    "Kyle Verreynne": "Kyli Virreynne",
+    "Lahiru Kumara": "Lehiru Komara",
+    "Lahiru Udara": "Lehiru Udera",
+    "Lance Gibbs": "Lence Gybbs",
+    "Lance Klusener": "Lence Klosener",
+    "Lawrence Rowe": "Lewrence Ruwe",
+    "Len Hutton": "Lin Hotton",
+    "Liam Dawson": "Lyam Dewson",
+    "Liton Das": "Lyton Des",
+    "Litton Das": "Lytton Des",
+    "Lokesh Rahul": "Lukesh Rehul",
+    "Lorcan Tucker": "Lurcan Tocker",
+    "Luke Wright": "Loke Wryght",
+    "Mahmudullah": "Mehmudullah",
+    "Majid Khan": "Mejid Khen",
+    "Makhaya Ntini": "Mekhaya Ntyni",
+    "Malcolm Marshall": "Melcolm Mershall",
+    "Marcus Harris": "Mercus Herris",
+    "Marcus Trescothick": "Mercus Triscothick",
+    "Mark Adair": "Merk Adeir",
+    "Mark Chapman": "Merk Chepman",
+    "Mark Ramprakash": "Merk Remprakash",
+    "Mark Taylor": "Merk Teylor",
+    "Mark Wood": "Merk Wuod",
+    "Marlon Samuels": "Merlon Semuels",
+    "Marnus Labuschagne": "Mernus Lebuschagne",
+    "Marquino Mindley": "Merquino Myndley",
+    "Martin Crowe": "Mertin Cruwe",
+    "Martin Donnelly": "Mertin Dunnelly",
+    "Martin Guptill": "Mertin Goptill",
+    "Matt Short": "Mett Shurt",
+    "Matthew Forde": "Metthew Furde",
+    "Matthew Kuhnemann": "Metthew Kohnemann",
+    "Matthew Potts": "Metthew Putts",
+    "Matthew Renshaw": "Metthew Rinshaw",
+    "Max O'Dowd": "Mex O'Duwd",
+    "Mehidy Hasan Miraz": "Mihidy Hesan Myraz",
+    "Michael Bevan": "Mychael Bivan",
+    "Michael Holding": "Mychael Hulding",
+    "Michael Klinger": "Mychael Klynger",
+    "Mick Lewis": "Myck Liwis",
+    "Mike Atherton": "Myke Athirton",
+    "Mike Hussey": "Myke Hossey",
+    "Mikyle Louis": "Mykyle Luuis",
+    "Milan Rathnayake": "Mylan Rethnayake",
+    "Milind Kumar": "Mylind Komar",
+    "Misbah-ul-Haq": "Mysbah-ul-Heq",
+    "Mohamed Ayyub": "Muhamed Ayyob",
+    "Mohammad Azharuddin": "Muhammad Azheruddin",
+    "Mohammad Hafeez": "Muhammad Hefeez",
+    "Mohammad Nawaz": "Muhammad Newaz",
+    "Mohammad Rizwan": "Muhammad Ryzwan",
+    "Mohammad Saleem Safi": "Muhammad Seleem Sefi",
+    "Mohammad Wasim Jr": "Muhammad Wesim Jr",
+    "Mohammad Yousuf": "Muhammad Yuusuf",
+    "Mohammed Asif": "Muhammed Asyf",
+    "Mominul Haque": "Muminul Heque",
+    "Muhammad Waseem": "Mohammad Weseem",
+    "Mushfiqur Rahim": "Moshfiqur Rehim",
+    "Mushtaq Ahmed": "Moshtaq Ahmid",
+    "Mushtaq Mohammad": "Moshtaq Muhammad",
+    "Najibullah Zadran": "Nejibullah Zedran",
+    "Najmul Hossain Shanto": "Nejmul Hussain Shento",
+    "Nantie Hayward": "Nentie Heyward",
+    "Naseem Shah": "Neseem Sheh",
+    "Nasser Hussain": "Nesser Hossain",
+    "Nasum Ahmed": "Nesum Ahmid",
+    "Nathan Lyon": "Nethan Lyun",
+    "Naveen-ul-Haq": "Neveen-ul-Heq",
+    "Nayeem Hasan": "Neyeem Hesan",
+    "Neil Harvey": "Niil Hervey",
+    "Neil McKenzie": "Niil McKinzie",
+    "Nick Knight": "Nyck Knyght",
+    "Nishan Madushka": "Nyshan Medushka",
+    "Nkrumah Bonner": "Nkromah Bunner",
+    "Noman Ali": "Numan Aly",
+    "Nour El Islam Guessoum": "Nuur El Islem Goessoum",
+    "Nuwan Pradeep": "Nowan Predeep",
+    "Obaid Shah": "Obeid Sheh",
+    "Obed McCoy": "Obid McCuy",
+    "Oliver Peake": "Olyver Piake",
+    "Ollie Pope": "Ollye Pupe",
+    "Ollie Robinson": "Ollye Rubinson",
+    "Oman Bilal Khan": "Omen Bylal Khen",
+    "Ottneil Baartman": "Ottniil Beartman",
+    "Parvez Hossain Emon": "Pervez Hussain Emun",
+    "Pasindu Sooriyabandara": "Pesindu Suoriyabandara",
+    "Paul Stirling": "Peul Styrling",
+    "Pavan Rathnayake": "Pevan Rethnayake",
+    "Peter Kirsten": "Piter Kyrsten",
+    "Peter Loader": "Piter Luader",
+    "Peter May": "Piter Mey",
+    "Phil Tufnell": "Phyl Tofnell",
+    "Pieter Seelaar": "Pyeter Sielaar",
+    "Polly Umrigar": "Pully Umrygar",
+    "Prabath Jayasuriya": "Prebath Jeyasuriya",
+    "Pramod Madushan": "Premod Medushan",
+    "Prasanna": "Presanna",
+    "Prenelan Subrayen": "Prinelan Sobrayen",
+    "Quentin Sampson": "Qoentin Sempson",
+    "R Ashwin": "R Ashwyn",
+    "Rahmat Shah": "Rehmat Sheh",
+    "Ramesh Mendis": "Remesh Mindis",
+    "Rashidul Hasan": "Reshidul Hesan",
+    "Rassie van der Dussen": "Ressie van der Dossen",
+    "Ravi Rampaul": "Revi Rempaul",
+    "Ray Lindwall": "Rey Lyndwall",
+    "Reeza Hendricks": "Rieza Hindricks",
+    "Regis Chakabva": "Rigis Chekabva",
+    "Rehan Ahmed": "Rihan Ahmid",
+    "Riaz Hassan": "Ryaz Hessan",
+    "Richard Hadlee": "Rychard Hedlee",
+    "Richie Richardson": "Rychie Rychardson",
+    "Rishad Hossain": "Ryshad Hussain",
+    "Robert Croft": "Rubert Cruft",
+    "Robin Singh": "Rubin Syngh",
+    "Rodney Marsh": "Rudney Mersh",
+    "Roelof van der Merwe": "Ruelof van der Mirwe",
+    "Rohail Nazir": "Ruhail Nezir",
+    "Rohan Kanhai": "Ruhan Kenhai",
+    "Roston Chase": "Ruston Chese",
+    "Roy Fredericks": "Ruy Fridericks",
+    "Ruben Trumpelmann": "Roben Trompelmann",
+    "Rubin Hermann": "Robin Hirmann",
+    "Ryan Burl": "Ryen Borl",
+    "Ryan Campbell": "Ryen Cempbell",
+    "Ryan Sidebottom": "Ryen Sydebottom",
+    "Sachith Pathirana": "Sechith Pethirana",
+    "Sachithra Senanayake": "Sechithra Sinanayake",
+    "Sadeera Samarawickrama": "Sedeera Semarawickrama",
+    "Sahibzada Farhan": "Sehibzada Ferhan",
+    "Saim Ayub": "Seim Ayob",
+    "Sajid Khan": "Sejid Khen",
+    "Salman Ali Agha": "Selman Aly Aghe",
+    "Samit Patel": "Semit Petel",
+    "Samuel Badree": "Semuel Bedree",
+    "Sanath Jayasuriya": "Senath Jeyasuriya",
+    "Saqib Mahmood": "Seqib Mehmood",
+    "Saqlain Mushtaq": "Seqlain Moshtaq",
+    "Sarfraz Nawaz": "Serfraz Newaz",
+    "Saud Shakil": "Seud Shekil",
+    "Sayed Shirzad": "Seyed Shyrzad",
+    "Scott Boland": "Scutt Buland",
+    "Scott Edwards": "Scutt Edwerds",
+    "Sean Williams": "Sian Wylliams",
+    "Shadab Khan": "Shedab Khen",
+    "Shadman Islam": "Shedman Islem",
+    "Shaheen Shah Afridi": "Sheheen Sheh Afrydi",
+    "Shahid Afridi": "Shehid Afrydi",
+    "Shahzad Mawali": "Shehzad Mewali",
+    "Shai Hope": "Shei Hupe",
+    "Shamar Joseph": "Shemar Juseph",
+    "Shan Masood": "Shen Mesood",
+    "Shane Bond": "Shene Bund",
+    "Shaun Tait": "Sheun Teit",
+    "Shoaib Akhtar": "Shuaib Akhter",
+    "Shoaib Bashir": "Shuaib Beshir",
+    "Shoaib Malik": "Shuaib Melik",
+    "Shoriful Islam": "Shuriful Islem",
+    "Sikandar Raza": "Sykandar Reza",
+    "Simi Singh": "Symi Syngh",
+    "Simon Harmer": "Symon Hermer",
+    "Sonal Dinusha": "Sunal Dynusha",
+    "Soumya Sarkar": "Suumya Serkar",
+    "Srinivas Venkataraghavan": "Srynivas Vinkataraghavan",
+    "Stephan Baard": "Stiphan Beard",
+    "Steve Harmison": "Stive Hermison",
+    "Steve Waugh": "Stive Weugh",
+    "Steven Smith": "Stiven Smyth",
+    "Stuart Broad": "Stoart Bruad",
+    "Stuart Law": "Stoart Lew",
+    "Stuart MacGill": "Stoart MecGill",
+    "Subhash Gupte": "Sobhash Gopte",
+    "Sufyan Moqim": "Sofyan Muqim",
+    "Sulieman Benn": "Solieman Binn",
+    "Sunil Gavaskar": "Sonil Gevaskar",
+    "Suranga Lakmal": "Soranga Lekmal",
+    "Sydney Barnes": "Sydniy Bernes",
+    "Tabraiz Shamsi": "Tebraiz Shemsi",
+    "Taijul Islam": "Teijul Islem",
+    "Tamim Iqbal": "Temim Iqbel",
+    "Tanveer Sangha": "Tenveer Sengha",
+    "Tanzid Hasan Tamim": "Tenzid Hesan Temim",
+    "Tanzim Hasan Sakib": "Tenzim Hesan Sekib",
+    "Tayyab Tahir": "Teyyab Tehir",
+    "Ted Dexter": "Tid Dixter",
+    "Temba Bavuma": "Timba Bevuma",
+    "Tendai Chatara": "Tindai Chetara",
+    "Tevin Imlach": "Tivin Imlech",
+    "Tharindu Rathnayake": "Therindu Rethnayake",
+    "Tim Southee": "Tym Suuthee",
+    "Tino Best": "Tyno Bist",
+    "Todd Murphy": "Tudd Morphy",
+    "Tom Graveney": "Tum Greveney",
+    "Tom Latham": "Tum Letham",
+    "Tom Moody": "Tum Muody",
+    "Tony Lock": "Tuny Luck",
+    "Tony de Zorzi": "Tuny de Zurzi",
+    "Towhid Hridoy": "Tuwhid Hrydoy",
+    "Tymal Mills": "Tymel Mylls",
+    "Umar Akmal": "Umer Akmel",
+    "Upul Tharanga": "Upol Theranga",
+    "Usman Khan": "Usmen Khen",
+    "Usman Khawaja": "Usmen Khewaja",
+    "Usman Tariq": "Usmen Teriq",
+    "Venkatesh Prasad": "Vinkatesh Presad",
+    "Victor Trumper": "Vyctor Tromper",
+    "Vijay Hazare": "Vyjay Hezare",
+    "Vijay Merchant": "Vyjay Mirchant",
+    "Vikramjit Singh": "Vykramjit Syngh",
+    "Vinoo Mankad": "Vynoo Menkad",
+    "Virendra Sehwag": "Vyrendra Sihwag",
+    "Vishwa Fernando": "Vyshwa Firnando",
+    "Viv Richards": "Vyv Rychards",
+    "Wahab Riaz": "Wehab Ryaz",
+    "Wahidullah Shafaq": "Wehidullah Shefaq",
+    "Wally Hammond": "Welly Hemmond",
+    "Waqar Younis": "Weqar Yuunis",
+    "Wasim Akram": "Wesim Akrem",
+    "Wayne Daniel": "Weyne Deniel",
+    "Wes Hall": "Wis Hell",
+    "Will O'Rourke": "Wyll O'Ruurke",
+    "Will Young": "Wyll Yuung",
+    "William O'Rourke": "Wylliam O'Ruurke",
+    "Yamin Ahmadzai": "Yemin Ahmedzai",
+    "Younis Khan": "Yuunis Khen",
+    "Zaheer Abbas": "Zeheer Abbes",
+    "Zahir Khan": "Zehir Khen",
+    "Zak Crawley": "Zek Crewley",
+    "Zakir Hasan": "Zekir Hesan",
 }
 
 # Files that reference team names as plain strings (the player CSVs are
@@ -508,6 +978,54 @@ TEAM_TEXT_FILES = [
     ROOT / "backend" / "tests" / "live_match" / "test_live_match_routes.py",
     ROOT / "backend" / "tests" / "auth" / "test_auth_routes.py",
 ]
+
+
+# --- deriving new names -------------------------------------------------------
+#
+# PLAYER_MAP above was authored by hand for the original IPL pool. Phase 8 added
+# three all-time pools and current international squads containing several
+# hundred further real names, which is far too many to hand-write while keeping
+# the convention consistent. The convention itself is mechanical, so we derive
+# from it instead and keep every result in PLAYER_MAP as the audit record.
+#
+# The rule (reverse-engineered from the hand-authored entries, which it
+# reproduces for 434 of 435 of them): shift the first vowel that follows a
+# word's opening letter, so initials survive and abbreviated scorecard forms
+# stay familiar — "V. Kohli" -> "V. Kuhli". Hyphenated surnames shift each
+# segment independently ("Coulter-Nile" -> "Cuulter-Nyle"). Initialisms ("AB")
+# and name particles ("de", "van") are left alone.
+#
+# The one hand-authored entry this does not reproduce is "Lynn" -> "Lyno": a
+# surname with no shiftable vowel. Such names have no derivable form, so they
+# are reported for a hand-written PLAYER_MAP entry rather than guessed at.
+
+VOWEL_SHIFT = {"a": "e", "e": "i", "i": "y", "o": "u", "u": "o"}
+NAME_PARTICLES = {"de", "van", "der", "du", "da", "di", "le", "la", "bin", "al"}
+
+
+def _shift_word(word: str) -> str:
+    if len(word) < 3 or word.lower() in NAME_PARTICLES or word.isupper():
+        return word
+    for i, ch in enumerate(word):
+        if i == 0:
+            continue
+        shifted = VOWEL_SHIFT.get(ch.lower())
+        if shifted:
+            return word[:i] + (shifted.upper() if ch.isupper() else shifted) + word[i + 1:]
+    return word  # no shiftable vowel — caller reports it for a manual mapping
+
+
+def derive_ip_safe_name(name: str) -> str:
+    """Apply the rename convention to a real player name."""
+    return " ".join(
+        "-".join(_shift_word(part) for part in token.split("-"))
+        for token in name.split(" ")
+    )
+
+
+def is_derivable(name: str) -> bool:
+    """Whether the convention actually changes this name (vowel-less names do not)."""
+    return derive_ip_safe_name(name) != name
 
 
 def _replace_teams(text: str) -> str:
@@ -546,6 +1064,138 @@ def apply_player_roster_renames(write: bool) -> None:
         path.write_text(text)
 
 
+# Phase 8 data: the all-time ODI/Test/T20I pools and the current national
+# squads. These shipped with real names and are what `--apply` now also covers.
+ALLTIME_CSVS = [
+    ENGINE / "players_alltime_odi.csv",
+    ENGINE / "players_alltime_t20_intl.csv",
+    ENGINE / "players_alltime_test.csv",
+]
+INTERNATIONAL_DATA = ENGINE / "international_data.py"
+
+
+def csv_player_names() -> set[str]:
+    """Every name in the all-time pool CSVs (the name is always the first column)."""
+    names: set[str] = set()
+    for path in ALLTIME_CSVS:
+        if not path.exists():
+            continue
+        lines = path.read_text().splitlines()
+        for line in lines[1:]:
+            if line.strip():
+                names.add(line.split(",", 1)[0].strip())
+    return names
+
+
+# Every squad member is declared as `_p("Name", "Role", ...)`, so the player
+# name is always the first argument. Match on that structure rather than on
+# "looks like a name": country names ("South Africa") and batting archetypes
+# ("Middle-order Rotator") are quoted identically and a shape-based regex
+# happily renames them, which silently decouples the rosters from
+# INTERNATIONAL_TEAMS_LIST and corrupts archetype values.
+_PLAYER_CALL = re.compile(r'_p\(\s*"([^"]+)"')
+
+
+def international_player_names() -> set[str]:
+    """Player names declared in international_data.py, and nothing else."""
+    if not INTERNATIONAL_DATA.exists():
+        return set()
+    return set(_PLAYER_CALL.findall(INTERNATIONAL_DATA.read_text()))
+
+
+def unmapped_names() -> set[str]:
+    """Real names in the Phase 8 data that PLAYER_MAP does not yet cover."""
+    return (csv_player_names() | international_player_names()) - set(PLAYER_MAP)
+
+
+def audit_derived_names() -> tuple[dict[str, str], list[str], list[str]]:
+    """Derive names for everything unmapped, and report what needs a human.
+
+    Returns (derived, undecidable, collisions):
+      - undecidable: no shiftable vowel, so the convention yields the real name
+      - collisions:  two real names deriving to the same fictional name, or a
+                     derived name colliding with a real name still in the data
+    """
+    real_names = csv_player_names() | international_player_names() | set(PLAYER_MAP)
+    derived: dict[str, str] = {}
+    undecidable: list[str] = []
+    seen: dict[str, str] = {v: k for k, v in PLAYER_MAP.items()}
+    collisions: list[str] = []
+
+    for real in sorted(unmapped_names()):
+        if not is_derivable(real):
+            undecidable.append(real)
+            continue
+        fake = derive_ip_safe_name(real)
+        if fake in real_names:
+            collisions.append(f"{real} -> {fake} (collides with a real name)")
+            continue
+        if fake in seen:
+            collisions.append(f"{real} -> {fake} (already used by {seen[fake]})")
+            continue
+        seen[fake] = real
+        derived[real] = fake
+    return derived, undecidable, collisions
+
+
+def _rename_csv_names(path: Path, mapping: dict[str, str], write: bool) -> int:
+    """Rewrite only the first CSV column, leaving every other byte untouched.
+
+    These files use CRLF endings, and Path.read_text() applies universal-newline
+    translation — which would silently rewrite every line to LF and bury the
+    real change in an all-lines diff. newline="" round-trips them verbatim.
+    """
+    with open(path, "r", encoding="utf-8", newline="") as fh:
+        lines = fh.read().splitlines(keepends=True)
+    changed = 0
+    for idx, line in enumerate(lines[1:], start=1):
+        if not line.strip():
+            continue
+        name, sep, rest = line.partition(",")
+        new = mapping.get(name.strip())
+        if new:
+            lines[idx] = f"{new}{sep}{rest}"
+            changed += 1
+    if changed and write:
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write("".join(lines))
+    return changed
+
+
+def apply_alltime_csv_renames(mapping: dict[str, str], write: bool) -> None:
+    for path in ALLTIME_CSVS:
+        if not path.exists():
+            print(f"  (skip, missing) {path}")
+            continue
+        n = _rename_csv_names(path, mapping, write)
+        print(f"  renamed {n:>3} names in {path.name}")
+
+
+def apply_international_renames(mapping: dict[str, str], write: bool) -> None:
+    if not INTERNATIONAL_DATA.exists():
+        print("  (skip, missing) international_data.py")
+        return
+    text = INTERNATIONAL_DATA.read_text()
+    original = text
+    changed = 0
+
+    # Rewrite only the first argument of each _p(...) call, so nothing outside a
+    # player-name position can be touched no matter what the mapping contains.
+    def _sub(match: re.Match) -> str:
+        nonlocal changed
+        real = match.group(1)
+        new = mapping.get(real)
+        if not new:
+            return match.group(0)
+        changed += 1
+        return match.group(0).replace(f'"{real}"', f'"{new}"', 1)
+
+    text = _PLAYER_CALL.sub(_sub, text)
+    print(f"  renamed {changed:>3} player names in international_data.py")
+    if write and text != original:
+        INTERNATIONAL_DATA.write_text(text)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", help="rewrite files in place")
@@ -553,10 +1203,30 @@ def main() -> None:
     args = parser.parse_args()
 
     print(f"Teams: {len(TEAM_MAP)}  Players: {len(PLAYER_MAP)}")
+
+    derived, undecidable, collisions = audit_derived_names()
+    print(f"\nPhase 8 data needing mappings: {len(unmapped_names())}")
+    print(f"  derived by convention: {len(derived)}")
+    if undecidable:
+        print(f"  NO SHIFTABLE VOWEL ({len(undecidable)}) — add these to PLAYER_MAP by hand:")
+        for n in undecidable:
+            print(f"    {n}")
+    if collisions:
+        print(f"  COLLISIONS ({len(collisions)}) — resolve by hand:")
+        for c in collisions:
+            print(f"    {c}")
+
+    full_map = {**PLAYER_MAP, **derived}
+
     print("\nApplying team renames:")
     apply_team_renames(write=args.apply)
     print("Applying player roster renames:")
     apply_player_roster_renames(write=args.apply)
+    print("Applying all-time pool CSV renames:")
+    apply_alltime_csv_renames(full_map, write=args.apply)
+    print("Applying international squad renames:")
+    apply_international_renames(full_map, write=args.apply)
+
     if not args.apply:
         print("\n(dry run — pass --apply to write)")
 

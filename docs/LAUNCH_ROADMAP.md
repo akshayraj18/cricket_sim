@@ -11,6 +11,13 @@ Status legend: ☐ not started · ◐ partial · ☑ done
 - Player names are fictional but recognizable — IP-safe convention already applied
 - *(Country and city names are not protected — India, Australia, Mumbai, etc. are fine)*
 - Roster editor in squad screen lets users rename teams/players (standard workaround)
+- Phase 8 regression, fixed 2026-08-18: the three all-time pools
+  (`players_alltime_{odi,test,t20_intl}.csv`) and the current national squads in
+  `international_data.py` shipped with **real** player names — 465 of them.
+  `international_data.py` even documented the rename as deliberately deferred.
+  All are now renamed via `tools/ip_safe_rename.py`, whose `PLAYER_MAP` is the
+  audit record. **Re-run `--check` before any release that adds player data**;
+  it reports any real name that has not been mapped.
 
 ### 0.2 ☐ In-app account deletion  *(Apple Guideline 5.1.1(v) — required)*
 - Backend: `DELETE /auth/me` removes user, careers, tokens
