@@ -1,5 +1,5 @@
 Cricket Simulation Engine — Reference
-Last updated: July 2026
+Last updated: August 2026
 
 All values reflect the current code in engine.py, live_match.py, and constants.py.
 
