@@ -558,7 +558,7 @@ def test_payload_total_balls_odi():
 
 
 def test_payload_total_balls_test():
-    """Test payload exposes total_balls = 540."""
+    """Test payload exposes total_balls = 660 (110 overs)."""
     random.seed(202)
     league = drafted_league(seed=202)
     league.match_format = "test"
@@ -570,7 +570,7 @@ def test_payload_total_balls_test():
     force_toss(match, winner_team=team, decision="bat")
     submit_user_xi_for_innings_role(league, match, presets)
     p = match.payload()
-    assert p["total_balls"] == 540
+    assert p["total_balls"] == 660
     assert p["match_format"] == "test"
 
 

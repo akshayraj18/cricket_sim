@@ -111,12 +111,61 @@ def test_test_format_config():
     from cricket_sim_engine.sim.constants import format_config
     cfg = format_config("test")
     assert cfg["innings_per_side"] == 2
-    assert cfg["balls_per_innings"] == 540
+    assert cfg["balls_per_innings"] == 660
     assert cfg["days"] == 5
     assert cfg["sessions_per_day"] == 3
     assert cfg["overs_per_session"] == 30
     assert cfg["follow_on_margin"] == 200
     assert cfg["allows_draw"] is True
+
+
+@pytest.mark.parametrize("seed", [3, 5, 10, 11, 12])
+def test_fourth_innings_chase_stops_on_the_winning_run(seed):
+    """A side that overhauls the target must still have wickets in hand.
+
+    The 4th-innings target is the runs needed IN THAT INNINGS, not the
+    opposition's aggregate. Setting it to the aggregate meant the comparison
+    against the current-innings score could never fire, so the chase ran on to
+    all out — which reported "won by 0 wickets" (10 - 10) and inflated every
+    4th-innings total. These five seeds all produced that result before the fix.
+    """
+    league = _fresh_test_league(seed)
+    match, card = _auto_match(league)
+    margin = card.get("margin", "") or ""
+
+    assert "0 wicket" not in margin.replace("10 wicket", ""), f"seed {seed}: {margin}"
+
+    if "wicket" in margin:
+        last = match.innings[-1]
+        assert last["wickets"] < 10, (
+            f"seed {seed}: won by wickets while all out — the chase did not stop"
+        )
+        assert card["winner"] == last["team"].name, (
+            f"seed {seed}: a wickets win must go to the side batting last"
+        )
+
+
+def test_chase_target_is_runs_needed_this_innings_not_the_aggregate():
+    """The target shown mid-chase is what a real scoreboard shows.
+
+    Team A 300 & 100 (agg 400), team B 250 => B needs 151 in the 4th innings,
+    not 401. Asserted on the state directly so it does not depend on a seed
+    happening to produce a chase.
+    """
+    league = _fresh_test_league(1)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    _setup_innings_manually(match, league)
+
+    a, b = match.inn1_bat, match.inn1_bowl
+    match.innings = [
+        {"team": a, "runs": 300, "wickets": 10, "balls": 540},
+        {"team": b, "runs": 250, "wickets": 10, "balls": 480},
+        {"team": a, "runs": 100, "wickets": 10, "balls": 300},
+    ]
+    match.current_innings = 4
+    match._compute_test_target()
+    assert match.target == 151
 
 
 def test_test_league_sets_match_format():
@@ -184,7 +233,9 @@ def test_win_by_wickets_margin_format():
         team_a = [i for i in match.innings if i["team"] == match.inn1_bat]
         team_b = [i for i in match.innings if i["team"] == match.inn1_bowl]
         if sum(i["runs"] for i in team_b) > sum(i["runs"] for i in team_a):
-            assert "wickets" in card["margin"], f"expected wickets win, got: {card['margin']}"
+            # "wicket", not "wickets": a one-wicket win is singular, so matching
+            # only the plural fails on exactly the tightest and best results.
+            assert "wicket" in card["margin"], f"expected wickets win, got: {card['margin']}"
             return
     pytest.skip("no 4th-innings chase win in the sampled seeds")
 
@@ -406,7 +457,7 @@ def test_draw_via_tiny_time_budget():
 
 def test_draw_summary_text():
     """A drawn match's summary is 'Match drawn'."""
-    match, card = _tiny_draw_match(2)
+    match, card = _tiny_draw_match(3)  # seed 3 runs out of time; seed 2 now chases a small target
     assert card["summary"] == "Match drawn"
     assert card["winner"] == ""
 

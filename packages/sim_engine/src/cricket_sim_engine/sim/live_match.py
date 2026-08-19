@@ -1150,6 +1150,31 @@ class LiveMatch:
             return self.inn1_bowl if self.followed_on else self.inn1_bat
         return self.inn1_bat if self.followed_on else self.inn1_bowl
 
+    def runs_ahead(self):
+        """(team_name, runs) for whoever currently leads on aggregate, else None.
+
+        This is the "lead by N runs" / "trail by N runs" line every real Test
+        scorecard carries, and in a multi-innings match it is the only figure
+        that makes the state legible: a side can be 200/4 and still be 150
+        behind. Returns None when scores are level or no innings has been
+        completed. Limited-overs formats have no aggregate, so None there too.
+        """
+        if self.format["innings_per_side"] <= 1 or not self.innings:
+            return None
+        totals = {}
+        for inn in self.innings:
+            totals[inn["team"].name] = totals.get(inn["team"].name, 0) + inn["runs"]
+        # Count the innings in progress, which is not yet archived in self.innings.
+        if self.score and self.score.get("batting_team") is not None:
+            name = self.score["batting_team"].name
+            totals[name] = totals.get(name, 0) + self.score.get("runs", 0)
+        if len(totals) < 2:
+            # Only one side has batted — they lead by everything they have made.
+            name, runs = next(iter(totals.items()))
+            return (name, runs) if runs else None
+        (n1, r1), (n2, r2) = sorted(totals.items(), key=lambda kv: -kv[1])
+        return (n1, r1 - r2) if r1 != r2 else None
+
     def _compute_test_target(self):
         """Compute and set `self.target` for the current Test innings if it's a genuine run-chase.
 
@@ -1161,7 +1186,15 @@ class LiveMatch:
         if self.format["innings_per_side"] <= 1:
             return  # Not a Test match — target is set by finish_innings() already.
         n = self.current_innings
-        if n <= 2:
+        # `self.target` TERMINATES an innings on the winning run, so it may only
+        # be set for the final innings of the match. A side batting third that
+        # passes the opposition's aggregate has merely taken a lead — the match
+        # goes on and the other side bats fourth. Setting a target in the third
+        # innings ended it the moment the deficit was cleared, producing
+        # scorecards like "193/3" where a side was neither bowled out nor out of
+        # overs, and handing the opposition an artificially small chase.
+        # The lead/deficit is still tracked for display; see `runs_ahead()`.
+        if n < 4:
             self.target = None
             return
         # Who is chasing in innings 3/4?
@@ -1172,8 +1205,14 @@ class LiveMatch:
         defending_runs = sum(inn["runs"] for inn in defending_innings)
         deficit = defending_runs - chasing_runs
         if deficit > 0:
-            # Chasing side still needs to overhaul the defending side.
-            self.target = defending_runs + 1
+            # Runs needed IN THIS INNINGS, not the opposition's aggregate.
+            # `self.target` is compared against self.score["runs"], which counts
+            # only the innings in progress, so an aggregate target could never
+            # be reached: the chase ran to all out instead of stopping on the
+            # winning run, which is what produced "won by 0 wickets" (10 - 10)
+            # and inflated every 4th-innings score. This is also the number a
+            # real scoreboard shows — "needs 84 runs to win".
+            self.target = deficit + 1
         else:
             # Chasing side already leads — this innings extends the lead, no target.
             self.target = None
@@ -1227,7 +1266,16 @@ class LiveMatch:
         defending_runs = team_b_runs if chasing_team == self.inn1_bat else team_a_runs
 
         if chasing_runs > defending_runs:
-            margin = wickets_margin(10 - last["wickets"])
+            # A side that overhauls the target has, by definition, wickets in
+            # hand — the innings stops on the winning run. If it is somehow all
+            # out and still ahead, the chase did not terminate correctly and a
+            # "0 wickets" margin would be nonsense; report the runs the side is
+            # ahead by instead of a margin that cannot happen.
+            wickets_left = 10 - last["wickets"]
+            if wickets_left <= 0:
+                margin = f"won by {chasing_runs - defending_runs} runs"
+            else:
+                margin = wickets_margin(wickets_left)
             self.finalize_match(chasing_team, defending_team, margin)
             return
         if len(self.innings) == 3 and self.followed_on and not self.match_time_expired():
@@ -1412,6 +1460,17 @@ class LiveMatch:
             "pending_session_break": self.pending_session_break,
             "follow_on_available": self.status == "follow_on_decision",
             "followed_on": self.followed_on,
+            # Who is ahead on aggregate, and by how much — the "lead by N" line a
+            # real Test scorecard carries. Without it a multi-innings score is
+            # unreadable: 200/4 means nothing until you know whether that is 150
+            # ahead or 150 behind. None in limited-overs, or when scores are level.
+            "lead_team": (self.runs_ahead() or (None, None))[0],
+            "lead_runs": (self.runs_ahead() or (None, None))[1],
+            # Runs still needed in the innings in progress (final innings only).
+            "runs_required": (
+                max(0, self.target - self.score["runs"])
+                if self.target and self.score else None
+            ),
             "can_declare": self.format["innings_per_side"] > 1 and self.status == "over" and bool(self.score) and self.score["batting_team"].name == user_team.name,
         }
 
