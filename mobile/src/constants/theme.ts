@@ -346,11 +346,25 @@ function saturation(hex: string): number {
  * enough for `#fff` foreground.
  */
 export function getTeamBackground(team: TeamMeta, teamName?: string): string {
-  // Prefer the more saturated of the two team colors; that skips grayscale.
+  // Prefer a color that ALREADY works as a dark fill under white text, and
+  // prefer the primary when both qualify — that is the team's identity color.
+  //
+  // Selecting purely by saturation picked the accent for 6 of 10 teams and then
+  // darkened 5 of them into mud, because the most saturated color is usually the
+  // bright one. Mumbai (primary #1f6feb blue, accent #f0c419 gold) came out
+  // #8c7315 — a muddy olive that is neither of the team's colors, and which
+  // disagreed with the Squad screen, where getTeamPlayerAccent picks the blue.
+  // Chennai is the case that justifies still considering the accent: its primary
+  // is a bright gold that white text cannot sit on, so its navy accent is right.
+  const usable = [team.primary, team.accent].filter(
+    (c) => !isGrayscale(c) && relativeLuminance(c) <= 0.5 && saturation(c) >= 0.15
+  );
+  if (usable.length) return usable[0];
+
+  // Neither color can serve as-is (both too light, or grayscale identities like
+  // a silver/black kit): fall back to darkening the more vivid one.
   const candidate = saturation(team.primary) >= saturation(team.accent) ? team.primary : team.accent;
-  // If even the better candidate is washed-out gray, fall back to the swatch.
   const base = saturation(candidate) < 0.15 ? (teamName && TeamSwatches[teamName]?.light) || candidate : candidate;
-  // Ensure it's dark enough for white text; darken toward near-black if needed.
   return relativeLuminance(base) > 0.5 ? mixHex(base, '#111111', 0.45) : base;
 }
 

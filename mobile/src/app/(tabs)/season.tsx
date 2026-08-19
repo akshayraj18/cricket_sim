@@ -28,7 +28,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function SeasonScreen() {
   const theme = useTheme();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const { showError } = useError();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, refresh, setPayload } = useLeague();
@@ -101,7 +101,7 @@ export default function SeasonScreen() {
           </View>
         )}
         {!error && payload && (
-          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
             {actionError && <ThemedText themeColor="red">{actionError}</ThemedText>}
 
             {payload.live_match ? (
