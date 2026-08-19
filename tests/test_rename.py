@@ -70,13 +70,13 @@ def test_rename_team_updates_pointer_and_objects():
 
 def test_rename_team_keeps_branding_and_can_simulate():
     """Regression: renaming a team to a name that isn't a TEAM_META key (e.g.
-    'Sunrisers Hyderabad') must keep its original branding and must NOT crash
+    'a name the user typed') must keep its original branding and must NOT crash
     when building the match card's venue (team_meta fallback, not TEAM_META[])."""
     league = _drafted()
     team = league.user_team()
     original_meta = league.team_dict(team)["abbr"]
 
-    league.rename_team("Mumbai Mavericks", "Sunrisers Hyderabad")
+    league.rename_team("Mumbai Mavericks", "Rename Test United")
 
     team = league.user_team()
     d = league.team_dict(team)
@@ -113,11 +113,11 @@ def test_full_season_after_renaming_team_and_player():
     user = league.user_team()
     old_player = user.captain.name
 
-    league.rename_team("Mumbai Mavericks", "Sunrisers Hyderabad")
+    league.rename_team("Mumbai Mavericks", "Rename Test United")
     league.rename_player(old_player, "Star Player")
 
     team = league.user_team()
-    assert team.name == "Sunrisers Hyderabad"
+    assert team.name == "Rename Test United"
     assert any(p.name == "Star Player" for p in team.roster)
     assert not any(p.name == old_player for p in team.roster)
 
@@ -135,7 +135,7 @@ def test_full_season_after_renaming_team_and_player():
 
     table = league.standings()
     assert len(table) == 10
-    renamed = next(t for t in table if t.name == "Sunrisers Hyderabad")
+    renamed = next(t for t in table if t.name == "Rename Test United")
     assert renamed.games_played == 14
     assert not any(t.name == "Mumbai Mavericks" for t in table)
 

@@ -121,7 +121,9 @@ App Store rating & feedback
 
 Gameplay / Format Quality
   - Verify and fix all-time great player natural_slot values per format
-  - IPL → "Indian T20 League" rename in mobile UI text
+  - (done) IPL → generic naming in mobile UI text. Audited 2026-08-18: no
+    user-visible "IPL" string exists in the app; "ipl" survives only as an
+    internal competition enum value and in code comments.
   - NRR column in international standings (Test: W/D/L/Points table)
   - Day summary card after stumps in Test (runs, wickets, highlights)
   - Required rate display in ODI chase (current RR vs required RR)

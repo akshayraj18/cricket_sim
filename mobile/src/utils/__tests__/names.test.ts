@@ -2,16 +2,16 @@ import { abbreviateDismissal, abbreviateName } from '../names';
 
 describe('abbreviateName', () => {
   it('shortens a two-part name to "F. Last"', () => {
-    expect(abbreviateName('Jasprit Bumrah')).toBe('J. Bumrah');
-    expect(abbreviateName('Sanju Samson')).toBe('S. Samson');
+    expect(abbreviateName('Jesprit Bomrah')).toBe('J. Bomrah');
+    expect(abbreviateName('Senju Semson')).toBe('S. Semson');
   });
 
   it('keeps a single-word name as-is', () => {
-    expect(abbreviateName('Pant')).toBe('Pant');
+    expect(abbreviateName('Pent')).toBe('Pent');
   });
 
   it('keeps a multi-word surname whole', () => {
-    expect(abbreviateName('AB de Villiers')).toBe('A. de Villiers');
+    expect(abbreviateName('AB de Vylliers')).toBe('A. de Vylliers');
   });
 
   it('handles empty / whitespace gracefully', () => {
@@ -22,21 +22,21 @@ describe('abbreviateName', () => {
 
 describe('abbreviateDismissal', () => {
   it('abbreviates caught dismissals', () => {
-    expect(abbreviateDismissal('c Sanju Samson b Jasprit Bumrah')).toBe('c S. Samson b J. Bumrah');
+    expect(abbreviateDismissal('c Senju Semson b Jesprit Bomrah')).toBe('c S. Semson b J. Bomrah');
   });
 
   it('abbreviates stumped dismissals', () => {
-    expect(abbreviateDismissal('st KL Rahul b Rashid Khan')).toBe('st K. Rahul b R. Khan');
+    expect(abbreviateDismissal('st KL Rehul b Reshid Khen')).toBe('st K. Rehul b R. Khen');
   });
 
   it('abbreviates bowled and lbw', () => {
-    expect(abbreviateDismissal('b Jasprit Bumrah')).toBe('b J. Bumrah');
-    expect(abbreviateDismissal('lbw b Rashid Khan')).toBe('lbw b R. Khan');
+    expect(abbreviateDismissal('b Jesprit Bomrah')).toBe('b J. Bomrah');
+    expect(abbreviateDismissal('lbw b Reshid Khen')).toBe('lbw b R. Khen');
   });
 
   it('abbreviates the fielder in a run out', () => {
-    expect(abbreviateDismissal('run out (Virat Kohli)')).toBe('run out (V. Kohli)');
-    expect(abbreviateDismissal('run out (Virat Kohli/MS Dhoni)')).toBe('run out (V. Kohli/M. Dhoni)');
+    expect(abbreviateDismissal('run out (Vyrat Kuhli)')).toBe('run out (V. Kuhli)');
+    expect(abbreviateDismissal('run out (Vyrat Kuhli/MS Dhuni)')).toBe('run out (V. Kuhli/M. Dhuni)');
   });
 
   it('leaves statuses untouched', () => {
