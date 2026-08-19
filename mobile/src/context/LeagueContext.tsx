@@ -5,6 +5,7 @@ import { seasonApi } from '@/api/season';
 import { LeaguePayload } from '@/api/types';
 import { useCareer } from '@/context/CareerContext';
 import { useTour } from '@/context/TourContext';
+import { useFunnelTracking } from '@/observability/use-funnel-tracking';
 
 interface LeagueContextValue {
   payload: LeaguePayload | null;
@@ -60,6 +61,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       if (!tourActive) refresh();
     }, [refresh, tourActive])
   );
+
+  // Gameplay funnel events are derived here rather than at each button, since
+  // this is where every path (manual, autodraft, quick-sim, auto-sim) converges.
+  useFunnelTracking(activeCareerId, payload, tourActive);
 
   const value = useMemo(
     () => ({ payload, loading, error, refresh, setPayload }),

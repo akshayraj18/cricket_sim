@@ -5,6 +5,7 @@
  * API key is configured.
  */
 import { type ReactNode } from 'react';
+import * as Device from 'expo-device';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 
 import { POSTHOG_API_KEY, POSTHOG_HOST } from '@/api/config';
@@ -17,9 +18,15 @@ export type AnalyticsEvent =
   | 'signed_out'
   | 'account_deleted'
   | 'career_created' // props: { team, difficulty, draft_pool }
-  | 'draft_completed'
-  | 'match_played' // props: { mode: 'quick_sim' | 'live' }
-  | 'season_completed'
+  // --- gameplay funnel. Emitted centrally from payload transitions by
+  // useFunnelTracking(), not from individual buttons: a draft can finish via
+  // autodraft or the last manual pick, and a match can end from several
+  // screens, so per-button capture calls miss paths. See use-funnel-tracking.ts.
+  | 'draft_started' // props: { draft_type, competition, match_format }
+  | 'draft_completed' // props: { draft_type, competition, match_format }
+  | 'match_played' // props: { mode: 'quick_sim' | 'live', competition, match_format }
+  | 'playoffs_reached' // props: { competition, match_format, season }
+  | 'season_completed' // props: { completed_seasons, competition, match_format }
   | 'impact_sub_used'
   | 'tutorial_started' // props: { source: 'first_run' | 'replay' }
   | 'tutorial_completed' // props: { slides: number }
@@ -28,12 +35,40 @@ export type AnalyticsEvent =
   | 'notifications_disabled' // props: { source: 'settings' }
   | 'notification_opened'; // props: { kind: string }
 
+/**
+ * Fill in the device fields PostHog can't work out on its own.
+ *
+ * Out of the box every install reported `$device_type: "Mobile"` with no model
+ * at all, so iPhone and iPad were indistinguishable in the data — which made
+ * device-specific layout bugs impossible to size. expo-device exposes these
+ * synchronously, and its DeviceType separates TABLET from PHONE.
+ */
+function deviceProperties() {
+  const byType: Record<number, string> = {
+    [Device.DeviceType.PHONE]: 'Mobile',
+    [Device.DeviceType.TABLET]: 'Tablet',
+    [Device.DeviceType.DESKTOP]: 'Desktop',
+    [Device.DeviceType.TV]: 'TV',
+  };
+  return {
+    $device_name: Device.modelName ?? null,
+    $device_model: Device.modelId ?? Device.modelName ?? null,
+    $device_manufacturer: Device.manufacturer ?? Device.brand ?? null,
+    $device_type: (Device.deviceType != null ? byType[Device.deviceType] : null) ?? 'Mobile',
+  };
+}
+
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   if (!POSTHOG_API_KEY) return <>{children}</>;
   return (
     <PostHogProvider
       apiKey={POSTHOG_API_KEY}
-      options={{ host: POSTHOG_HOST }}
+      options={{
+        host: POSTHOG_HOST,
+        // Merge over PostHog's defaults rather than replacing them, so app
+        // version/build (which it already gets right) keep flowing through.
+        customAppProperties: (defaults) => ({ ...defaults, ...deviceProperties() }),
+      }}
       autocapture={{ captureScreens: true, captureTouches: false }}>
       {children}
     </PostHogProvider>
