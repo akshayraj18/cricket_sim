@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/card';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getLegibleAccentValue, getTeamBackground, getTeamSwatch, GOLD, Spacing, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, getTeamBackground, getTeamPlayerAccent, getTeamSwatch, GOLD, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
@@ -622,7 +622,17 @@ function PlayoffCard({ match: p, teams }: { match: PlayoffMatch; teams: LeaguePa
 
 function StandingsPanel({ payload, accent }: { payload: LeaguePayload; accent?: string }) {
   const theme = useTheme();
+  const scheme = useColorScheme();
   const [expanded, setExpanded] = useState<string | null>(null);
+  // `accent` here is getTeamBackground(), which is deliberately DARK so white
+  // text reads on top of it — correct for filled surfaces, wrong for text on a
+  // card. Highlighting the user's row with it made that row harder to read than
+  // the others, worst for the near-black identity colours (Gujarat's primary is
+  // 1.01:1 against the dark card). Derive a foreground colour for the label.
+  const userTeamDict = payload.teams.find((t) => t.name === payload.user_team);
+  const userRowColor = userTeamDict
+    ? getTeamPlayerAccent(userTeamDict, scheme)
+    : accent ?? theme.green;
 
   return (
     <View style={styles.panelGap}>
@@ -662,7 +672,7 @@ function StandingsPanel({ payload, accent }: { payload: LeaguePayload; accent?: 
                 style={[styles.standingsRow, { borderBottomColor: theme.border }]}>
                 <ThemedText style={[styles.standingsCell, styles.posCol]}>{i + 1}</ThemedText>
                 <View style={styles.teamCol}>
-                  <ThemedText style={[styles.standingsTeam, t.name === payload.user_team && { color: accent ?? theme.green }]} numberOfLines={1}>
+                  <ThemedText style={[styles.standingsTeam, t.name === payload.user_team && { color: userRowColor }]} numberOfLines={1}>
                     {t.abbr}
                   </ThemedText>
                 </View>

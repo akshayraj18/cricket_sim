@@ -13,7 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getLegibleAccentValue, GOLD, Radius, Spacing, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, getTeamPlayerAccent, GOLD, Radius, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useLeague } from '@/context/LeagueContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -183,6 +183,7 @@ function parseBestBowling(label: string | undefined): [number, number] {
 
 export default function HistoryScreen() {
   const theme = useTheme();
+  const scheme = useColorScheme();
   const { contentContainerStyle } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error } = useLeague();
@@ -193,7 +194,13 @@ export default function HistoryScreen() {
     () => payload?.teams.find((t) => t.name === payload.user_team),
     [payload]
   );
-  const accent = team?.accent;
+  // NOT the raw team accent. This is passed down as `accentColor` to the
+  // segmented control, pills and the player sheet, all of which use it as
+  // FOREGROUND text — and most team colours fail a contrast check against the
+  // card in at least one theme (Bengaluru's #1c1c24 is 1.06:1 on the dark card,
+  // Chennai's #0f2a5c is 1.14:1). getTeamPlayerAccent picks whichever of the
+  // team's two colours reads in the current scheme, matching squad.tsx.
+  const accent = team ? getTeamPlayerAccent(team, scheme) : undefined;
 
   const matchLog = useMemo(() => [...(payload?.match_log ?? [])].reverse(), [payload]);
   const seasonHistory = useMemo(() => [...(payload?.history ?? [])].reverse(), [payload]);
