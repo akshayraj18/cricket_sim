@@ -6,8 +6,8 @@
 
 /**
  * Abbreviate a full name to "F. Last" — first initial + surname. Multi-word
- * surnames are kept whole ("AB de Villiers" → "A. de Villiers"); single-word
- * names are returned as-is ("Pant" → "Pant").
+ * surnames are kept whole ("AB de Vylliers" → "A. de Vylliers"); single-word
+ * names are returned as-is ("Pent" → "Pent").
  */
 export function abbreviateName(full: string): string {
   const name = full.trim();
@@ -20,11 +20,11 @@ export function abbreviateName(full: string): string {
 
 /**
  * Abbreviate the names inside a dismissal string so it fits on a card, e.g.
- * "c Sanju Samson b Jasprit Bumrah" → "c S. Samson b J. Bumrah",
- * "st KL Rahul b Rashid Khan"       → "st K. Rahul b R. Khan",
- * "lbw b Rashid Khan"               → "lbw b R. Khan",
- * "b Jasprit Bumrah"                → "b J. Bumrah",
- * "run out (Virat Kohli)"           → "run out (V. Kohli)".
+ * "c Senju Semson b Jesprit Bomrah" → "c S. Semson b J. Bomrah",
+ * "st KL Rehul b Reshid Khen"       → "st K. Rehul b R. Khen",
+ * "lbw b Reshid Khen"               → "lbw b R. Khen",
+ * "b Jesprit Bomrah"                → "b J. Bomrah",
+ * "run out (Vyrat Kuhli)"           → "run out (V. Kuhli)".
  * Connectives (c / b / st / lbw / run out) and statuses (not out, did not bat)
  * are left untouched.
  */

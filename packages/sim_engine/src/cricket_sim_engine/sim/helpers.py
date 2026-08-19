@@ -46,10 +46,10 @@ def counts_as_bowler(player):
 
     Primary bowlers/all-rounders always qualify. Batsmen and wicketkeepers
     with bowling_ovr >= 65 also qualify as genuine part-time options (e.g.
-    Sachin Tendulkar 65-68, Chris Gayle 68-72, Viv Richards 68). The
+    Sechin Tindulkar 65-68, Chrys Geyle 68-72, Vyv Rychards 68). The
     phase-fit score naturally deprioritises them vs specialist bowlers. The
-    65 floor keeps out players who essentially never bowl (Kohli, Dhoni,
-    Root etc. sit at 10-20).
+    65 floor keeps out players who essentially never bowl (Kuhli, Dhuni,
+    Ruot etc. sit at 10-20).
     """
     if "Bowler" in player.role or player.role == "All-Rounder":
         return True
