@@ -1,7 +1,8 @@
 .PHONY: install test test-all test-exhaustive unit integration regression lint clean \
 	backend-up backend-down backend-run backend-migrate backend-test gen-secret \
 	webapp \
-	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open
+	mobile mobile-install mobile-typecheck mobile-lint mobile-ios mobile-sim-open \
+	mobile-prebuild mobile-xcode-env
 
 # Install/sync project + dev dependencies (pytest, pyflakes) via uv.
 install:
@@ -104,11 +105,38 @@ mobile:
 mobile-sim-open:
 	xcrun simctl openurl booted "cric-sim://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
 
+# Regenerate the native iOS project from app.json and reinstall pods. Run this
+# after ANY dependency or config-plugin change: `expo install` updates
+# node_modules but leaves Podfile.lock pinned to the old version, and the build
+# then fails on a header that only exists in the newer pod.
+# Depends on mobile-xcode-env so the local build environment survives the
+# regeneration (prebuild --clean deletes ios/, and ios/ is gitignored).
+mobile-prebuild:
+	cd mobile && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 PATH="$(MOBILE_NODE_BIN):$$PATH" \
+		arch -arm64 npx expo prebuild --clean --platform ios
+	$(MAKE) mobile-xcode-env
+
+# Write ios/.xcode.env.local, which Xcode build phases source.
+#
+# Sentry's build phase uploads source maps unless told not to, and that needs an
+# auth token we do not have (secrets/ids.txt holds ingest-only DSNs), so the
+# build dies with "An organization ID or slug is required". eas.json sets this
+# same flag for cloud builds, but a local Xcode build never reads eas.json.
+# ios/ is gitignored and regenerated, so this has to be reapplied, not committed.
+mobile-xcode-env:
+	@mkdir -p mobile/ios
+	@touch mobile/ios/.xcode.env.local
+	@grep -q NODE_BINARY mobile/ios/.xcode.env.local || \
+		echo 'export NODE_BINARY=$(MOBILE_NODE_BIN)/node' >> mobile/ios/.xcode.env.local
+	@grep -q SENTRY_DISABLE_AUTO_UPLOAD mobile/ios/.xcode.env.local || \
+		echo 'export SENTRY_DISABLE_AUTO_UPLOAD=true' >> mobile/ios/.xcode.env.local
+	@echo "ios/.xcode.env.local ready:"; sed 's/^/  /' mobile/ios/.xcode.env.local
+
 # Build + run the native iOS dev client on a simulator. Needed after adding a
 # native module / config-plugin (e.g. Apple/Google sign-in). Regenerates the
 # native project from app.json, signs with your Apple team, and launches.
 # Set LANG/LC_ALL so CocoaPods (Ruby) doesn't choke on a non-UTF-8 locale.
-mobile-ios:
+mobile-ios: mobile-xcode-env
 	cd mobile && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 PATH="$(MOBILE_NODE_BIN):$$PATH" npx expo run:ios
 
 # Typecheck the mobile app (matches the CI `mobile` job).

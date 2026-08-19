@@ -1,5 +1,5 @@
 CricSim — Architecture Reference
-Last updated: July 2026
+Last updated: August 2026
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OVERVIEW
@@ -154,6 +154,45 @@ Theme (constants/theme.ts):
 Utilities (utils/):
   lineup.ts    — ORDER_ZONES (Openers/Middle/Lower/Tail), bowler scoring, XI validation
   names.ts     — abbreviateName(), abbreviateDismissal()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OBSERVABILITY  (mobile/src/observability/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+analytics.tsx
+  PostHog provider plus a typed useAnalytics(). AnalyticsEvent is a closed union
+  — events are a curated list, not free-form strings, so a typo is a type error
+  rather than a silently missing metric.
+  Also supplies customAppProperties: PostHog cannot work out the device on its
+  own here (every install reported $device_type "Mobile" with no model), so
+  expo-device fills in $device_model/$device_name/$device_manufacturer and maps
+  DeviceType to a real $device_type, which is what separates iPad from iPhone.
+
+use-funnel-tracking.ts
+  Derives the gameplay funnel (draft_started, draft_completed, match_played,
+  playoffs_reached, season_completed) from LeaguePayload transitions, called
+  once from LeagueProvider.
+  It lives here rather than in the screens on purpose: a draft can end via
+  "autodraft the rest" or via the last manual pick; a match can finish from the
+  live hub, a quick-simmed round, or a tournament auto-sim. Capturing at each
+  call site means missing paths, and a missed path is invisible — the event
+  simply never arrives. The payload is where every path converges.
+  Three rules it has to honour, all covered by tests:
+    - fire once per transition, not per refresh (the payload refetches on every
+      tab focus, so an unchanged snapshot must be silent)
+    - never fire on first sight of a career (a cold start into a mid-season
+      career is not a draft completing)
+    - stay silent while the guided tour is active (it drives a throwaway demo
+      career through draft → season → match at speed)
+  The transition rules are a pure function (funnelEventsFor) so they can be
+  tested directly — a hook that over-fires looks identical to one that works
+  until someone reads the funnel weeks later.
+
+sentry.ts
+  Crash reporting. NOTE: only ingest DSNs exist; there is no auth token, so
+  source maps are not uploaded and crash data cannot be read back via API.
+  The iOS build phase therefore needs SENTRY_DISABLE_AUTO_UPLOAD — see
+  `make mobile-xcode-env`.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KEY DESIGN DECISIONS

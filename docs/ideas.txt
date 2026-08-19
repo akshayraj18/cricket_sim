@@ -36,13 +36,16 @@ First-run funnel leaks, in order of size:
 Platform mix (justifies the iPad work):
   - 9 of 74 users are on iPadOS (~12%)
   - ~5 users still on iOS 16/17 — keep the deployment target low
-  - device model is NOT captured; we cannot segment by iPhone model yet
+  - device model was NOT captured at the time of this snapshot — every install
+    reported "Mobile" with no model, so the iPad share above is inferred from
+    $os_name. Fixed 2026-08-18; real models arrive from the next release on.
 
-BIGGEST INSTRUMENTATION GAP: there are no gameplay events at all. The last
-event in the funnel is career_created. We cannot see draft completion, matches
-played, seasons finished, or where a session ends — all match data has to be
-reverse-engineered from Postgres. Fixing this is prerequisite to measuring
-whether any retention change actually worked.
+INSTRUMENTATION GAP AT THE TIME OF THIS SNAPSHOT: there were no gameplay events
+at all — the funnel ended at career_created, so draft completion, matches
+played and seasons finished all had to be reverse-engineered from Postgres.
+Fixed 2026-08-18 (see COMPLETED). Everything above therefore describes the
+1.0.0 cohort measured WITHOUT gameplay events; the next release is the first
+that can be compared against it properly. Re-measure before re-prioritising.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 COMPLETED
@@ -60,36 +63,62 @@ Phase 8B — All-time ODI and Test draft pools
 Phase 8C — International careers (tournament + bilateral), world city franchises,
             current national team rosters, real country/city names
 
+Verified complete 2026-08-18 (these had been sitting in IN PROGRESS):
+  - international_data.py — 30 squads (10 nations × T20I/ODI/Test), 17-18 players
+    each, none empty
+  - all-time pool natural_slot values — every slot in 1-11, no bowler opening,
+    no specialist batter at 10-11, across all three pools
+  - skip-draft path for international_current — the constructor assigns each
+    nation its real squad and calls start_regular_season() directly, so these
+    careers open in phase "season" with no draft; backend passes draft_pool through
+  - bilateral 500s on simulate-round — fixed, and guarded by
+    test_bilateral_all_formats_complete, parametrised over t20/odi/test
+
+IP-safe naming completed 2026-08-18: the three all-time pools and the current
+national squads shipped with 465 real player names; all renamed via
+tools/ip_safe_rename.py. Country names stay real (not protected marks).
+Run `python tools/ip_safe_rename.py --check` before any release adding players.
+
+Gameplay analytics shipped 2026-08-18: draft_started / draft_completed /
+match_played / playoffs_reached / season_completed, derived centrally from
+league-payload transitions, plus real device model/type from expo-device.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IN PROGRESS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- international_data.py: real current 2026 squads for 10 nations × 3 formats
-- players_alltime_t20_intl.csv / players_alltime_odi.csv / players_alltime_test.csv:
-  research and verify correct natural_slot for each all-time great
-- Backend service.py: wire skip-draft path for international_current careers
-- Bilateral series: fix 500 errors on simulate-round during Test/ODI
+(nothing — everything previously listed here was verified complete on
+ 2026-08-18 and moved to COMPLETED above. Keep this section honest: an item
+ that is actually done but still listed here reads as outstanding work and
+ gets re-investigated.)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NEXT PRIORITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Analytics & Instrumentation  ** do this first — everything else is unmeasurable
-                                without it **
-  - Gameplay funnel events (the whole missing middle of the funnel):
-      draft_started / draft_pick_made / draft_completed / draft_abandoned
-      match_started / match_completed / match_quick_simmed
-      season_completed / playoffs_reached / trophy_won
-      career_deleted (and WHY, if we can capture a reason)
-  - Capture $device_model / $device_type properly — right now every user
-    reports as "Mobile" with no model, so we cannot segment iPhone vs iPad
-    beyond the OS name, and cannot validate device-specific layout bugs.
-  - Screen-view events per tab so we can see where a first session dies.
-  - Tag events with app version — every user is on 1.0.0 today, so the moment
-    we ship, version becomes the key comparison dimension.
-  - Sentry: generate a read auth token and wire crash-free-session rate into
-    the release checklist. We currently ship blind to crash rates. (The DSNs
-    in secrets/ids.txt are ingest-only; they cannot read issues back.)
+Analytics & Instrumentation
+  - (done 2026-08-18) Gameplay funnel events: draft_started, draft_completed,
+    match_played (live vs quick_sim, with a count), playoffs_reached,
+    season_completed. Derived centrally from league-payload transitions in
+    use-funnel-tracking.ts rather than from buttons, because a draft can end via
+    autodraft or the last manual pick and a match can finish from several
+    screens — per-call-site capture misses paths, and a missed path is invisible.
+    Every event carries competition / match_format / career_mode.
+  - (done 2026-08-18) $device_model / $device_type from expo-device, whose
+    DeviceType separates TABLET from PHONE. Previously every install reported
+    "Mobile" with no model, so iPad users could only be inferred from $os_name.
+  - Still open: draft_abandoned. Needs a session-end signal, which the client
+    cannot observe reliably; likelier derived server-side from careers that sit
+    in phase="draft" with zero matches past some age.
+  - Still open: screen-view events per tab. PostHog autocapture has
+    captureScreens enabled but no $screen events are arriving, so expo-router
+    navigation is not being picked up — needs manual instrumentation.
+  - Still open: Sentry read auth token, so crash-free-session rate can go in the
+    release checklist. We ship blind to crash rates today. (The DSNs in
+    secrets/ids.txt are ingest-only; they cannot read issues back. This also
+    blocks source-map upload — see build(mobile) notes and make mobile-xcode-env.)
+  - App version tagging already works: PostHog reports $app_version, which is how
+    we know every user is still on 1.0.0.
 
 Retention — first session  ** the 64% one-and-done problem **
   - The mega-draft is the most likely first-run wall: it is long, it is the
@@ -132,9 +161,12 @@ Gameplay / Format Quality
   - Phase color coding in T20 scoreboard (green powerplay, amber middle, red death)
 
 Bug Fixes (from KNOWN_ISSUES.md)
-  - Account data bleed: scope active_career_id storage key per user id
-  - "How to Play" tutorial error before career exists
-  - Team color fallback to green on match hub + fixtures row
+  - (done 2026-08-18) Account data bleed — key scoped per user; sign-in now
+    assigns the stored id unconditionally, closing the account-linking path
+  - (done 2026-08-18) Tutorial "Career not found" — a 404 now clears the stale
+    career instead of surfacing an error the user cannot act on
+  - (done) Team colour fallback — both surfaces resolve colours from the
+    backend-resolved TeamDict, so renamed teams keep their branding
   - iPhone display: squad tab overflow, scorecard spacing, text size scaling
 
 Draft Improvements
