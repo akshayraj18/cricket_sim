@@ -184,7 +184,7 @@ function parseBestBowling(label: string | undefined): [number, number] {
 export default function HistoryScreen() {
   const theme = useTheme();
   const scheme = useColorScheme();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error } = useLeague();
   const [tab, setTab] = useState<HistoryTab>('log');
@@ -354,7 +354,7 @@ export default function HistoryScreen() {
           </View>
         )}
         {!loading && !error && payload && (
-          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
             {viewedScorecard ? (
               <MatchScorecard
                 card={viewedScorecard}

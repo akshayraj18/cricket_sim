@@ -23,7 +23,7 @@ function initials(name: string | null): string {
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const { user } = useAuth();
   const { careers, loading, error, refresh, deleteCareer } = useCareers();
   const { activeCareerId, setActiveCareerId } = useCareer();
@@ -65,7 +65,7 @@ export default function HomeScreen() {
         </View>
         <AccountSheet visible={accountVisible} onClose={() => setAccountVisible(false)} />
 
-        <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Your Careers
           </ThemedText>
