@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { ApiError } from '@/api/client';
 import { seasonApi } from '@/api/season';
 import { LeaguePayload } from '@/api/types';
 import { useCareer } from '@/context/CareerContext';
@@ -20,7 +21,7 @@ interface LeagueContextValue {
 const LeagueContext = createContext<LeagueContextValue | null>(null);
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
-  const { activeCareerId } = useCareer();
+  const { activeCareerId, setActiveCareerId } = useCareer();
   const { active: tourActive } = useTour();
   const [payload, setPayload] = useState<LeaguePayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,11 +39,24 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       const data = await seasonApi.getPayload(activeCareerId);
       setPayload(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load career data');
+      // A 404 means this career is gone, not that something went wrong: the
+      // guided tour deletes its throwaway demo, a career can be deleted on
+      // another device, and the backend's ownership check 404s a career that
+      // belongs to a different account. All three leave a stale id pointing at
+      // nothing, and surfacing the backend's "Career not found." as an error
+      // banner is both alarming and unactionable — the user cannot fix it from
+      // that screen. Drop the stale id instead so the app falls back to the
+      // no-career state and offers to create or pick one.
+      if (err instanceof ApiError && err.status === 404) {
+        setPayload(null);
+        setActiveCareerId(null);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load career data');
+      }
     } finally {
       setLoading(false);
     }
-  }, [activeCareerId]);
+  }, [activeCareerId, setActiveCareerId]);
 
   useEffect(() => {
     // During the tour, the tour owns the demo career's payload (it calls

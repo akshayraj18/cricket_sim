@@ -74,7 +74,17 @@ export function CareerProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (stored) setActiveCareerIdState(stored);
+      // Assign unconditionally, including when this user has no stored career.
+      // Only setting it when `stored` is truthy leaks the previous account's
+      // career whenever the user id changes WITHOUT passing through
+      // 'signed-out' — account linking, or a refresh resolving to a different
+      // user — because the old id would simply stay in state. Signing out and
+      // back in is already safe (the branch above clears), but that is the only
+      // path that was, and this is the privacy bug in KNOWN_ISSUES.
+      setActiveCareerIdState(stored ?? null);
+      // The cached summary belongs to whoever was signed in before; drop it and
+      // let refreshActiveCareer() refetch for this user.
+      if (!stored) setActiveCareer(null);
       setLoading(false);
     })();
   }, [status, userId]);
