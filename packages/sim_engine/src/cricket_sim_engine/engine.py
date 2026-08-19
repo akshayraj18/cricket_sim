@@ -33,10 +33,24 @@ class MatchEngine:
     # ODI:  (0.345×1 + 0.065×2 + 0.004×3 + 0.085×4 + 0.018×6) × 6 = 0.990 × 6 ≈ 5.9 r/o ✓  (before agg=2 nudge)
     # Test: (0.330×1 + 0.050×2 + 0.003×3 + 0.026×4 + 0.003×6) × 6 = 0.575 × 6 ≈ 3.5 r/o ✓  (before agg=1 nudge)
     # Each tuple is (wicket, dot, single, double, triple, four, six).
+    # (wicket, dot, 1, 2, 3, 4, 6) per delivery, before any adjustment.
+    # Weights are normalised at sampling time, so these are relative.
+    #
+    # Calibrated against real first-innings scoring:
+    #   T20  ~180-220 off 20 overs   (RR 9-11)
+    #   ODI  ~280-330 off 50 overs   (RR 5.6-6.6)
+    #   Test ~300-350 per innings    (RR 3.2-3.5, ~100 overs to bowl a side out)
+    #
+    # The wicket rate is the dominant lever, not the run rate. Test sides were
+    # being dismissed for ~230 inside 74 overs — a wicket every 7.4 overs, where
+    # a real Test is nearer 11-12 — so innings ended long before a realistic
+    # total. Note the effective rate runs slightly ABOVE these bases because
+    # tail-end batters carry low ratings, which is why ODI needs 0.0225 to bat
+    # close to its 50 overs.
     _FORMAT_BASE = {
         "t20":  (0.045, 0.290, 0.300, 0.080, 0.005, 0.148, 0.082),
-        "odi":  (0.028, 0.415, 0.350, 0.068, 0.004, 0.110, 0.025),
-        "test": (0.022, 0.565, 0.330, 0.050, 0.003, 0.026, 0.003),
+        "odi":  (0.0225, 0.415, 0.352, 0.070, 0.004, 0.112, 0.026),
+        "test": (0.0167, 0.545, 0.340, 0.052, 0.003, 0.033, 0.004),
     }
 
     def simulate_ball(self, batter, bowler):

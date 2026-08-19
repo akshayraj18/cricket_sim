@@ -43,8 +43,15 @@ MATCH_FORMAT_CONFIG = {
         "overs_per_session": 50,
     },
     "test": {
-        "overs_per_innings": 90,
-        "balls_per_innings": 540,
+        # A Test innings is not limited to a day's play — sides routinely bat
+        # 100-130 overs. At 90 the innings was being guillotined at roughly 315
+        # runs, which capped first-innings totals below a realistic 300-350 no
+        # matter how the scoring rate was tuned. 110 overs leaves room for a big
+        # innings while still fitting four innings inside the 450 overs that
+        # 5 days x 3 sessions x 30 overs provides — which is also what lets a
+        # match run out of time and draw.
+        "overs_per_innings": 110,
+        "balls_per_innings": 660,
         "innings_per_side": 2,
         "bowler_overs_cap": 90,
         "phase_boundaries": (10, 70),

@@ -447,6 +447,11 @@ export interface LiveMatchPayload {
   follow_on_available?: boolean;
   followed_on?: boolean;
   can_declare?: boolean;
+  /** Who leads on aggregate and by how much (multi-innings formats only). */
+  lead_team?: string | null;
+  lead_runs?: number | null;
+  /** Runs still needed in the innings in progress — final innings only. */
+  runs_required?: number | null;
   lineup_context: '' | 'batting' | 'bowling';
   impact_context: '' | 'bat_to_bowl' | 'bowl_to_bat';
   suggested: PlayerDict[];
