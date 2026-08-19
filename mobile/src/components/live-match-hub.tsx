@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { getContrastText, getTeamBackground, Radius, Spacing, teamMetaByName } from '@/constants/theme';
+import { getContrastText, getTeamBackground, Radius, Spacing, teamAbbr, teamMetaByName } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { abbreviateDismissal, abbreviateName } from '@/utils/names';
 import { ORDER_ZONES, benchNames, uniqueXi, xiValidationError } from '@/utils/lineup';
@@ -910,6 +910,18 @@ function Scoreboard({ match, accent }: { match: LiveMatchPayload; accent?: strin
           ? `${score.phase}${score.target ? ` · ${neededRuns} needed off ${Math.ceil(ballsLeft / 6)} ov` : ` · ${Math.ceil(ballsLeft / 6)} ov left`}`
           : `${score.phase}${score.target ? ` · ${neededRuns} needed off ${ballsLeft}` : ` · ${ballsLeft} balls left`}`}
       </ThemedText>
+
+      {/* The line every real Test scorecard carries. Across four innings the raw
+          score says almost nothing on its own — 200/4 is a strong position or a
+          hopeless one depending entirely on the aggregate — so state the lead,
+          or the runs still needed once a chase is actually on. */}
+      {match.match_format === 'test' && (match.runs_required != null || match.lead_runs != null) && (
+        <ThemedText style={[styles.scoreboardSmall, { color: scoreText, fontWeight: '700' }]} numberOfLines={1}>
+          {match.runs_required != null
+            ? `Need ${match.runs_required} run${match.runs_required === 1 ? '' : 's'} to win`
+            : `${teamAbbr(match.lead_team ?? '')} lead by ${match.lead_runs} run${match.lead_runs === 1 ? '' : 's'}`}
+        </ThemedText>
+      )}
     </View>
   );
 }

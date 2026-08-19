@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/card';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getTeamBackground, getTeamSwatch, GOLD, Spacing, teamAbbr } from '@/constants/theme';
+import { ContentBottomInset, getLegibleAccentValue, getTeamBackground, getTeamSwatch, GOLD, Spacing, teamAbbr } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
@@ -307,6 +307,7 @@ function BilateralPanel({
   payload: LeaguePayload;
   onViewScorecard: (card: MatchCard) => void;
 }) {
+  const scheme = useColorScheme();
   const teams = Object.keys(payload.bilateral_wins ?? {});
   const userTeam = payload.user_team ?? '';
   const oppTeam = teams.find((t) => t !== userTeam) ?? '';
@@ -325,23 +326,43 @@ function BilateralPanel({
         <ThemedText themeColor="textFaint" style={styles.sectionLabel}>Series</ThemedText>
         <View style={styles.bilateralScoreRow}>
           <View style={styles.bilateralTeamBlock}>
-            <View style={[styles.bilateralColorDot, { backgroundColor: userTeamDict?.primary ?? '#3a3f4b' }]} />
+            <View
+              style={[
+                styles.bilateralColorDot,
+                { backgroundColor: userTeamDict ? getTeamSwatch(userTeamDict, userTeam, scheme) : '#3a3f4b' },
+              ]}
+            />
             <ThemedText style={styles.bilateralTeamName} numberOfLines={1}>
               {userTeamDict?.abbr ?? userTeam}
             </ThemedText>
-            <ThemedText style={[styles.bilateralScore, { color: userTeamDict?.primary ?? undefined }]}>
+            <ThemedText
+              style={[
+                styles.bilateralScore,
+                userTeamDict ? { color: getLegibleAccentValue(userTeamDict.primary, scheme) } : null,
+              ]}
+              numberOfLines={1}>
               {userWins}
             </ThemedText>
           </View>
           <ThemedText themeColor="textFaint" style={styles.bilateralDash}>–</ThemedText>
           <View style={[styles.bilateralTeamBlock, styles.bilateralTeamRight]}>
-            <ThemedText style={[styles.bilateralScore, { color: oppTeamDict?.primary ?? undefined }]}>
+            <ThemedText
+              style={[
+                styles.bilateralScore,
+                oppTeamDict ? { color: getLegibleAccentValue(oppTeamDict.primary, scheme) } : null,
+              ]}
+              numberOfLines={1}>
               {oppWins}
             </ThemedText>
             <ThemedText style={styles.bilateralTeamName} numberOfLines={1}>
               {oppTeamDict?.abbr ?? oppTeam}
             </ThemedText>
-            <View style={[styles.bilateralColorDot, { backgroundColor: oppTeamDict?.primary ?? '#3a3f4b' }]} />
+            <View
+              style={[
+                styles.bilateralColorDot,
+                { backgroundColor: oppTeamDict ? getTeamSwatch(oppTeamDict, oppTeam, scheme) : '#3a3f4b' },
+              ]}
+            />
           </View>
         </View>
         <ThemedText themeColor="textDim" style={[styles.fixtureSub, { textAlign: 'center', marginTop: 4 }]}>
@@ -884,12 +905,22 @@ const styles = StyleSheet.create({
   bilateralTeamName: {
     fontSize: 13,
     fontWeight: '700',
-    flex: 1,
+    // Shrinkable, but never at the score's expense: flex:1 alone let a long
+    // abbreviation squeeze the 32pt figure until it clipped.
+    flexShrink: 1,
+    flexGrow: 1,
+    flexBasis: 0,
   },
   bilateralScore: {
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -1,
+    // An explicit line height and a floor on the width stop the digits being
+    // clipped vertically or squeezed to nothing by the name beside them.
+    lineHeight: 38,
+    minWidth: 26,
+    textAlign: 'center',
+    flexShrink: 0,
   },
   bilateralDash: {
     fontSize: 22,

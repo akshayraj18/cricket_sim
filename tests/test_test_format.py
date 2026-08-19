@@ -168,6 +168,50 @@ def test_chase_target_is_runs_needed_this_innings_not_the_aggregate():
     assert match.target == 151
 
 
+def test_runs_ahead_reports_the_leader_and_margin():
+    """The 'lead by N' line: across four innings the raw score is unreadable."""
+    league = _fresh_test_league(1)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    _setup_innings_manually(match, league)
+    a, b = match.inn1_bat, match.inn1_bowl
+
+    match.innings = [{"team": a, "runs": 300, "wickets": 10, "balls": 540}]
+    match.score = None
+    assert match.runs_ahead() == (a.name, 300)
+
+    match.innings.append({"team": b, "runs": 340, "wickets": 10, "balls": 560})
+    assert match.runs_ahead() == (b.name, 40)
+
+    match.innings.append({"team": a, "runs": 40, "wickets": 3, "balls": 200})
+    assert match.runs_ahead() is None, "level scores have no leader"
+
+
+def test_runs_ahead_counts_the_innings_in_progress():
+    """A lead has to include runs made so far, not just completed innings."""
+    league = _fresh_test_league(1)
+    league.begin_match_day(interactive=True)
+    match = league.live_match
+    _setup_innings_manually(match, league)
+    a, b = match.inn1_bat, match.inn1_bowl
+
+    match.innings = [{"team": a, "runs": 300, "wickets": 10, "balls": 540}]
+    match.score = {"batting_team": b, "runs": 120, "wickets": 2, "balls": 300}
+    assert match.runs_ahead() == (a.name, 180)
+
+
+def test_limited_overs_has_no_aggregate_lead():
+    """Lead is a multi-innings concept; a T20 has no aggregate to lead on."""
+    from .conftest import drafted_league, apply_smart_presets
+
+    lg = drafted_league()
+    team = lg.user_team()
+    lg.set_leadership(team.captain.name, team.vice_captain.name)
+    apply_smart_presets(lg)
+    lg.begin_match_day(interactive=True)
+    assert lg.live_match.runs_ahead() is None
+
+
 def test_test_league_sets_match_format():
     """new_league(..., match_format='test') sets competition/match_format correctly."""
     league = _fresh_test_league()
