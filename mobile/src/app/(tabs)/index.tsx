@@ -7,6 +7,7 @@ import { useLayout } from '@/hooks/use-layout';
 
 import { AccountSheet } from '@/components/account-sheet';
 import { CareerCard } from '@/components/career-card';
+import { RosterCsvCard } from '@/components/roster-csv-card';
 import { ThemedText } from '@/components/themed-text';
 import { ContentBottomInset, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -27,6 +28,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { careers, loading, error, refresh, deleteCareer } = useCareers();
   const { activeCareerId, setActiveCareerId } = useCareer();
+  const activeCareer = careers.find((c) => c.id === activeCareerId) ?? null;
 
   const [accountVisible, setAccountVisible] = useState(false);
 
@@ -111,6 +113,16 @@ export default function HomeScreen() {
                   </ThemedText>
                 </View>
               </Pressable>
+
+              {/* Roster CSV acts on the ACTIVE career, so it only appears once
+                  one is selected — otherwise "export the roster" has no subject. */}
+              {activeCareer && (
+                <RosterCsvCard
+                  careerId={activeCareer.id}
+                  careerName={activeCareer.name}
+                  onImported={refresh}
+                />
+              )}
             </View>
           )}
         </ScrollView>
