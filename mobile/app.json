@@ -69,7 +69,14 @@
         }
       ],
       "expo-web-browser",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-file-system",
+        {
+          "enableFileSharing": true,
+          "supportsOpeningDocumentsInPlace": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
