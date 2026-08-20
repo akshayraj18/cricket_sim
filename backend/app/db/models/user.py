@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -19,6 +20,11 @@ class User(Base):
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    # {shipped_name: user's name} applied when a NEW career is created. Stores
+    # only what the user actually changed, not ~900 identity mappings. A column
+    # rather than a table because it is read once per career creation and never
+    # queried across users.
+    player_name_overrides: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
 
 class RefreshToken(Base):

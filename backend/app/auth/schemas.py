@@ -34,3 +34,9 @@ class GoogleSignInRequest(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class PlayerNamesImportRequest(BaseModel):
+    """An edited player-names CSV (player_key,name), sent as text."""
+
+    csv: str

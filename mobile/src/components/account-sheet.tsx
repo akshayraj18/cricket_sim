@@ -3,6 +3,7 @@ import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, View 
 
 import * as WebBrowser from 'expo-web-browser';
 
+import { PlayerNamesSection } from '@/components/player-names-section';
 import { ThemedText } from '@/components/themed-text';
 import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
@@ -166,6 +167,8 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
               ? 'We’ll nudge you when your season or transfer window is waiting.'
               : 'Turn on notifications for cric-sim to get reminded when your season is waiting.'}
           </ThemedText>
+
+          <PlayerNamesSection />
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Help

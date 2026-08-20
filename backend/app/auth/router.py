@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import service
@@ -12,10 +12,16 @@ from app.auth.schemas import (
     GoogleSignInRequest,
     RefreshRequest,
     TokenPair,
+    PlayerNamesImportRequest,
     UserOut,
 )
 from app.db.models.user import User
 from app.db.session import get_db
+from cricket_sim_engine.sim.player_names import (
+    NameImportError,
+    export_names_csv,
+    parse_names_csv,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -111,3 +117,44 @@ async def delete_me(
     """Permanently delete the authenticated user and all their data (careers,
     match history, tokens). Required for App Store compliance; irreversible."""
     await service.delete_user(db, user)
+
+
+@router.get("/me/player-names.csv")
+async def export_player_names(user: User = Depends(get_current_user)) -> Response:
+    """Every player name in the game, with any override the user has saved.
+
+    Pre-filling saved overrides means an export always reflects the user's
+    current setup and can be re-imported unchanged.
+    """
+    csv_text = export_names_csv(user.player_name_overrides or {})
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="player-names.csv"'},
+    )
+
+
+@router.post("/me/player-names.csv", response_model=dict)
+async def import_player_names(
+    body: PlayerNamesImportRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Save player-name overrides, applied to careers created from now on.
+
+    Deliberately does NOT touch existing careers: their names are already baked
+    into saved lineups, leadership and archived scorecards, and rewriting those
+    safely is a per-career operation (LeagueState.rename_player), not a
+    settings toggle. The response says how many careers were left alone so the
+    client can tell the user rather than leaving them to wonder.
+    """
+    try:
+        overrides = parse_names_csv(body.csv)
+    except NameImportError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"message": "Player names rejected.", "errors": exc.errors},
+        ) from exc
+
+    await service.set_player_name_overrides(db, user, overrides)
+    return {"renamed": len(overrides)}

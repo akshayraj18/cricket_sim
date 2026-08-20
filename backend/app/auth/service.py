@@ -169,3 +169,17 @@ async def delete_user(db: AsyncSession, user: User) -> None:
     """
     await db.delete(user)
     await db.commit()
+
+
+async def set_player_name_overrides(
+    db: AsyncSession, user: User, overrides: dict[str, str]
+) -> User:
+    """Persist a user's player-name overrides.
+
+    An empty mapping is stored as NULL rather than {} so "no overrides" has one
+    representation, and clearing them is just an import with nothing changed.
+    """
+    user.player_name_overrides = overrides or None
+    await db.commit()
+    await db.refresh(user)
+    return user

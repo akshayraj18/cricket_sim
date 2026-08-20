@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
@@ -13,17 +13,11 @@ from app.careers.schemas import (
     MatchBallsOut,
     MatchDetail,
     MatchSummary,
-    RosterImportRequest,
 )
 from app.db.models.career import Career, Match, MatchBall
 from app.db.models.user import User
 from app.db.session import get_db
 from cricket_sim_engine.sim.league_state import LeagueState
-from cricket_sim_engine.sim.roster_csv import (
-    RosterImportError,
-    export_roster_csv,
-    import_roster_csv,
-)
 
 router = APIRouter(prefix="/careers", tags=["careers"])
 
@@ -155,58 +149,6 @@ async def save_career_state(
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
 
     return _detail(career)
-
-
-@router.get("/{career_id}/roster.csv")
-async def export_roster(
-    career_id: uuid.UUID,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> Response:
-    """Every player in the career as CSV, for editing in a spreadsheet."""
-    try:
-        league = await service.load_league_state(db, user.id, career_id)
-    except service.CareerNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
-
-    csv_text = export_roster_csv(league)
-    filename = f"{(league.save_name or 'roster').replace(' ', '-')}-roster.csv"
-    return Response(
-        content=csv_text,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
-
-
-@router.post("/{career_id}/roster.csv", response_model=dict)
-async def import_roster(
-    career_id: uuid.UUID,
-    body: RosterImportRequest,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """Apply an edited roster CSV.
-
-    All-or-nothing: a file with any invalid row is rejected in full and the
-    career is left untouched, so a partial apply can never leave a career the
-    user cannot reason about. The 400 body lists every problem found rather than
-    just the first, so one round trip is enough to fix the file.
-    """
-    try:
-        league = await service.load_league_state(db, user.id, career_id)
-    except service.CareerNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
-
-    try:
-        report = import_roster_csv(league, body.csv)
-    except RosterImportError as exc:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Roster import rejected.", "errors": exc.errors},
-        ) from exc
-
-    await service.save_league_state(db, user.id, career_id, league)
-    return report.as_dict()
 
 
 @router.delete("/{career_id}", status_code=status.HTTP_204_NO_CONTENT)

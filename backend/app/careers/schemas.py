@@ -77,13 +77,3 @@ class MatchBallsOut(BaseModel):
     match_id: uuid.UUID
     balls: list[MatchBallOut]
 
-
-class RosterImportRequest(BaseModel):
-    """An edited roster CSV, sent as text rather than multipart.
-
-    Text keeps the mobile client simple: it can post a file it read OR content
-    the user pasted, with one code path. `MAX_BYTES` in roster_csv rejects
-    anything oversized before parsing.
-    """
-
-    csv: str
