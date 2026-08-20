@@ -314,14 +314,26 @@ function relativeLuminance(hex: string): number {
 
 /**
  * Picks a legible foreground color (near-black or near-white) for text/icons
- * drawn on top of `backgroundHex`, based on relative luminance. Used for
- * buttons, segmented controls, and chips that take an arbitrary team color
- * as their background — some team colors are very dark (e.g. RCB, GT) and
- * others very light (e.g. PBKS, CSK), so a single hardcoded text color
- * doesn't stay readable across all of them.
+ * drawn on top of `backgroundHex`. Used for buttons, segmented controls, and
+ * chips that take an arbitrary team color as their background — some team
+ * colors are very dark (e.g. RCB, GT) and others very light (e.g. PBKS, CSK),
+ * so a single hardcoded text color doesn't stay readable across all of them.
+ *
+ * Picks whichever candidate actually contrasts more, rather than guessing from
+ * a luminance threshold. The previous 0.55 cutoff was well above the real
+ * crossover: against our near-black (#1a1404, luminance ~0.011) the two
+ * candidates are equally legible at about 0.20, so every mid-tone color
+ * between 0.20 and 0.55 — Mumbai's blue, Rajasthan's teal, Delhi's red — was
+ * given white text when black read better. Mumbai measured 2.3:1 with white
+ * against 3.5:1 with black.
  */
 export function getContrastText(backgroundHex: string): string {
-  return relativeLuminance(backgroundHex) > 0.55 ? '#1a1404' : '#ffffff';
+  const bg = relativeLuminance(backgroundHex);
+  const ratio = (a: number, b: number) =>
+    (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  const dark = '#1a1404';
+  const light = '#ffffff';
+  return ratio(bg, relativeLuminance(dark)) >= ratio(bg, relativeLuminance(light)) ? dark : light;
 }
 
 /** Saturation of a hex color (HSL S), 0 (gray) to 1 (fully saturated). */
@@ -346,12 +358,58 @@ function saturation(hex: string): number {
  * enough for `#fff` foreground.
  */
 export function getTeamBackground(team: TeamMeta, teamName?: string): string {
-  // Prefer the more saturated of the two team colors; that skips grayscale.
+  // Prefer a color that ALREADY works as a dark fill under white text, and
+  // prefer the primary when both qualify — that is the team's identity color.
+  //
+  // Selecting purely by saturation picked the accent for 6 of 10 teams and then
+  // darkened 5 of them into mud, because the most saturated color is usually the
+  // bright one. Mumbai (primary #1f6feb blue, accent #f0c419 gold) came out
+  // #8c7315 — a muddy olive that is neither of the team's colors, and which
+  // disagreed with the Squad screen, where getTeamPlayerAccent picks the blue.
+  // Chennai is the case that justifies still considering the accent: its primary
+  // is a bright gold that white text cannot sit on, so its navy accent is right.
+  const usable = [team.primary, team.accent].filter(
+    (c) => !isGrayscale(c) && relativeLuminance(c) <= 0.5 && saturation(c) >= 0.15
+  );
+  if (usable.length) return darkenForWhiteText(usable[0]);
+
+  // Neither color can serve as-is (both too light, or grayscale identities like
+  // a silver/black kit): fall back to darkening the more vivid one.
   const candidate = saturation(team.primary) >= saturation(team.accent) ? team.primary : team.accent;
   // If even the better candidate is washed-out gray, fall back to the swatch.
   const base = saturation(candidate) < 0.15 ? (teamName && TeamSwatches[teamName]?.light) || candidate : candidate;
-  // Ensure it's dark enough for white text; darken toward near-black if needed.
-  return relativeLuminance(base) > 0.5 ? mixHex(base, '#111111', 0.45) : base;
+  return darkenForWhiteText(base);
+}
+
+/** Contrast ratio between two relative luminances, per WCAG. */
+function contrastRatio(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+/**
+ * Deepens `hex` until white text on it clears `minRatio` (WCAG AA, 4.5:1).
+ *
+ * Selecting a color merely "dark enough" (luminance <= 0.5) is not the same as
+ * being legible under white: at 0.5 white text measures 1.9:1, roughly four
+ * times short of AA, which is why filled buttons and segmented controls were
+ * hard to read across nearly every team. Deepening the identity color keeps the
+ * white-on-team-color look rather than flipping the text to dark, and it also
+ * lands below getContrastText's black/white crossover (~0.20 luminance), so
+ * that helper independently agrees on white.
+ *
+ * Mixes toward near-black in small steps so a color stops as soon as it
+ * qualifies, rather than being flattened into mud.
+ */
+export function darkenForWhiteText(hex: string, minRatio = 4.5): string {
+  let out = hex;
+  // 32 steps of 12% covers the worst case: a pure-white identity colour
+  // (Pakistan's accent is #ffffff) needs ~17 to reach AA, and a cap of 16 left
+  // it one step short at 4.41:1.
+  for (let i = 0; i < 32; i++) {
+    if (contrastRatio(relativeLuminance(out), relativeLuminance('#ffffff')) >= minRatio) break;
+    out = mixHex(out, '#111111', 0.12);
+  }
+  return out;
 }
 
 /**
