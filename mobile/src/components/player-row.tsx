@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { PlayerDict } from '@/api/types';
-import { getReadableAccentText, Radius, Spacing } from '@/constants/theme';
+import { darkenForWhiteText, getReadableAccentText, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -48,6 +48,12 @@ export function PlayerRow({
   // A team accent can be near-black/near-white and vanish on the badge; run it
   // through the contrast-safe helper so the role text stays legible in both themes.
   const badgeText = accentColor ? getReadableAccentText(accentColor, scheme) : theme.text;
+  // Deepen the team colour until white text on it clears AA, rather than
+  // hunting for a legible text colour on whatever the accent happens to be.
+  // Some accents (Kolkata's purple) support neither black nor white at a
+  // readable ratio — white manages 2.9:1, black 2.8:1 — so the fill itself has
+  // to move. This keeps the badge recognisably the team's colour.
+  const captainBadgeBg = darkenForWhiteText(accentColor ?? theme.green);
 
   return (
     <Wrapper
@@ -68,8 +74,11 @@ export function PlayerRow({
             {player.name}
           </ThemedText>
           {isCaptain && (
-            <View style={[styles.badgeMini, { backgroundColor: accentColor ?? theme.green }]}>
-              <ThemedText style={styles.badgeMiniText}>C</ThemedText>
+            // White on a deepened team colour. badgeMiniText's static near-black
+            // was unreadable here: in light mode getTeamPlayerAccent returns a
+            // DARK accent (luminance < 0.7), so dark-on-dark.
+            <View style={[styles.badgeMini, { backgroundColor: captainBadgeBg }]}>
+              <ThemedText style={[styles.badgeMiniText, styles.badgeMiniTextOnFill]}>C</ThemedText>
             </View>
           )}
           {isViceCaptain && (
@@ -152,5 +161,9 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     color: '#1a1404',
+  },
+  /** For badges filled with a team colour, which is deepened for white text. */
+  badgeMiniTextOnFill: {
+    color: '#ffffff',
   },
 });

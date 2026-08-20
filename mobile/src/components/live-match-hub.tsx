@@ -1155,7 +1155,17 @@ function AggressionSlider({
               { borderColor: theme.border },
               n === value && { backgroundColor: accent ?? theme.green, borderColor: accent ?? theme.green },
             ]}>
-            <ThemedText style={[styles.aggDotText, n === value && { color: '#1a1404' }]}>{n}</ThemedText>
+            {/* The selected dot is filled with the team colour, and `accent`
+                comes from getTeamBackground(), which guarantees a colour dark
+                enough for WHITE text — so a fixed near-black was unreadable on
+                every team. Derive it from the fill instead. */}
+            <ThemedText
+              style={[
+                styles.aggDotText,
+                n === value && { color: getContrastText(accent ?? theme.green) },
+              ]}>
+              {n}
+            </ThemedText>
           </Pressable>
         ))}
       </View>
