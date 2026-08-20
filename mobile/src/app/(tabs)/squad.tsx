@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ContentBottomInset, getTeamPlayerAccent, Radius, Spacing } from '@/constants/theme';
+import { ContentBottomInset, getTeamBackground, getTeamPlayerAccent, Radius, Spacing } from '@/constants/theme';
 import { useCareer } from '@/context/CareerContext';
 import { useError } from '@/context/ErrorContext';
 import { useLeague } from '@/context/LeagueContext';
@@ -137,7 +137,7 @@ export default function SquadScreen() {
         {!loading && !error && payload && team && (
           <>
             <View style={styles.segmentWrap}>
-              <SegmentedControl segments={squadSegments} value={tab} onChange={setTab} accentColor={team.primary} />
+              <SegmentedControl segments={squadSegments} value={tab} onChange={setTab} accentColor={getTeamBackground(team, team.name)} />
             </View>
 
             {tab === 'roster' && (
@@ -250,7 +250,7 @@ function RosterTab({
   onSort: (key: SortKey) => void;
   onPlayerPress: (p: PlayerDict) => void;
 }) {
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'ovr', label: 'OVR' },
     { key: 'mvp', label: 'MVP' },
@@ -259,7 +259,7 @@ function RosterTab({
   ];
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
       <View style={styles.rowBetween}>
         <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
           {roster.length}-Man Roster
@@ -318,7 +318,7 @@ function BattingXiTab({
   competition: string;
 }) {
   const { showError } = useError();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
 
   const initialXi = useMemo(
@@ -400,7 +400,7 @@ function BattingXiTab({
   });
 
   return (
-    <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
       <View>
         <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
           Starting XI
@@ -527,7 +527,7 @@ function BowlingPlanTab({
   refresh: () => Promise<void>;
 }) {
   const { showError } = useError();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
   const startingXi = useMemo(
     () =>
@@ -591,7 +591,7 @@ function BowlingPlanTab({
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
       <ThemedText themeColor="textDim" style={styles.helpText}>
         Overs are grouped by phase — Powerplay (1-6), Middle (7-15), Death (16-20). Tap a slot to assign a bowler. Max
         4 overs each, never in consecutive overs. Leave fully blank for smart auto-pick.
@@ -700,7 +700,7 @@ function LeadershipTab({
   refresh: () => Promise<void>;
 }) {
   const { showError } = useError();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const byName = useMemo(() => new Map(team.roster.map((p) => [p.name, p])), [team]);
   const keepers = useMemo(() => team.roster.filter((p) => p.role === 'Wicketkeeper'), [team]);
 
@@ -766,7 +766,7 @@ function LeadershipTab({
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
       <View>
         <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
           Leadership

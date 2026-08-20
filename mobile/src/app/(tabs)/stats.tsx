@@ -85,7 +85,7 @@ const BOWL_LEADER_DEFS: { title: string; listKey: string; statKey: keyof PlayerD
 
 export default function StatsScreen() {
   const theme = useTheme();
-  const { contentContainerStyle } = useLayout();
+  const { contentContainerStyle, bottomInset } = useLayout();
   const { activeCareerId, activeCareer } = useCareer();
   const { payload, loading, error, setPayload } = useLeague();
   const { showError } = useError();
@@ -166,7 +166,7 @@ export default function StatsScreen() {
           </View>
         )}
         {!loading && !error && payload && (
-          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle]} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
             <View style={[styles.searchRow, { backgroundColor: theme.bgElevated, borderColor: theme.border }]}>
               <TextInput
                 value={search}
