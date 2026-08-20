@@ -8,9 +8,7 @@
  */
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 
 import { ApiError } from '@/api/client';
 import { rosterApi, type RosterImportReport } from '@/api/roster';
@@ -19,6 +17,28 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+/**
+ * expo-sharing and expo-document-picker are NATIVE modules, so they only exist
+ * in a binary built after they were added. Importing them at the top of the
+ * file makes a missing module throw while the module graph is still loading,
+ * which takes down the whole screen — the home screen died with "Cannot find
+ * native module 'ExpoDocumentPicker'" plus three cascading render errors.
+ *
+ * Loading them on demand keeps the failure contained to the button that needs
+ * them, so an older binary (or a JS-only OTA update that runs ahead of the
+ * native build) degrades to a clear message instead of a blank screen.
+ */
+const MISSING_NATIVE =
+  'This needs a newer version of the app. Update from the App Store and try again.';
+
+function loadNativeModule<T>(load: () => T): T | null {
+  try {
+    return load();
+  } catch {
+    return null;
+  }
+}
 
 export function RosterCsvCard({
   careerId,
@@ -46,6 +66,13 @@ export function RosterCsvCard({
 
   const onExport = async () => {
     reset();
+    // Deliberate: a static import of a missing native module crashes the screen.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sharing = loadNativeModule(() => require('expo-sharing') as typeof import('expo-sharing'));
+    if (!Sharing) {
+      setError(MISSING_NATIVE);
+      return;
+    }
     setBusy('export');
     try {
       const csv = await rosterApi.exportCsv(careerId);
@@ -74,6 +101,15 @@ export function RosterCsvCard({
 
   const onImport = async () => {
     reset();
+    const DocumentPicker = loadNativeModule(
+      // Deliberate: a static import of a missing native module crashes the screen.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      () => require('expo-document-picker') as typeof import('expo-document-picker')
+    );
+    if (!DocumentPicker) {
+      setError(MISSING_NATIVE);
+      return;
+    }
     try {
       const picked = await DocumentPicker.getDocumentAsync({
         // Some providers hand back a generic type for .csv, so text/* is
