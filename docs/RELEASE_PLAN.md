@@ -35,14 +35,27 @@ So instrumentation ships first, in this release, even though users won't see it.
 3. ~~**Security dependencies** (PR #43).~~ **Merged 2026-08-18.** Dependabot
    alerts 18 → 3; the remaining three are build-time only and two have no patch
    in existence. See "Known risks".
-4. **Gameplay analytics events** — draft started/completed/abandoned, match
+4. ~~**Gameplay analytics events**~~ — draft started/completed/abandoned, match
    started/completed, season completed, screen views, `$device_model`.
-   Small, low-risk, and unblocks measuring everything else. **Still to do.**
-5. **Account data bleed on sign-out/sign-in** (`KNOWN_ISSUES.md`) — a privacy
-   bug, and cheap: scope the `active_career_id` storage key per user id.
-   **Still to do.**
-6. **Tutorial "career not found" on first run** — a first-run crash in a release
-   whose whole theme is first-run retention. **Still to do.**
+   **Merged 2026-08-19** (`f155662`); see `src/observability/`.
+5. ~~**Account data bleed on sign-out/sign-in**~~ **Merged 2026-08-19.**
+6. ~~**Tutorial "career not found" on first run**~~ **Merged 2026-08-19.**
+7. ~~**Test-match result and scoring calibration**~~ — "won by 0 wickets"
+   affected 32% of Test matches. **Merged 2026-08-19.**
+8. ~~**Team-colour legibility**~~ — contrast helpers, 92 assertions over 30
+   teams in both themes. **Merged 2026-08-20** (#51, #52).
+9. ~~**Player names via CSV**~~ — export/import in Settings.
+   **Merged 2026-08-21** (#53); migration `12baff3d6136` applied in production.
+
+### Remaining before submit
+
+10. **iPhone display issues** (`KNOWN_ISSUES.md`) — the last user-visible
+    blocker. Segmented-control truncation and scorecard column collisions are
+    fixed; the initial-screen overlap still needs a reproduction on device.
+11. **Google sign-in fails in the App Store build.** Works in dev, so it is
+    almost certainly an EAS production-profile client-ID mismatch rather than
+    code — but it is a broken sign-in path in a release about first-run
+    retention, so it should not ship unresolved.
 
 ## Scope — out (deliberately)
 

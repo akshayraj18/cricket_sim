@@ -33,12 +33,12 @@ export function SegmentedControl<T extends string>({
             key={seg.key}
             onPress={() => onChange(seg.key)}
             style={[styles.seg, active && { backgroundColor: activeBg }]}>
+            {/* One line, at full size: the segment now widens to fit the label
+                rather than the label shrinking to fit the segment. */}
             <ThemedText
               style={[styles.label, active && { color: activeTextColor }]}
               themeColor={active ? undefined : 'textDim'}
-              numberOfLines={2}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}>
+              numberOfLines={1}>
               {seg.label}
             </ThemedText>
           </Pressable>
@@ -55,16 +55,23 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 4,
+    // No `width: '100%'`: on a horizontal ScrollView that pins the content to
+    // exactly the viewport, so it can never scroll and the segments have to
+    // compress instead — which is how "Bowling Plan" became "Bowling Pl…".
+    // flexGrow still fills the width whenever the labels do fit.
     flexGrow: 1,
-    width: '100%',
   },
   seg: {
-    flex: 1,
+    // Share any leftover width, but never shrink below the label: scrolling a
+    // too-wide row is always better than an unreadable truncated one. This is
+    // what keeps the labels intact at large accessibility text sizes too.
+    flexGrow: 1,
+    flexShrink: 0,
     minWidth: 64,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 7,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     borderRadius: Radius.md - 5,
   },
   label: {
