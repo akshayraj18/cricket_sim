@@ -195,7 +195,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: Spacing.two,
+    // maxWidth alone caps the width but leaves the block at the start of the
+    // cross axis, so on an iPad everything sat in the left half with the right
+    // half empty. alignSelf centres the capped column.
     maxWidth: 560,
+    alignSelf: 'center',
+    width: '100%',
   },
   markBadge: {
     width: 72,
@@ -249,6 +254,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     maxWidth: 480,
     width: '100%',
+    alignSelf: 'center',
   },
   error: {
     textAlign: 'center',
