@@ -80,11 +80,23 @@ would be worse than the missing prompt. `expo-store-review` is loaded with a
 guarded `require()` for the same reason the CSV feature does it — see
 `CSV_ROSTER_IO.md`.
 
-## Configuration still needed
+## Configuration
 
-The manual Settings row is **hidden until `EXPO_PUBLIC_APP_STORE_ID` is set**
-in the EAS build profile (the digits from the App Store Connect URL,
-`.../app/idXXXXXXXXXX`). It is deliberately hidden rather than broken.
+The App Store ID is **`6779728013`**, committed as the default in
+`api/config.ts`. It is public information — it is in our own store URL — and
+hard-coding it means the Rate row works in a local dev build, not only in EAS
+builds. `EXPO_PUBLIC_APP_STORE_ID` still overrides it.
+
+To find it again: App Store Connect > your app > App Information > **Apple ID**,
+or the digits in `apps.apple.com/.../id<digits>`. It can also be looked up from
+the bundle ID with no login:
+
+```
+curl -s "https://itunes.apple.com/lookup?bundleId=com.akshraj.cric" | jq .results[0].trackId
+```
+
+If the ID is ever cleared, `RATE_APP_URL` becomes null and the Settings row
+hides rather than opening a broken page.
 
 The automatic prompt needs no configuration.
 
@@ -96,6 +108,10 @@ year per device. To re-test, delete and reinstall the app, or clear the
 `cricket_sim.review_*` keys.
 
 The gate logic is unit-tested and does not require any of that.
+
+The **Settings > Rate CricSim** row, by contrast, is testable immediately: it
+opens the store listing every time, with no quota and no gating. That is the
+only part of this feature a person can verify by tapping it.
 
 ## Timing note
 

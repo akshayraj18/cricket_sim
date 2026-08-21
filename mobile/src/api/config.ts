@@ -69,10 +69,15 @@ export const TERMS_URL =
   process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://akshayraj18.github.io/cricket_sim/legal/terms.html';
 
 /**
- * Numeric App Store ID (the digits in `.../app/idXXXXXXXXXX`), from App Store
- * Connect. Set `EXPO_PUBLIC_APP_STORE_ID` in the EAS build profile.
+ * Numeric App Store ID — the digits in `.../app/idXXXXXXXXXX`, also shown as
+ * "Apple ID" under App Store Connect > App Information.
+ *
+ * Committed as a default rather than left to the build profile because it is
+ * public information (it is in our own store URL), and hard-coding it means the
+ * Rate row works in a local dev build too, not only in EAS builds. The env var
+ * still overrides, e.g. to point a test build at another listing.
  */
-export const APP_STORE_ID = process.env.EXPO_PUBLIC_APP_STORE_ID ?? '';
+export const APP_STORE_ID = process.env.EXPO_PUBLIC_APP_STORE_ID ?? '6779728013';
 
 /**
  * Deep link to our App Store page with the review sheet already open.
