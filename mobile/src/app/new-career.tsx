@@ -73,6 +73,12 @@ export default function NewCareerScreen() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [name, setName] = useState('');
   const [draftPoolMode, setDraftPoolMode] = useState<'current' | 'alltime'>('current');
+  /**
+   * Squad choice for the Indian T20 league: start with the 2026 squads, or
+   * draft the whole pool from scratch. Defaults to no-draft so a first career
+   * reaches an actual match quickly.
+   */
+  const [iplPool, setIplPool] = useState<'rosters2026' | 'current'>('rosters2026');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,7 +101,7 @@ export default function NewCareerScreen() {
     setError(null);
     try {
       const draftPool: DraftPoolType =
-        competition === 'ipl' ? 'rosters2026' :
+        competition === 'ipl' ? iplPool :
         draftPoolMode === 'alltime' ? (
           matchFormat === 'odi' ? 'alltime_odi' :
           matchFormat === 'test' ? 'alltime_test' :
@@ -387,6 +393,32 @@ export default function NewCareerScreen() {
                 );
               })}
             </View>
+            {competition === 'ipl' && (
+              <>
+                <ThemedText themeColor="textFaint" style={[styles.label, { marginTop: Spacing.three }]}>Squad</ThemedText>
+                <View style={styles.segRow}>
+                  {[
+                    { value: 'rosters2026' as const, label: 'Current Roster', desc: "Start with your franchise's 2026 squad" },
+                    { value: 'current' as const, label: 'Mega Draft', desc: 'Draft from the full pool of 2026 players' },
+                  ].map((sq) => {
+                    const sel = iplPool === sq.value;
+                    return (
+                      <Pressable
+                        key={sq.value}
+                        onPress={() => setIplPool(sq.value)}
+                        style={({ pressed }) => [
+                          styles.segItem,
+                          { backgroundColor: sel ? theme.green : theme.bgCard, borderColor: sel ? theme.green : theme.border },
+                          pressed && styles.pressed,
+                        ]}>
+                        <ThemedText style={[styles.segLabel, { color: sel ? '#1a1404' : theme.text }]}>{sq.label}</ThemedText>
+                        <ThemedText style={[styles.segDesc, { color: sel ? '#1a1404' : theme.textDim }]}>{sq.desc}</ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
             <ThemedText themeColor="textFaint" style={[styles.label, { marginTop: Spacing.three }]}>Career Name (optional)</ThemedText>
             <TextInput
               value={name}
