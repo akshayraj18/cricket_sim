@@ -166,7 +166,12 @@ protected marks. See `docs/LAUNCH_ROADMAP.md` §0.1.
 
 ## Key docs
 
-| File | What it covers |
+**These files are kept locally and are not in the repository** — they are
+planning and design notes rather than shipped artefacts, so they are
+gitignored. They live at these paths in a working checkout; a fresh clone will
+not have them.
+
+| File (local only) | What it covers |
 |---|---|
 | `docs/engine.txt` | Ball-by-ball probability model, format configs, all tuning values |
 | `docs/new_career_schema.txt` | Career wizard flow, API payload, team lists, valid combinations |
@@ -174,8 +179,15 @@ protected marks. See `docs/LAUNCH_ROADMAP.md` §0.1.
 | `docs/LAUNCH_ROADMAP.md` | App Store / Play Store launch checklist, including the IP-safe naming rules |
 | `docs/ideas.txt` | Feature backlog, phase roadmap, and the measured user-data snapshot the priorities are derived from |
 | `docs/RELEASE_PLAN.md` | Scope, pre-flight checklist and accepted risks for the current release |
-| `docs/CSV_ROSTER_IO.md` | Design for CSV roster export/import (not yet implemented) |
+| `docs/CSV_ROSTER_IO.md` | Design and rationale for the player-name CSV export/import (shipped in 1.1) |
+| `docs/APP_RATING_PROMPT.md` | How the App Store rating prompt is gated, and the guideline that shaped it |
+| `KNOWN_ISSUES.md`, `APP_STORE_LISTING.md` | Open bugs; store listing copy and release notes |
 | `backend/DEPLOY.md` | Production deployment guide |
+
+The one documentation directory that **is** tracked is `docs/legal/` — GitHub
+Pages publishes it from `main:/docs`, so those files are the live privacy
+policy and terms the app links to. Edit the `.md` and run `make legal`;
+`make lint` fails if the generated `.html` is stale.
 
 ---
 

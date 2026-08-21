@@ -12,7 +12,7 @@ Cric Sim is a fictional cricket-management simulation game. It is **not affiliat
 
 ## 1. Who we are
 
-The App is provided by Cric Sim Group ("the Developer"). The Developer is the data controller responsible for your information.
+The App is provided by Cric Sim Group ("the Developer"), based in the State of Georgia, United States. The Developer is the data controller responsible for your information.
 
 ## 2. Information we collect
 

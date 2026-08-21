@@ -78,9 +78,9 @@ We may suspend or terminate your access to the App if you violate these Terms or
 
 ## 12. Governing law and disputes
 
-These Terms are governed by the laws of your place of residence to the extent required by mandatory consumer-protection law, and otherwise by the laws of the Developer's jurisdiction, without regard to conflict-of-laws rules. Disputes will be resolved in the courts of that jurisdiction, unless applicable law gives you the right to bring proceedings elsewhere.
+These Terms are governed by the laws of the **State of Georgia, United States**, without regard to its conflict-of-laws rules. Disputes will be resolved in the state or federal courts located in Georgia, United States, and you consent to their jurisdiction.
 
-> **Note:** Set your specific governing jurisdiction (e.g. your state/country) before publishing.
+This does not remove protections you have where you live: where mandatory consumer-protection law in your country or state of residence applies, that law governs to the extent required, and you may be entitled to bring proceedings in your local courts.
 
 ## 13. App store terms
 
