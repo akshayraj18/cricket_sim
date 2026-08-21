@@ -40,12 +40,17 @@ regression:
 lint: check-legal
 	uv run pyflakes packages/sim_engine/src/cricket_sim_engine tests backend/app backend/tests
 
-# The App links users to docs/legal/*.html, but the .md files are what anyone
-# edits. Both are maintained by hand, so this catches a change landing in only
-# one of them -- a privacy policy describing the wrong app is a bug you find
-# only when it matters.
+# Regenerate docs/legal/*.html from the .md sources. GitHub Pages serves docs/
+# from main as-is, so the .html has to be committed -- but it is generated, not
+# edited. Edit the .md and run this.
+legal:
+	python3 tools/build_legal_html.py
+
+# Fail if the committed .html does not match the .md. They used to be
+# maintained by hand, and an edit that landed in only one of them published a
+# privacy policy describing the wrong app.
 check-legal:
-	python3 tools/check_legal_sync.py
+	python3 tools/build_legal_html.py --check
 
 # Remove cached bytecode.
 clean:
