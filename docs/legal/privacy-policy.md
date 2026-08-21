@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: June 15, 2026**
+**Last updated: August 21, 2026**
 
 This Privacy Policy explains how the Cric Sim mobile game ("Cric Sim," the "App," "we," "us," or "our") collects, uses, and protects your information. By using the App you agree to the practices described here.
 
@@ -23,15 +23,22 @@ We collect only what we need to run the game and keep your progress safe.
 - **Sign in with Apple / Google:** If you choose to link your account, we receive a unique account identifier from Apple or Google, and — only if you choose to share it — your email address and display name. We use these solely to identify your account and let you restore your progress across devices. We never receive your Apple or Google password.
 
 ### b. Game data
-- Your careers, teams, rosters, lineups, custom names you set in the roster editor, match results, statistics, and game settings. This is stored so your progress persists and syncs across your devices.
+- Your careers, teams, rosters, lineups, match results, statistics, and game settings. This is stored so your progress persists and syncs across your devices.
+- **Custom player names.** If you use the player-name feature in Settings, the names you choose are saved to your account and applied to careers you start afterwards. We store only the names you actually changed, alongside the built-in name each one replaces. These names are private to your account and are never shown to other users.
 
 ### c. Usage and analytics data
-- We use **PostHog** to collect anonymous, aggregated product-analytics events (for example: app opened, career created, match played, season completed) so we can understand how the game is used and improve it. These events describe in-game actions, not personal content.
+- We use **PostHog** to collect product-analytics events (for example: app opened, career created, draft started or completed, match played, playoffs reached, season completed, tutorial started or completed, notification settings changed) so we can understand how the game is used and improve it. These events describe in-game actions, not the content of your game.
+- These events are **linked to your account identifier** so we can understand how the game is used over time. They are not linked to your name or email address. We refer to this as pseudonymous rather than anonymous: we cannot identify you from the events themselves, but they are associated with your account.
+- We also record the **screen you are viewing** within the App, and basic **device information** — device model, manufacturer, and whether the device is a phone or tablet. We collect the device model because layout problems are often specific to one screen size, and without it we cannot tell an iPhone from an iPad. We do **not** record taps, keystrokes, or screen contents.
 
 ### d. Crash and diagnostic data
 - We use **Sentry** to capture crash reports and technical error logs so we can fix bugs. Crash reports are configured to **exclude personal data** (we do not attach IP addresses or personal identifiers).
 
-### e. Information we do **not** collect
+### e. Files you export or import
+- **Exporting.** The player-name export writes a CSV file to your device. Once that file is on your device it is under your control, not ours — if you share it, we have no involvement in or knowledge of where it goes.
+- **Importing.** When you import a file, the App opens your device's file picker and can read **only the single file you choose**. It has no access to any other file on your device. The names in that file are sent to our servers to be saved to your account; the file itself is not stored by us.
+
+### f. Information we do **not** collect
 - We do not collect your contacts, photos, precise location, microphone, or camera data.
 - We do not sell your personal information.
 - We do not show third-party advertising (as of the date above).
@@ -39,11 +46,17 @@ We collect only what we need to run the game and keep your progress safe.
 ## 3. How we use your information
 
 - To create and maintain your account and save/sync your game progress.
-- To operate core game features (drafts, matches, seasons, stats, the roster editor).
+- To operate core game features (drafts, matches, seasons, stats, and custom player names).
 - To send optional local reminders ("your season is waiting") **on your device** — these are scheduled locally and only if you grant notification permission; we do not run a notification server.
 - To understand usage trends and improve the game (analytics).
 - To diagnose crashes and fix problems (diagnostics).
 - To protect the service against abuse (e.g. rate limiting).
+
+### Ratings and reviews
+
+The App may occasionally ask you to rate it. The rating prompt is displayed by **Apple**, using Apple's own system feature, and any rating or review you leave goes to Apple — **not to us**. We do not receive your rating, your review, or even whether you responded or dismissed it. We record only, on your device, that a prompt was requested, so that we do not ask you again too soon.
+
+The "Rate CricSim" option in Settings simply opens our App Store page.
 
 ## 4. Legal bases for processing (EEA/UK users)
 

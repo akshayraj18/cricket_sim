@@ -37,8 +37,15 @@ regression:
 	uv run pytest -m regression $(ARGS)
 
 # Static-check for undefined names, unused imports, etc.
-lint:
+lint: check-legal
 	uv run pyflakes packages/sim_engine/src/cricket_sim_engine tests backend/app backend/tests
+
+# The App links users to docs/legal/*.html, but the .md files are what anyone
+# edits. Both are maintained by hand, so this catches a change landing in only
+# one of them -- a privacy policy describing the wrong app is a bug you find
+# only when it matters.
+check-legal:
+	python3 tools/check_legal_sync.py
 
 # Remove cached bytecode.
 clean:

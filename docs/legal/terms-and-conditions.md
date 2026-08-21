@@ -1,6 +1,6 @@
 # Terms and Conditions
 
-**Last updated: June 15, 2026**
+**Last updated: August 21, 2026**
 
 These Terms and Conditions ("Terms") govern your use of the Cric Sim mobile game ("Cric Sim," the "App," "we," "us," or "our"), provided by Cric Sim Group ("the Developer"). By downloading, accessing, or using the App, you agree to these Terms. If you do not agree, do not use the App.
 
@@ -16,8 +16,20 @@ Cric Sim is a **fictional cricket-management simulation game**. You manage an im
 
 All team names, abbreviations, logos, colors, venues, and player names that ship with the App are **fictional and were created by us**. Any resemblance to real teams or persons is for the purpose of a believable simulation and does not imply any association or endorsement. We claim no rights in, and do not use, any third party's trademarks or names.
 
-### Roster editor / user-generated names
-The App includes a roster editor that lets **you** rename teams and players within your own private game. Any names you enter are **your own user-generated content**, stored only in your account for your personal use. You are solely responsible for the names you choose, and you agree not to enter names in a way that infringes any third party's trademark, publicity, or other rights, or that is unlawful, offensive, or abusive. We do not review, endorse, or take responsibility for names you set, and such names are not displayed to other users.
+### Custom names — your content, your responsibility
+The App lets **you** rename teams and players within your own private game, either individually in the roster editor or in bulk by exporting a list of player names from Settings, editing it, and importing it back.
+
+Any names you enter are **your own user-generated content**. They are stored in your account for your personal use, are visible only to you, and are never displayed to other users. We do not review, endorse, monitor, or take responsibility for the names you set.
+
+You are solely responsible for the names you choose, however you enter them, and you agree not to use this feature:
+
+- to enter names that infringe any third party's trademark, name, image, likeness, publicity, or other rights — **including the names of real cricketers, real clubs, real franchises, or real leagues**;
+- to enter names that are unlawful, offensive, abusive, hateful, or harassing;
+- to create, share, sell, or distribute name files intended to reproduce real players, teams, or leagues within the App.
+
+The names and teams that **ship with** the App are fictional and were created by us, as set out above. The import feature exists so you can personalise your own private game — it is not a route around that, and we neither provide nor endorse any file of real names. If you import such names, you do so on your own responsibility, and you are responsible for any consequences of doing so.
+
+We may remove custom names, or withdraw access to this feature, if it is misused.
 
 ## 3. Eligibility and accounts
 
@@ -58,7 +70,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE DEVELOPER WILL NOT BE LIABLE FOR ANY
 
 ## 10. Indemnification
 
-You agree to indemnify and hold harmless the Developer from any claims, damages, or expenses (including reasonable legal fees) arising from your misuse of the App, your violation of these Terms, or content (such as custom names) you enter into the App.
+You agree to indemnify and hold harmless the Developer from any claims, damages, or expenses (including reasonable legal fees) arising from your misuse of the App, your violation of these Terms, or content (such as custom names you enter or import) you put into the App.
 
 ## 11. Termination
 
