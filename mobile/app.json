@@ -68,7 +68,15 @@
           "color": "#1f9d55"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sharing",
+      [
+        "expo-file-system",
+        {
+          "enableFileSharing": true,
+          "supportsOpeningDocumentsInPlace": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

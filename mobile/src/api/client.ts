@@ -3,11 +3,15 @@ import { clearTokens, getTokens, setTokens } from '@/api/tokenStorage';
 
 export class ApiError extends Error {
   status: number;
+  /** Per-item problems, when the server rejects with a structured list (e.g. a
+   *  roster import naming every invalid row). */
+  details?: string[];
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, details?: string[]) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -98,6 +102,8 @@ interface RequestOptions {
   body?: unknown;
   /** Skip attaching the Authorization header (used for /auth/guest etc). */
   skipAuth?: boolean;
+  /** Parse the response as text rather than JSON (used for the CSV export). */
+  responseType?: 'json' | 'text';
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -135,16 +141,26 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     let message = res.statusText;
+    let details: string[] | undefined;
     try {
       const data = await res.json();
-      message = data.detail ?? message;
+      const detail = data.detail;
+      if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+        // Structured rejection, e.g. a roster import that lists every bad row.
+        // Stringifying the object here would show the user "[object Object]".
+        message = typeof detail.message === 'string' ? detail.message : message;
+        if (Array.isArray(detail.errors)) details = detail.errors.map(String);
+      } else if (typeof detail === 'string') {
+        message = detail;
+      }
     } catch {
       // response had no JSON body
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, details);
   }
 
   if (res.status === 204) return undefined as T;
+  if (options.responseType === 'text') return (await res.text()) as T;
   return res.json() as Promise<T>;
 }
 

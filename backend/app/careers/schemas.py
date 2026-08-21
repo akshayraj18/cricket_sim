@@ -76,3 +76,4 @@ class MatchBallOut(BaseModel):
 class MatchBallsOut(BaseModel):
     match_id: uuid.UUID
     balls: list[MatchBallOut]
+

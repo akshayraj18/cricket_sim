@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cricket_sim_engine.players_data import IPL_TEAMS_LIST
 from cricket_sim_engine.sim.league_state import LeagueState
+from cricket_sim_engine.sim.player_names import apply_name_overrides
 
+from app.db.models.user import User
 from app.db.models.career import Career, Match as MatchRow, MatchBall as MatchBallRow, Player as PlayerRow, Team as TeamRow
 
 VALID_DIFFICULTIES = ("easy", "medium", "hard")
@@ -51,6 +53,7 @@ def build_league_state(
     career_mode: str = "league",
     series_length: int | None = None,
     opponent_name: str | None = None,
+    player_name_overrides: dict[str, str] | None = None,
 ) -> LeagueState:
     if difficulty not in VALID_DIFFICULTIES:
         raise CareerError(f"Difficulty must be one of {VALID_DIFFICULTIES}.")
@@ -90,6 +93,12 @@ def build_league_state(
             league.new_league_with_rosters(user_team_name, difficulty)
         else:
             league.new_league(user_team_name, difficulty, draft_pool=draft_pool_type, match_format=match_format)
+
+    # Apply the user's saved player names. Done here, at creation, because a
+    # brand-new career has no saved lineups, leadership or match history
+    # referencing the old names yet — so a plain assignment is safe, whereas the
+    # same rename mid-career has to go through LeagueState.rename_player.
+    apply_name_overrides(league, player_name_overrides)
     return league
 
 
@@ -288,11 +297,13 @@ async def create_career(
     if existing.scalar_one_or_none() is not None:
         raise CareerError(f'A career named "{name}" already exists.')
 
+    owner = await db.get(User, user_id)
     league = build_league_state(
         user_team_name, difficulty, draft_pool_type,
         competition=competition, match_format=match_format,
         career_mode=career_mode, series_length=series_length,
         opponent_name=opponent_name,
+        player_name_overrides=(owner.player_name_overrides if owner else None),
     )
 
     career = Career(user_id=user_id, name=name, **_career_fields_from_state(league))
