@@ -52,10 +52,9 @@ So instrumentation ships first, in this release, even though users won't see it.
 10. **iPhone display issues** (`KNOWN_ISSUES.md`) — the last user-visible
     blocker. Segmented-control truncation and scorecard column collisions are
     fixed; the initial-screen overlap still needs a reproduction on device.
-11. **Google sign-in fails in the App Store build.** Works in dev, so it is
-    almost certainly an EAS production-profile client-ID mismatch rather than
-    code — but it is a broken sign-in path in a release about first-run
-    retention, so it should not ship unresolved.
+11. ~~**Google sign-in fails in the App Store build.**~~ **Dropped
+    2026-08-21** — not reproducible, and contradicted by production sign-in
+    data. See "Google sign-in" below.
 
 ## Scope — out (deliberately)
 
@@ -76,13 +75,24 @@ So instrumentation ships first, in this release, even though users won't see it.
       the version already on the App Store — Connect rejects an upload whose
       version matches a released one. Build number is handled by
       `autoIncrement: true` in the production profile.
-- [ ] **App Store privacy labels must be re-answered in App Store Connect.**
-      The privacy policy now discloses device model/manufacturer/type,
-      autocaptured screen views, and analytics linked to an account identifier.
-      The Connect questionnaire is a separate declaration and is what Apple
-      checks the app against; leaving it describing 1.0 is a rejection risk and
-      a compliance one. Likely additions: Identifiers > User ID, Usage Data >
-      Product Interaction, Diagnostics, and User Content for custom names.
+- [x] **App Store privacy labels — no change expected.** This was first listed
+      as a blocker on an assumption, before checking what 1.0 already ships. It
+      ships nearly all of it: `identify(user.id)`, `captureScreens: true`, the
+      16 analytics events, Sentry, and server-stored custom names (the roster
+      editor) were all in 1.0. The only genuinely new item in 1.1 is **device
+      model / manufacturer / type**, and that is not an identifier in Apple's
+      sense — "Device ID" means a unique per-device value (IDFV/IDFA), whereas
+      `Device.modelId` returns `iPhone17,1`, shared by millions of devices. It
+      sits under Diagnostics / Product Interaction, already covered if 1.0
+      declared analytics at all.
+
+      Keep collecting it: device model is the only thing distinguishing iPhone
+      from iPad, and this release fixes device-specific layout bugs with one
+      still unreproduced.
+
+      *Unverified:* we have no App Store Connect API access, so nobody has read
+      the current labels. The claim is "1.1 adds nothing new beyond device
+      model", not "the 1.0 labels are correct". Worth a two-minute look.
 - [ ] **"What's New" text** for the listing (custom names, rating prompt,
       display fixes, Test-match scoring corrections).
 - [ ] **Governing jurisdiction still unset in the Terms.** Section 12 has
@@ -90,21 +100,17 @@ So instrumentation ships first, in this release, even though users won't see it.
       governing jurisdiction before publishing.` It is published at
       /legal/terms.html right now.
 
-### Google sign-in: the documented hypothesis is wrong
+### Google sign-in: not a blocker — the bug appears stale
 
-The plan assumed a production client-ID mismatch. Checked 2026-08-21 — it is
-not that:
+The plan assumed a production client-ID mismatch. It is not that (all three
+places agree), and more decisively, **production data says Google sign-in
+works**: PostHog `signed_in` events show 12 sign-ins by 8 distinct people, all
+on `$app_version 1.0.0` — the App Store build — most recently 2026-08-21.
 
-- `app.json`'s `iosUrlScheme` matches `GOOGLE_IOS_CLIENT_ID` in `config.ts`.
-- The production EAS profile sets no `EXPO_PUBLIC_GOOGLE_*`, so it uses those
-  same inline IDs, which are real.
-- The backend accepts **both** the web and iOS client IDs as `aud`, and
-  `GOOGLE_CLIENT_IDS` is not overridden on Railway, so production runs those
-  defaults.
+Full evidence in `KNOWN_ISSUES.md`. Reopen only with a real error message.
 
-Diagnosing further needs the actual native error from a production build —
-which we cannot read, because there is still no Sentry auth token. That makes
-the Sentry token a blocker for this bug, not just a nice-to-have.
+This also takes the **Sentry auth token off the critical path**. It remains
+worth having for crash-free-session rate, but nothing is blocked on it.
 
 ## Pre-flight checklist
 
