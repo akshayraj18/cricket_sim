@@ -34,6 +34,11 @@ async def limited_client(monkeypatch):
     monkeypatch.setattr(settings, "auth_rate_limit_per_minute", 3)
     # The limiter calls get_redis() directly (not via DI), so point it at test Redis.
     monkeypatch.setattr(rate_limit, "get_redis", lambda: redis)
+    # Pin the fixed window. Unpinned, a burst that straddles a minute rollover
+    # lands under a fresh counter and the throttle never fires -- which is how
+    # this failed in CI at exactly 04:44:00. The rollover is real behaviour and
+    # is covered separately below.
+    monkeypatch.setattr(rate_limit, "_window", lambda: 28_000_000)
 
     transport = ASGITransport(app=app)
     try:
@@ -59,3 +64,15 @@ async def test_auth_endpoint_rate_limited(limited_client):
     resp = await limited_client.post("/auth/guest")
     assert resp.status_code == 429
     assert "Retry-After" in resp.headers
+
+
+async def test_limit_resets_when_the_window_rolls_over(limited_client, monkeypatch):
+    """The documented edge of fixed-window limiting, asserted rather than left
+    to be rediscovered as a flaky test."""
+    for _ in range(3):
+        assert (await limited_client.post("/auth/guest")).status_code == 200
+    assert (await limited_client.post("/auth/guest")).status_code == 429
+
+    # Next minute: a new counter, so the client is served again.
+    monkeypatch.setattr(rate_limit, "_window", lambda: 28_000_001)
+    assert (await limited_client.post("/auth/guest")).status_code == 200
