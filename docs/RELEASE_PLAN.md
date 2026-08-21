@@ -70,6 +70,42 @@ So instrumentation ships first, in this release, even though users won't see it.
 
 ---
 
+## Release blockers found 2026-08-21
+
+- [x] **Version bumped 1.0.0 -> 1.1.0.** `app.json` still said `1.0.0`, which is
+      the version already on the App Store — Connect rejects an upload whose
+      version matches a released one. Build number is handled by
+      `autoIncrement: true` in the production profile.
+- [ ] **App Store privacy labels must be re-answered in App Store Connect.**
+      The privacy policy now discloses device model/manufacturer/type,
+      autocaptured screen views, and analytics linked to an account identifier.
+      The Connect questionnaire is a separate declaration and is what Apple
+      checks the app against; leaving it describing 1.0 is a rejection risk and
+      a compliance one. Likely additions: Identifiers > User ID, Usage Data >
+      Product Interaction, Diagnostics, and User Content for custom names.
+- [ ] **"What's New" text** for the listing (custom names, rating prompt,
+      display fixes, Test-match scoring corrections).
+- [ ] **Governing jurisdiction still unset in the Terms.** Section 12 has
+      shipped since June carrying a visible `> Note: Set your specific
+      governing jurisdiction before publishing.` It is published at
+      /legal/terms.html right now.
+
+### Google sign-in: the documented hypothesis is wrong
+
+The plan assumed a production client-ID mismatch. Checked 2026-08-21 — it is
+not that:
+
+- `app.json`'s `iosUrlScheme` matches `GOOGLE_IOS_CLIENT_ID` in `config.ts`.
+- The production EAS profile sets no `EXPO_PUBLIC_GOOGLE_*`, so it uses those
+  same inline IDs, which are real.
+- The backend accepts **both** the web and iOS client IDs as `aud`, and
+  `GOOGLE_CLIENT_IDS` is not overridden on Railway, so production runs those
+  defaults.
+
+Diagnosing further needs the actual native error from a production build —
+which we cannot read, because there is still no Sentry auth token. That makes
+the Sentry token a blocker for this bug, not just a nice-to-have.
+
 ## Pre-flight checklist
 
 - [ ] `make test-all` green locally (~97s)
