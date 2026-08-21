@@ -398,8 +398,11 @@ export default function NewCareerScreen() {
                 <ThemedText themeColor="textFaint" style={[styles.label, { marginTop: Spacing.three }]}>Squad</ThemedText>
                 <View style={styles.segRow}>
                   {[
-                    { value: 'rosters2026' as const, label: 'Current Roster', desc: "Start with your franchise's 2026 squad" },
-                    { value: 'current' as const, label: 'Mega Draft', desc: 'Draft from the full pool of 2026 players' },
+                    // Kept short deliberately: these cards are ~181pt wide, and
+                    // the longer copy measured 181-187pt, so it wrapped to a
+                    // third line with an orphaned word.
+                    { value: 'rosters2026' as const, label: 'Current Roster', desc: 'Your 2026 squad' },
+                    { value: 'current' as const, label: 'Mega Draft', desc: 'Draft the full pool' },
                   ].map((sq) => {
                     const sel = iplPool === sq.value;
                     return (
