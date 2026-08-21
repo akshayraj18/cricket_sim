@@ -32,6 +32,9 @@ yarn-error.*
 
 # local env files
 .env*.local
+# ...and anything derived from one: `.env*.local` only matches names ENDING
+# in .local, so a `.env.local.bak` slipped into the repo in #54.
+.env*.local.*
 
 # typescript
 *.tsbuildinfo

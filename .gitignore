@@ -47,3 +47,30 @@ backend/DEPLOY.md
 # main:/docs, so these files ARE the live privacy policy and terms: the URLs
 # the app links to and the App Store requires. Untracking them takes those
 # pages offline. README.md and the per-package READMEs also stay tracked.
+
+# --- Build/tool artifacts and editor leftovers -------------------------------
+# Preventive: none of these are in the repo today. Added because the one file
+# that did slip in (mobile/.env.local.bak, #54) got through on a suffix the
+# rules did not anticipate, and this class of file is never worth committing.
+
+# Node deps anywhere (mobile/ and webapp/ each vendor their own)
+node_modules/
+
+# Python tooling caches
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editor / OS leftovers
+*.swp
+*.swo
+Thumbs.db
+
+# Backups, merge leftovers, and stray logs
+*.bak
+*.orig
+*.rej
+*~
+*.log
