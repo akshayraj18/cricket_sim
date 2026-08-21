@@ -67,3 +67,24 @@ export const PRIVACY_POLICY_URL =
   'https://akshayraj18.github.io/cricket_sim/legal/privacy-policy.html';
 export const TERMS_URL =
   process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://akshayraj18.github.io/cricket_sim/legal/terms.html';
+
+/**
+ * Numeric App Store ID (the digits in `.../app/idXXXXXXXXXX`), from App Store
+ * Connect. Set `EXPO_PUBLIC_APP_STORE_ID` in the EAS build profile.
+ */
+export const APP_STORE_ID = process.env.EXPO_PUBLIC_APP_STORE_ID ?? '';
+
+/**
+ * Deep link to our App Store page with the review sheet already open.
+ *
+ * This is a *link*, not a prompt — App Store Review Guideline 1.1.7 requires
+ * the system API for prompting and bans custom review dialogs, but sending
+ * someone to the store page when they ask to rate is the normal, allowed path.
+ * The automatic prompt lives in `services/store-review.ts`.
+ *
+ * Null until the ID is configured, so the Settings row hides rather than
+ * opening a broken store page.
+ */
+export const RATE_APP_URL = APP_STORE_ID
+  ? `https://apps.apple.com/app/id${APP_STORE_ID}?action=write-review`
+  : null;

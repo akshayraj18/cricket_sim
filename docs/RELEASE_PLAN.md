@@ -112,5 +112,9 @@ So instrumentation ships first, in this release, even though users won't see it.
 1. Watch crash-free session rate and the new funnel events for ~a week.
 2. Then use that baseline to judge the retention work (draft escape hatch,
    no-draft default for a first career, shorter tutorial).
-3. Only then revisit the in-app rating prompt — asking for reviews while every
-   user is on 1.0.0 would collect ratings for a build we have already replaced.
+3. ~~Only then revisit the in-app rating prompt~~ — **shipped in v1.1
+   instead.** The concern was collecting reviews for a build already replaced;
+   that resolves itself by shipping the prompt *in* v1.1, since anyone who can
+   see it is already running v1.1. See `docs/APP_RATING_PROMPT.md`.
+   **Still needs `EXPO_PUBLIC_APP_STORE_ID`** in the EAS production profile
+   before the Settings link appears.

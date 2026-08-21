@@ -23,6 +23,7 @@ import { useEffect, useRef } from 'react';
 
 import type { LeaguePayload } from '@/api/types';
 import { useAnalytics, type AnalyticsEvent } from '@/observability/analytics';
+import { maybeRequestReview } from '@/services/store-review';
 
 /** The slice of the payload a funnel transition can be derived from. */
 export interface FunnelSnapshot {
@@ -151,6 +152,13 @@ export function useFunnelTracking(
       season: payload.season,
     })) {
       analytics.capture(event, props);
+
+      // Finishing a season is the app's clearest "that went well" moment, and
+      // this hook already guarantees the properties an App Store prompt needs:
+      // it fires once per real transition, never on a cold start, and never
+      // during the guided tour. Deliberately fire-and-forget — the request is
+      // silent by design and must not delay or disturb anything.
+      if (event === 'season_completed') void maybeRequestReview(current.completedSeasons);
     }
   }, [analytics, careerId, payload, tourActive]);
 }

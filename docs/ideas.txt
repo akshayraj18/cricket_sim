@@ -136,6 +136,18 @@ Retention — first session  ** the 64% one-and-done problem **
     A "your season is waiting — N matches left" nudge is worth testing.
 
 App Store rating & feedback
+  - (done 2026-08-21) In-app rating prompt shipped. Triggers on the
+    season_completed funnel transition with 2+ completed seasons, once per app
+    version, 120-day cooldown, 3 lifetime. NOTE: the "gate behind a positive
+    signal" idea below cannot be implemented as a pre-prompt -- App Store
+    Review Guideline 1.1.7 bans custom review dialogs, so there is no way to
+    ask "enjoying the app?" first and only forward the happy answers. Engagement
+    gating (2+ seasons) is allowed; sentiment gating is not.
+    See docs/APP_RATING_PROMPT.md.
+  - Still open: a "send feedback" path that is NOT the App Store, which is the
+    legitimate way to give unhappy users somewhere else to go.
+  - Still open: EXPO_PUBLIC_APP_STORE_ID, without which the Settings "Rate
+    CricSim" row stays hidden.
   - In-app rating prompt via StoreKit's SKStoreReviewController
     (expo-store-review). Trigger it on a genuine high point — winning a
     trophy, completing a first season, or a milestone century — never on

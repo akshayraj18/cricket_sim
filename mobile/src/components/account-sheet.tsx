@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import { PlayerNamesSection } from '@/components/player-names-section';
 import { ThemedText } from '@/components/themed-text';
-import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
+import { PRIVACY_POLICY_URL, RATE_APP_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -55,6 +55,9 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
       ]
     );
   };
+
+  // Local const so the null check narrows inside the onPress closure too.
+  const rateUrl = RATE_APP_URL;
 
   // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -178,6 +181,18 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>How to Play</ThemedText>
           </Pressable>
+          {/* Opens our App Store page, rather than the system rating prompt:
+              that prompt may only be triggered by a signature moment in play
+              (see services/store-review.ts), never by a "rate us" tap.
+              Linking, not WebBrowser — this needs to hand off to the App Store
+              app. Hidden until EXPO_PUBLIC_APP_STORE_ID is configured. */}
+          {rateUrl && (
+            <Pressable
+              onPress={() => Linking.openURL(rateUrl)}
+              style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+              <ThemedText style={styles.linkButtonText}>Rate CricSim</ThemedText>
+            </Pressable>
+          )}
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Legal
