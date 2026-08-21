@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import { PlayerNamesSection } from '@/components/player-names-section';
 import { ThemedText } from '@/components/themed-text';
-import { PRIVACY_POLICY_URL, TERMS_URL } from '@/api/config';
+import { PRIVACY_POLICY_URL, RATE_APP_URL, TERMS_URL } from '@/api/config';
 import { isAppleSignInAvailable } from '@/api/socialAuth';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -54,6 +54,26 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
         },
       ]
     );
+  };
+
+  // Local const so the null check narrows inside the onPress closure too.
+  const rateUrl = RATE_APP_URL;
+
+  /**
+   * Open our App Store page. openURL rejects when nothing can handle the link
+   * -- most obviously the iOS Simulator, which has no App Store app at all, so
+   * this fails there every time and is not a sign the URL is wrong. Say so
+   * rather than leaving an unhandled rejection and a bare "invalid link".
+   */
+  const handleRate = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        'Could not open the App Store',
+        'The App Store is not available on this device. You can rate CricSim by searching for it in the App Store.'
+      );
+    }
   };
 
   // Sign in with Apple only exists on iOS 13+ — never offer it elsewhere.
@@ -178,6 +198,18 @@ export function AccountSheet({ visible, onClose }: { visible: boolean; onClose: 
             style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
             <ThemedText style={styles.linkButtonText}>How to Play</ThemedText>
           </Pressable>
+          {/* Opens our App Store page, rather than the system rating prompt:
+              that prompt may only be triggered by a signature moment in play
+              (see services/store-review.ts), never by a "rate us" tap.
+              Linking, not WebBrowser — this needs to hand off to the App Store
+              app. Hidden until EXPO_PUBLIC_APP_STORE_ID is configured. */}
+          {rateUrl && (
+            <Pressable
+              onPress={() => handleRate(rateUrl)}
+              style={({ pressed }) => [styles.linkButton, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}>
+              <ThemedText style={styles.linkButtonText}>Rate CricSim</ThemedText>
+            </Pressable>
+          )}
 
           <ThemedText themeColor="textFaint" style={styles.sectionLabel}>
             Legal

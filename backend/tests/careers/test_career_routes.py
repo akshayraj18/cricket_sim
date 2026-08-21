@@ -174,3 +174,43 @@ async def test_create_career_with_2026_rosters(client: AsyncClient, auth_headers
     assert body["phase"] == "season"
     assert body["draft_pool_type"] == "rosters2026"
     assert all(len(t["roster"]) >= 11 for t in body["state"]["teams"])
+
+
+async def test_the_two_ipl_squad_options_produce_different_careers(
+    client: AsyncClient, auth_headers: dict
+):
+    """The Indian T20 league offers two squad options, and they must actually differ.
+
+    Regression guard. The mobile wizard hardcoded `rosters2026` for the IPL when
+    the international flow was added, which silently removed the mega draft that
+    shipped in 1.0 -- the backend kept working the whole time, so nothing failed.
+    Asserting the two shapes here means the pool types cannot quietly converge,
+    though it cannot catch the wizard ceasing to offer the choice.
+    """
+    no_draft = await _create_career(
+        client, auth_headers, name="No Draft", draft_pool_type="rosters2026"
+    )
+    mega = await _create_career(client, auth_headers, name="Mega", draft_pool_type="current")
+
+    # rosters2026 skips the draft: squads are already filled and play starts.
+    assert no_draft["state"]["phase"] == "season"
+    assert sum(len(t["roster"]) for t in no_draft["state"]["teams"]) > 0
+
+    # current drafts from scratch: nobody is on a roster until the draft runs.
+    assert mega["state"]["phase"] == "draft"
+    assert sum(len(t["roster"]) for t in mega["state"]["teams"]) == 0
+
+
+async def test_starting_the_mega_draft_offers_a_pool_of_players(
+    client: AsyncClient, auth_headers: dict
+):
+    """A draft with an empty pool would be a broken feature that still 'works'."""
+    career = await _create_career(client, auth_headers, name="Mega", draft_pool_type="current")
+
+    resp = await client.post(f"/careers/{career['id']}/draft/start", headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+
+    # /draft/start returns the league payload directly, not wrapped in "state".
+    draft = resp.json()["draft"]
+    assert draft["started"] is True
+    assert len(draft["available"]) > 100, "the mega draft pool should hold the whole player set"

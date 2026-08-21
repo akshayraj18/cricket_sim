@@ -37,8 +37,20 @@ regression:
 	uv run pytest -m regression $(ARGS)
 
 # Static-check for undefined names, unused imports, etc.
-lint:
+lint: check-legal
 	uv run pyflakes packages/sim_engine/src/cricket_sim_engine tests backend/app backend/tests
+
+# Regenerate docs/legal/*.html from the .md sources. GitHub Pages serves docs/
+# from main as-is, so the .html has to be committed -- but it is generated, not
+# edited. Edit the .md and run this.
+legal:
+	python3 tools/build_legal_html.py
+
+# Fail if the committed .html does not match the .md. They used to be
+# maintained by hand, and an edit that landed in only one of them published a
+# privacy policy describing the wrong app.
+check-legal:
+	python3 tools/build_legal_html.py --check
 
 # Remove cached bytecode.
 clean:

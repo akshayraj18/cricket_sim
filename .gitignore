@@ -36,3 +36,14 @@ cricsimpics/
 # Local planning / prep docs — keep out of git
 KNOWN_ISSUES.md
 APP_STORE_LISTING.md
+
+# Documentation is kept local, not in the repo (planning, design notes, roadmaps).
+# `docs/*` does not cross a slash, so docs/legal/ is deliberately NOT matched.
+docs/*.md
+docs/*.txt
+backend/DEPLOY.md
+
+# EXCEPTION -- docs/legal/ MUST stay tracked. GitHub Pages publishes it from
+# main:/docs, so these files ARE the live privacy policy and terms: the URLs
+# the app links to and the App Store requires. Untracking them takes those
+# pages offline. README.md and the per-package READMEs also stay tracked.

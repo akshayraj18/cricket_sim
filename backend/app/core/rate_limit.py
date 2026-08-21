@@ -26,11 +26,26 @@ def _client_id(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _window() -> int:
+    """The current fixed-window bucket.
+
+    A counter lives under one window and expires with it, so a burst that
+    straddles a rollover can briefly get up to 2x the limit. That is inherent
+    to fixed-window limiting and accepted here — the point is to blunt abuse,
+    not to meter precisely.
+
+    Factored out so tests can pin the window. Without that a test that sends
+    N+1 requests is a coin flip near :00, which is exactly how it failed in CI
+    at 04:44:00.
+    """
+    return int(time.time() // 60)
+
+
 async def _check(request: Request, bucket: str, limit_per_minute: int) -> None:
     if not settings.rate_limit_enabled or limit_per_minute <= 0:
         return
 
-    window = int(time.time() // 60)
+    window = _window()
     key = f"ratelimit:{bucket}:{_client_id(request)}:{window}"
     try:
         redis = get_redis()

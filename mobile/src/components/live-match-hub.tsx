@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState, type ReactNode } from 'react';
+import { ActivityIndicator, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { liveMatchApi } from '@/api/liveMatch';
 import { LiveMatchPayload, MatchCard, OverEvent, PlayerDict } from '@/api/types';
@@ -993,6 +993,57 @@ function MiniInningsCards({
   );
 }
 
+/**
+ * Ceiling on system text scaling inside the scorecard tables.
+ *
+ * These are six right-aligned columns of figures in the width of a phone. Past
+ * roughly 1.4x the columns have nowhere left to go and the numbers collide —
+ * which is worse for a low-vision reader than slightly smaller text, because a
+ * run-together "6133.3" is not a number at all. Everything around the table
+ * (headings, names, prose) still scales without limit.
+ */
+const TABLE_FONT_CAP = 1.4;
+
+/** Clear space between two right-aligned figures columns. */
+const TABLE_COL_GUTTER = 6;
+
+/**
+ * Figures columns are FIXED width, not flexed, so the name column can take
+ * everything left over.
+ *
+ * The name is the most important thing in a scorecard -- "B. McCullum,
+ * c M. Crawford b J. Smith" is the line a reader is actually looking for --
+ * and flexing all six columns starved it: every figures column grew with the
+ * card while the name got a fixed share, so names truncated to "B. M..." even
+ * on a large phone. A figures column needs only enough room for its widest
+ * value ("154.1"), and nothing is gained by giving it more.
+ *
+ * Scaled by the system font scale (bounded by the same cap the text uses) so
+ * the columns grow with the text instead of clipping it.
+ */
+const TABLE_SCALE = Math.min(PixelRatio.getFontScale(), TABLE_FONT_CAP);
+/** Fits a 3-digit figure ("102") or an overs figure ("45.3"). */
+const STAT_COL_W = Math.round(32 * TABLE_SCALE);
+/** Fits "154.1" (SR) and "12.33" (Econ, rounded to 2dp server-side). */
+const STAT_COL_W_WIDE = Math.round(44 * TABLE_SCALE);
+
+/** A right-aligned figures column. `wide` is for SR / Econ, which hold 5 chars. */
+function StatCell({ value, wide, header }: { value: ReactNode; wide?: boolean; header?: boolean }) {
+  return (
+    <ThemedText
+      themeColor={header ? 'textFaint' : undefined}
+      style={[
+        header ? styles.tableHeaderCell : styles.tableCell,
+        styles.statCol,
+        wide && styles.statColWide,
+      ]}
+      maxFontSizeMultiplier={TABLE_FONT_CAP}
+      numberOfLines={1}>
+      {value}
+    </ThemedText>
+  );
+}
+
 export function BattingCardTable({
   bats,
   score,
@@ -1013,24 +1064,17 @@ export function BattingCardTable({
   return (
     <View>
       <View style={styles.tableHeaderRow}>
-        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableNameCol]}>
+        <ThemedText
+          themeColor="textFaint"
+          style={[styles.tableHeaderCell, styles.tableNameCol]}
+          maxFontSizeMultiplier={TABLE_FONT_CAP}>
           Batter
         </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          R
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          B
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          4s
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          6s
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableHeaderCellWide]}>
-          SR
-        </ThemedText>
+        <StatCell header value="R" />
+        <StatCell header value="B" />
+        <StatCell header value="4s" />
+        <StatCell header value="6s" />
+        <StatCell header wide value="SR" />
       </View>
       {bats.map((b) => {
         const sr = b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : '0.0';
@@ -1039,13 +1083,19 @@ export function BattingCardTable({
         return (
           <View key={b.name} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
             <View style={styles.tableNameCol}>
-              <ThemedText style={styles.tableName} numberOfLines={1}>
+              <ThemedText style={styles.tableName} numberOfLines={1} maxFontSizeMultiplier={TABLE_FONT_CAP}>
                 {isOnStrike ? '> ' : ''}
                 {abbreviateName(b.name)}
                 {isAtCrease ? '*' : ''}
               </ThemedText>
               {b.dismissal ? (
-                <ThemedText themeColor="textFaint" style={styles.tableDismissal} numberOfLines={1}>
+                // Two lines: how a batter got out is half the information in a
+                // scorecard line, and "c M. Cr..." tells the reader nothing.
+                <ThemedText
+                  themeColor="textFaint"
+                  style={styles.tableDismissal}
+                  numberOfLines={2}
+                  maxFontSizeMultiplier={TABLE_FONT_CAP}>
                   {abbreviateDismissal(b.dismissal)}
                 </ThemedText>
               ) : isAtCrease ? (
@@ -1054,11 +1104,11 @@ export function BattingCardTable({
                 </ThemedText>
               ) : null}
             </View>
-            <ThemedText style={styles.tableCell}>{b.runs}</ThemedText>
-            <ThemedText style={styles.tableCell}>{b.balls}</ThemedText>
-            <ThemedText style={styles.tableCell}>{b.fours}</ThemedText>
-            <ThemedText style={styles.tableCell}>{b.sixes}</ThemedText>
-            <ThemedText style={[styles.tableCell, styles.tableCellWide]}>{sr}</ThemedText>
+            <StatCell value={b.runs} />
+            <StatCell value={b.balls} />
+            <StatCell value={b.fours} />
+            <StatCell value={b.sixes} />
+            <StatCell wide value={sr} />
           </View>
         );
       })}
@@ -1084,35 +1134,31 @@ export function BowlingCardTable({
   return (
     <View>
       <View style={styles.tableHeaderRow}>
-        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableNameCol]}>
+        <ThemedText
+          themeColor="textFaint"
+          style={[styles.tableHeaderCell, styles.tableNameCol]}
+          maxFontSizeMultiplier={TABLE_FONT_CAP}>
           Bowler
         </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          O
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          M
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          R
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={styles.tableHeaderCell}>
-          W
-        </ThemedText>
-        <ThemedText themeColor="textFaint" style={[styles.tableHeaderCell, styles.tableHeaderCellWide]}>
-          Econ
-        </ThemedText>
+        <StatCell header value="O" />
+        <StatCell header value="M" />
+        <StatCell header value="R" />
+        <StatCell header value="W" />
+        <StatCell header wide value="Econ" />
       </View>
       {bowls.map((b) => (
         <View key={b.name} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
-          <ThemedText style={[styles.tableName, styles.tableNameCol]} numberOfLines={1}>
+          <ThemedText
+            style={[styles.tableName, styles.tableNameCol]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={TABLE_FONT_CAP}>
             {abbreviateName(b.name)}
           </ThemedText>
-          <ThemedText style={styles.tableCell}>{b.overs}</ThemedText>
-          <ThemedText style={styles.tableCell}>{b.maidens ?? 0}</ThemedText>
-          <ThemedText style={styles.tableCell}>{b.runs}</ThemedText>
-          <ThemedText style={styles.tableCell}>{b.wickets}</ThemedText>
-          <ThemedText style={[styles.tableCell, styles.tableCellWide]}>{b.econ}</ThemedText>
+          <StatCell value={b.overs} />
+          <StatCell value={b.maidens ?? 0} />
+          <StatCell value={b.runs} />
+          <StatCell value={b.wickets} />
+          <StatCell wide value={b.econ} />
         </View>
       ))}
     </View>
@@ -1424,16 +1470,24 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   tableHeaderCell: {
-    flex: 1,
-    minWidth: 28,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'right',
   },
-  tableHeaderCellWide: {
-    minWidth: 38,
+  /**
+   * One figures column. Fixed width so it takes only what it needs and the
+   * name column keeps the rest. paddingLeft is the gutter: every figures
+   * column is right-aligned, so without it a value that fills its column
+   * touches the one before it -- that is how "6s" and "SR" ran together.
+   */
+  statCol: {
+    width: STAT_COL_W,
+    paddingLeft: TABLE_COL_GUTTER,
+  },
+  statColWide: {
+    width: STAT_COL_W_WIDE,
   },
   tableRow: {
     flexDirection: 'row',
@@ -1442,7 +1496,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tableNameCol: {
-    flex: 2.4,
+    // Takes every point the figures columns do not. minWidth 0 lets it shrink
+    // on a narrow screen rather than pushing the figures off the edge.
+    flex: 1,
+    minWidth: 0,
     textAlign: 'left',
   },
   tableName: {
@@ -1454,13 +1511,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   tableCell: {
-    flex: 1,
-    minWidth: 28,
     fontSize: 12.5,
     textAlign: 'right',
-  },
-  tableCellWide: {
-    minWidth: 38,
   },
   aggWrap: {
     marginBottom: Spacing.two,
